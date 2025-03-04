@@ -12,7 +12,7 @@ export default function Navbar() {
   }
   
   const handleClickOutside = (event: MouseEvent) => {
-    if (navbarRef.current && !navbarRef.current.contains(event.target)){
+    if (navbarRef.current && !navbarRef.current.contains(event.target as Node)){
       setIsOpen(false)
     }
   }
