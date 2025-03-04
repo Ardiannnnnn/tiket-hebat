@@ -1,12 +1,30 @@
 "use client";
-import { useState } from "react";
+import { useState, useRef, useEffect} from "react";
 import { mouseMemoirs } from "@/app/ui/fonts";
 import { montserrat } from "@/app/ui/fonts";
 
+
 export default function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
+  const navbarRef = useRef<HTMLDivElement>(null); 
+  const toggleNavbar = () => {
+    setIsOpen(!isOpen)
+  }
+  
+  const handleClickOutside = (event: MouseEvent) => {
+    if (navbarRef.current && !navbarRef.current.contains(event.target)){
+      setIsOpen(false)
+    }
+  }
+
+  useEffect(() => {
+    document.addEventListener("mousedown", handleClickOutside );
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside)
+    }
+  },[])
   return (
-    <nav className="bg-white border-Orange border-b-2 fixed w-full z-10">
+    <nav ref={navbarRef} className="bg-white border-Orange border-b-2 fixed w-full z-10">
       <div className="max-w-screen-xl flex flex-wrap items-center justify-between mx-auto p-4">
         <a
           href="https://flowbite.com/"
@@ -24,7 +42,7 @@ export default function Navbar() {
           </span>
         </a>
         <button
-          onClick={() => setIsOpen(!isOpen)}
+          onClick={toggleNavbar}
           data-collapse-toggle="navbar-default"
           type="button"
           className="inline-flex items-center p-2 w-10 h-10 justify-center text-sm text-gray-500 rounded-lg md:hidden hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-gray-200 dark:text-gray-400 dark:hover:bg-gray-700 dark:focus:ring-gray-600"
