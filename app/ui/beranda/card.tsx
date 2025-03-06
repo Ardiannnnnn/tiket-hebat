@@ -5,7 +5,7 @@ export default function Card() {
   return (
     <>
       <div
-        className="bg-cover bg-center m-10 md:m-24 rounded-lg md:flex p-12"
+        className="bg-cover bg-center m-4 md:m-24 rounded-lg md:flex  p-4 md:p-12"
         style={{ backgroundImage: `url(${Image.src})` }}
       >
         <div className="m-4 text-white md:w-1/2 md:p-8 space-y-10 mb-10 text-center md:text-left ">
