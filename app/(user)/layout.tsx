@@ -3,12 +3,10 @@ import Footer from "../ui/beranda/footer";
 
 export default function Layout({ children }: { children: React.ReactNode }) {
   return (
-    <>
+    <div className="flex flex-col min-h-screen">
       <Navbar />
-      <div className="h-screen flex items-center justify-center">
-        {children}
-      </div>
+      <div className="flex-1">{children}</div>
       <Footer />
-    </>
+    </div>
   );
 }

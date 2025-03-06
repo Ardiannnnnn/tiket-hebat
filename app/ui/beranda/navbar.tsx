@@ -46,7 +46,7 @@ export default function Navbar() {
   const pathname = usePathname();
 
   return (
-    <nav ref={navbarRef} className="bg-white border-Orange border-b-2 fixed w-full z-10">
+    <nav ref={navbarRef} className="bg-white border-Orange border-b-2 ">
       <div className="max-w-screen-xl flex flex-wrap items-center justify-between mx-auto p-4">
         <a
           href="https://flowbite.com/"
@@ -103,7 +103,7 @@ export default function Navbar() {
                     "block py-2 px-3 rounded-sm md:p-0 transition-colors",
                     pathname === link.href
                       ? "bg-Orange text-white md:bg-transparent md:text-Orange  "
-                      : "text-gray-900 hover:underline decoration-Orange md:hover:bg-transparent md:hover:text-Orange "
+                      : "text-gray-900  md:hover:bg-transparent hover:text-Orange "
                   )}
                 >
                   {link.name}

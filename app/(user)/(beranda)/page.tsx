@@ -1,7 +1,7 @@
+import Card from "@/app/ui/beranda/card"
+
 export default function Beranda(){
     return(
-        <p>
-            ini beranda
-        </p>
+        <Card/>
     )
 }
