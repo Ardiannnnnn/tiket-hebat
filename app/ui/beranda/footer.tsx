@@ -1,4 +1,4 @@
-import { mouseMemoirs } from "./fonts"
+import { mouseMemoirs } from "../fonts"
 
 export default function Footer() {
     return (
