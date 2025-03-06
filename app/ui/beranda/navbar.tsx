@@ -1,10 +1,32 @@
 "use client";
+
 import { useState } from "react";
 import { mouseMemoirs } from "@/app/ui/fonts";
 import { montserrat } from "@/app/ui/fonts";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import clsx from "clsx";
+
+const links = [
+  {
+    name: "Beranda",
+    href: "/",
+  },
+  {
+    name: "Jadwal Kapal",
+    href: "/jadwal",
+  },
+
+  {
+    name: "Tiket",
+    href: "/tiket",
+  },
+];
 
 export default function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
+  const pathname = usePathname();
+
   return (
     <nav className="bg-white border-Orange border-b-2 fixed w-full z-10">
       <div className="max-w-screen-xl flex flex-wrap items-center justify-between mx-auto p-4">
@@ -55,31 +77,21 @@ export default function Navbar() {
           id="navbar-default"
         >
           <ul className="flex flex-col p-4 md:p-0 mt-4 border border-gray-100 rounded-lg md:flex-row md:space-x-8 rtl:space-x-reverse md:mt-0 md:border-0 md:bg-whit font-semibold">
-            <li>
-              <a
-                href="#"
-                className="block py-2 px-3 text-white bg-Orange rounded-sm md:bg-transparent md:text-Orange md:p-0 "
-                aria-current="page"
-              >
-                Beranda
-              </a>
-            </li>
-            <li>
-              <a
-                href="#"
-                className="block py-2 px-3 text-gray-900 rounded-sm hover:bg-Orange md:hover:bg-transparent md:border-0 md:hover:text-Orange md:p-0 md:dark:hover:text-Orange dark:hover:bg-Orange dark:hover:text-white md:dark:hover:bg-transparent"
-              >
-                Jadwal Kapal
-              </a>
-            </li>
-            <li>
-              <a
-                href="#"
-                className="block py-2 px-3 text-gray-900 rounded-sm hover:bg-Orange md:hover:bg-transparent md:border-0 md:hover:text-Orange md:p-0 md:dark:hover:text-Orange dark:hover:bg-Orange dark:hover:text-white md:dark:hover:bg-transparent"
-              >
-                Tiket
-              </a>
-            </li>
+            {links.map((link) => (
+              <li key={link.name}>
+                <Link
+                  href={link.href}
+                  className={clsx(
+                    "block py-2 px-3 rounded-sm md:p-0 transition-colors",
+                    pathname === link.href
+                      ? "bg-Orange text-white md:bg-transparent md:text-Orange  "
+                      : "text-gray-900 hover:underline decoration-Orange md:hover:bg-transparent md:hover:text-Orange "
+                  )}
+                >
+                  {link.name}
+                </Link>
+              </li>
+            ))}
           </ul>
         </div>
       </div>
