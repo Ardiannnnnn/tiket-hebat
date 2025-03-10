@@ -41,6 +41,9 @@ importers:
       tailwindcss-animate:
         specifier: ^1.0.7
         version: 1.0.7(tailwindcss@4.0.10)
+      use-debounce:
+        specifier: ^10.0.4
+        version: 10.0.4(react@19.0.0)
     devDependencies:
       '@tailwindcss/postcss':
         specifier: ^4
@@ -584,6 +587,12 @@ packages:
   undici-types@6.19.8:
     resolution: {integrity: sha512-ve2KP6f/JnbPBFyobGHuerC9g1FYGn/F8n1LWTwNxCEzd6IfqTwUQcNXgEtmmQ6DlRrC1hrSrBnCZPokRrDHjw==}
 
+  use-debounce@10.0.4:
+    resolution: {integrity: sha512-6Cf7Yr7Wk7Kdv77nnJMf6de4HuDE4dTxKij+RqE9rufDsI6zsbjyAxcH5y2ueJCQAnfgKbzXbZHYlkFwmBlWkw==}
+    engines: {node: '>= 16.0.0'}
+    peerDependencies:
+      react: '*'
+
 snapshots:
 
   '@alloc/quick-lru@5.2.0': {}
@@ -1011,3 +1020,7 @@ snapshots:
   typescript@5.8.2: {}
 
   undici-types@6.19.8: {}
+
+  use-debounce@10.0.4(react@19.0.0):
+    dependencies:
+      react: 19.0.0
