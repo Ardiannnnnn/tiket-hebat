@@ -5,6 +5,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import Image from "next/image";
 import { poppins } from "@/app/ui/fonts";
+import { FaArrowRight } from "react-icons/fa6";
 
 const items = [
   { id: 1, title: "Aceh Hebat 1", image: "/image/aceh-hebat-1.jpeg" },
@@ -17,9 +18,9 @@ export default function InfoShips() {
   return (
     <div className={`${poppins.className} w-full md:p-10 m-16 `}>
       <div className="flex w-full justify-center items-center gap-6 mb-10">
-        <hr className="w-1/2 border-t-2 border-orange-500" />
+        <hr className="w-1/2 border-t-2 border-Orange" />
         <h2 className="text-2xl font-bold text-gray-500">Informasi</h2>
-        <hr className="w-1/2 border-t-2 border-orange-500" />
+        <hr className="w-1/2 border-t-2 border-Orange" />
       </div>
 
       {/* Grid untuk Desktop */}
@@ -43,18 +44,18 @@ export default function InfoShips() {
             </div>
 
             {/* Label Judul */}
-            <div className="absolute top-4 left-4 bg-white border border-orange-500 text-orange-600 px-3 py-1 rounded-full text-sm font-semibold shadow-md">
+            <div className="absolute top-4 left-4 bg-white border-3 border-Orange px-3 py-1 rounded-full text-sm font-semibold shadow-md">
               {item.title}
             </div>
 
             {/* Konten Card */}
-            <CardContent className="absolute bottom-4 left-0 right-0 flex justify-center">
+            <CardContent className="absolute bottom-4 w-full flex">
               <Button
                 variant="outline"
-                className="w-full font-semibold flex justify-between items-center border border-gray-300 p-6 rounded-full bg-white shadow-md"
+                className="w-full font-semibold flex gap-22 items-center border text-gray-700 border-gray-300 p-6 rounded-full bg-white shadow-md text-lg"
               >
                 Info Kapal
-                <span className="ml-2">➡️</span>
+                <FaArrowRight className="ml-10 text-Orange"/>
               </Button>
             </CardContent>
           </Card>
@@ -93,7 +94,7 @@ export default function InfoShips() {
                   className="w-full max-w-[200px] font-semibold flex justify-between items-center border border-gray-300 rounded-full bg-white shadow-md px-4"
                 >
                   Info Kapal
-                  <span className="ml-2">➡️</span>
+                  <FaArrowRight />
                 </Button>
               </CardContent>
             </Card>
