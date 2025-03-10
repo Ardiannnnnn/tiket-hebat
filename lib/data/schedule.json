@@ -1,0 +1,68 @@
+[
+    {
+      "id": 1,
+      "route": "Slnabang - Calang",
+      "departureDay": "Minggu",
+      "departureDate": "01 Desember 2024",
+      "departureTime": "17.00 WIB",
+      "arrivalDay": "Senin",
+      "arrivalDate": "02 Desember 2024",
+      "arrivalTime": "08.00 WIB",
+      "ship": "Aceh Hebat 1"
+    },
+    {
+      "id": 2,
+      "route": "Slnabang - Calang",
+      "departureDay": "Minggu",
+      "departureDate": "01 Desember 2024",
+      "departureTime": "17.00 WIB",
+      "arrivalDay": "Senin",
+      "arrivalDate": "02 Desember 2024",
+      "arrivalTime": "08.00 WIB",
+      "ship": "Aceh Hebat 1"
+    },
+    {
+      "id": 3,
+      "route": "Slnabang - Calang",
+      "departureDay": "Minggu",
+      "departureDate": "01 Desember 2024",
+      "departureTime": "17.00 WIB",
+      "arrivalDay": "Senin",
+      "arrivalDate": "02 Desember 2024",
+      "arrivalTime": "08.00 WIB",
+      "ship": "Aceh Hebat 1"
+    },
+    {
+      "id": 4,
+      "route": "Slnabang - Calang",
+      "departureDay": "Minggu",
+      "departureDate": "01 Desember 2024",
+      "departureTime": "17.00 WIB",
+      "arrivalDay": "Senin",
+      "arrivalDate": "02 Desember 2024",
+      "arrivalTime": "08.00 WIB",
+      "ship": "Aceh Hebat 2"
+    },
+    {
+      "id": 5,
+      "route": "Labuhan Haji - Calang",
+      "departureDay": "Minggu",
+      "departureDate": "01 Desember 2024",
+      "departureTime": "17.00 WIB",
+      "arrivalDay": "Senin",
+      "arrivalDate": "02 Desember 2024",
+      "arrivalTime": "08.00 WIB",
+      "ship": "Teluk Sinabang"
+    },
+    {
+      "id": 6,
+      "route": "Pulau Banyak - Singkil",
+      "departureDay": "Minggu",
+      "departureDate": "01 Desember 2024",
+      "departureTime": "17.00 WIB",
+      "arrivalDay": "Senin",
+      "arrivalDate": "02 Desember 2024",
+      "arrivalTime": "08.00 WIB",
+      "ship": "Teluk Singkil"
+    }
+  ]
