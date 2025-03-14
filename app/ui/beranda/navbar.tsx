@@ -49,7 +49,7 @@ export default function Navbar() {
     <nav ref={navbarRef} className="bg-white border-Orange border-b-2 ">
       <div className="max-w-screen-xl flex flex-wrap items-center justify-between mx-auto p-4">
         <a
-          href="https://flowbite.com/"
+          href="/"
           className="flex items-center space-x-1 rtl:space-x-reverse"
         >
           <span
@@ -101,7 +101,7 @@ export default function Navbar() {
                   href={link.href}
                   className={clsx(
                     "block py-2 px-3 rounded-sm md:p-0 transition-colors",
-                    pathname === link.href
+                    pathname.includes(link.href)
                       ? "bg-Orange text-white md:bg-transparent md:text-Orange  "
                       : "text-gray-900  md:hover:bg-transparent hover:text-Orange "
                   )}

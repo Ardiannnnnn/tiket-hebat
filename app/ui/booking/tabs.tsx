@@ -1,0 +1,42 @@
+"use client";
+
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useState } from "react";
+import { poppins } from "@/app/ui/fonts";
+import TiketKendaraan from "./tiketKendaraan";
+import TiketPenumpang from "./tiketPenumpang";
+
+export default function TiketTabs() {
+  const [tabValue, setTabValue] = useState<string>("kendaraan");
+
+  return (
+    <div className={`${poppins.className} md:w-1/2  md:space-y-10 mt-4 md:mt-10`}>
+      <div className="flex text-xl items-center justify-center gap-4 ">
+        <div className="px-4 py-1.5  flex items-center justify-center bg-Blue rounded-full font-semibold text-white">
+          1
+        </div>
+        <h1 className="text-2xl font-semibold">Booking Tiket</h1>
+      </div>
+      <Tabs
+        value={tabValue}
+        onValueChange={setTabValue}
+        className="p-6"
+      >
+        <TabsList className="w-full flex justify-between">
+          <TabsTrigger disabled value="kendaraan">
+            Tiket Kendaraan
+          </TabsTrigger>
+          <TabsTrigger disabled value="penumpang">
+            Tiket Penumpang
+          </TabsTrigger>
+        </TabsList>
+        <TabsContent value="kendaraan">
+          <TiketKendaraan setTabValue={setTabValue} />
+        </TabsContent>
+        <TabsContent value="penumpang">
+          <TiketPenumpang setTabValue={setTabValue} />
+        </TabsContent>
+      </Tabs>
+    </div>
+  );
+}

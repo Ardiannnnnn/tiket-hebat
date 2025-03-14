@@ -23,6 +23,7 @@ export default function SelectInput(props: {
         <select
           id={props.id}
           defaultValue=""
+          // required
           className="bg-gray-50 border-2 border-Orange text-gray-900 text-sm rounded-lg 
           focus:ring-blue-500 focus:border-Orange block w-full p-3.5 pl-10 pr-10 appearance-none focus:outline-none"
         >
