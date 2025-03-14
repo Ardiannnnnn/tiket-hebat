@@ -1,7 +1,10 @@
+'use client';
+
 import SelectInput from "./selectInput";
 import { RiShipFill } from "react-icons/ri";
 import { IoMdHome } from "react-icons/io";
 import { FaCalendarWeek } from "react-icons/fa";
+import { useRouter} from "next/navigation";
 
 const propsExample = [
   {
@@ -31,9 +34,16 @@ const propsExample = [
 ];
 
 export function Form() {
+  const router = useRouter();
+
+  const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    router.push("/book");
+  };
+
   return (
     <div className="p-6 md:p-8 rounded-lg bg-amber-50 md:w-1/2">
-      <form action="" className="flex flex-col justify-center space-y-2 md:space-y-10">
+      <form onSubmit={handleSubmit} action="" className="flex flex-col justify-center space-y-2 md:space-y-10">
         <h2 className="text-2xl font-semibold text-Orange text-center">
           Cari Jadwal Kapal
         </h2>
