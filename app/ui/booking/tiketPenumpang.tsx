@@ -17,6 +17,8 @@ import { User, CreditCard, Plus, Trash, Minus } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { useId } from "react";
 import { useRouter } from "next/navigation";
+import { cn } from "@/lib/utils";
+import { CiCircleMinus } from "react-icons/ci";
 
 const classes = [
   { id: "1", label: "Ekonomi", value: "ekonomi", jumlahtiket: 200 },
@@ -73,112 +75,109 @@ export default function TiketPenumpang({ setTabValue }: TiketPenumpangProps) {
   };
 
   return (
-
     <Form {...form}>
-      <form
-        className="space-y-6"
-        onSubmit={form.handleSubmit((onSubmit))}
-      >
-        {classes.map((field, index) => { 
+      <form className="space-y-6" onSubmit={form.handleSubmit(onSubmit)}>
+        {classes.map((field, index) => {
           const adultsId = useId();
-          const childrenId = useId(); 
-          return(
+          const childrenId = useId();
+          return (
             <Card key={field.id}>
-            <CardContent className="p-4 space-y-10">
-              <div className="flex justify-center items-center">
-                {/* Kelas */}
-                <div className="flex flex-col items-center">
-                  <p className="font-semibold">{field.label}</p>
-                  <span className="text-gray-500">Sisa Tiket</span>
-                  <div className="flex items-center gap-2 mt-2">
-                    <CreditCard className="text-teal-500" />
-                    <span className="text-lg font-semibold">
-                      {field.jumlahtiket}
-                    </span>
+              <CardContent className="p-4 space-y-10">
+                <div className="flex justify-center items-center">
+                  {/* Kelas */}
+                  <div className="flex flex-col items-center">
+                    <p className="font-semibold">{field.label}</p>
+                    <span className="text-gray-500">Sisa Tiket</span>
+                    <div className="flex items-center gap-2 mt-2">
+                      <CreditCard className="text-teal-500" />
+                      <span className="text-lg font-semibold">
+                        {field.jumlahtiket}
+                      </span>
+                    </div>
                   </div>
                 </div>
-              </div>
-              {/* Jumlah Penumpang */}
-              <div className="md:gap-34 gap-4 flex justify-center items-center">
-                <FormField
-                  control={form.control}
-                  name={`passengers.${index}.adults`}
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel htmlFor={adultsId} className="text-center flex justify-center ml-8">
-                        Dewasa
-                      </FormLabel>
-                      <div className="flex items-center gap-2">
-                        <User className="text-teal-500" />
-                        <Button
-                          onClick={() => decrease(index, "adults")}
-                          type="button"
-                          variant="outline"
-                          size="icon"
+                {/* Jumlah Penumpang */}
+                <div className="md:gap-34 gap-8 flex items-center">
+                  <FormField
+                    control={form.control}
+                    name={`passengers.${index}.adults`}
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel
+                          htmlFor={adultsId}
+                          className="text-center flex justify-center"
                         >
-                          <Minus className="w-4 h-4" />
-                        </Button>
-                        <Input
-                          id={adultsId}
-                          className="w-10 text-center"
-                          type="number"
-                          {...field}
-                          readOnly
-                        />
-                        <Button
-                          onClick={() => increase(index, "adults")}
-                          type="button"
-                          variant="outline"
-                          size="icon"
-                        >
-                          <Plus className="w-4 h-4" />
-                        </Button>
-                      </div>
-                    </FormItem>
-                  )}
-                />
+                          Dewasa
+                        </FormLabel>
+                        <div className="flex items-center gap-1.5">
+                          <button
+                            className="border-2 border-Blue text-Orange flex items-center justify-center px-2 rounded-full"
+                            type="button"
+                            onClick={() => decrease(index, "adults")}
+                          >
+                            -
+                          </button>
+                          <Input
+                            id={adultsId}
+                            className="w-10 text-center"
+                            type="number"
+                            {...field}
+                            readOnly
+                          />
+                          <button
+                            onClick={() => increase(index, "adults")}
+                            type="button"
+                            className="px-1.5 border-2 rounded-full border-Blue flex items-center justify-center text-Orange"
+                          >
+                            +
+                          </button>
+                        </div>
+                      </FormItem>
+                    )}
+                  />
 
-                <FormField
-                  control={form.control}
-                  name={`passengers.${index}.children`}
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel htmlFor={childrenId} className="text-center flex justify-center ml-8">
-                        Anak-Anak
-                      </FormLabel>
-                      <div className="flex items-center gap-1.5">
-                        <User className="text-teal-500" />
-                        <Button
-                          onClick={() => decrease(index, "children")}
-                          type="button"
-                          variant="outline"
-                          size="icon"
+                  <FormField
+                    control={form.control}
+                    name={`passengers.${index}.children`}
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel
+                          htmlFor={childrenId}
+                          className="text-center flex justify-center"
                         >
-                          <Minus className="w-4 h-4" />
-                        </Button>
-                        <Input
-                          id={childrenId}
-                          className="w-10 text-center"
-                          type="text"
-                          {...field}
-                          readOnly
-                        />
-                        <Button
-                          onClick={() => increase(index, "children")}
-                          type="button"
-                          variant="outline"
-                          size="icon"
-                        >
-                          <Plus className="w-4 h-4" />
-                        </Button>
-                      </div>
-                    </FormItem>
-                  )}
-                />
-              </div>
-            </CardContent>
-          </Card>
-        )})}
+                          Anak-Anak
+                        </FormLabel>
+                        <div className="flex items-center gap-1.5">
+                          <button
+                            onClick={() => decrease(index, "children")}
+                            type="button"
+                            className="border-2 border-Blue text-Orange flex items-center justify-center px-2 rounded-full"
+                          >
+                            -
+                          </button>
+                          <Input
+                            id={childrenId}
+                            className="w-10 text-center"
+                            type="text"
+                            {...field}
+                            readOnly
+                          />
+                          <button
+                            onClick={() => increase(index, "children")}
+                            type="button"
+                            className="px-1.5 border-2 rounded-full border-Blue flex items-center justify-center text-Orange"
+                          >
+                            +
+                          </button>
+                        </div>
+                      </FormItem>
+                    )}
+                  />
+                </div>
+              </CardContent>
+            </Card>
+          );
+        })}
         {/* Tombol Navigasi */}
         <div className="flex justify-between">
           <Button
