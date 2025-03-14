@@ -101,7 +101,7 @@ export default function Navbar() {
                   href={link.href}
                   className={clsx(
                     "block py-2 px-3 rounded-sm md:p-0 transition-colors",
-                    pathname.includes(link.href)
+                    pathname === link.href
                       ? "bg-Orange text-white md:bg-transparent md:text-Orange  "
                       : "text-gray-900  md:hover:bg-transparent hover:text-Orange "
                   )}

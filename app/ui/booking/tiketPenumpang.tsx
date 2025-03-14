@@ -97,7 +97,7 @@ export default function TiketPenumpang({ setTabValue }: TiketPenumpangProps) {
                   </div>
                 </div>
                 {/* Jumlah Penumpang */}
-                <div className="md:gap-34 gap-8 flex items-center">
+                <div className="md:gap-34 justify-center gap-8 flex items-center">
                   <FormField
                     control={form.control}
                     name={`passengers.${index}.adults`}
