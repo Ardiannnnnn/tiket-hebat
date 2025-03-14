@@ -99,7 +99,7 @@ export default function TiketKendaraan({ setTabValue }: TiketKendaraanProps) {
                   >
                     <FormControl className="w-full">
                       <SelectTrigger>
-                        <SelectValue placeholder="Pilih kendaraan" />
+                        <SelectValue placeholder="Pilih" />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
