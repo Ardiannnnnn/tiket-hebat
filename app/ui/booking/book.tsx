@@ -5,8 +5,6 @@ import TiketTabs from "./tabs"
 export default function Booking() {
     return (
         <div className="flex flex-col justify-center items-center m-2">
-            {/* <TiketPenumpang />
-            <TiketKendaraan /> */}
             <TiketTabs/>
         </div>
     )
