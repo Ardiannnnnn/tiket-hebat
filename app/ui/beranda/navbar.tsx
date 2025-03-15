@@ -1,5 +1,5 @@
 "use client";
-import { useState, useRef, useEffect} from "react";
+import { useState, useRef, useEffect } from "react";
 
 import { mouseMemoirs } from "@/app/ui/fonts";
 import { montserrat } from "@/app/ui/fonts";
@@ -26,32 +26,34 @@ const links = [
 
 export default function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
-  const navbarRef = useRef<HTMLDivElement>(null); 
+  const navbarRef = useRef<HTMLDivElement>(null);
   const toggleNavbar = () => {
-    setIsOpen(!isOpen)
-  }
-  
+    setIsOpen(!isOpen);
+  };
+
   const handleClickOutside = (event: MouseEvent) => {
-    if (navbarRef.current && !navbarRef.current.contains(event.target as Node)){
-      setIsOpen(false)
+    if (
+      navbarRef.current &&
+      !navbarRef.current.contains(event.target as Node)
+    ) {
+      setIsOpen(false);
     }
-  }
+  };
 
   useEffect(() => {
-    document.addEventListener("mousedown", handleClickOutside );
+    document.addEventListener("mousedown", handleClickOutside);
     return () => {
-      document.removeEventListener("mousedown", handleClickOutside)
-    }
-  },[])
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
   const pathname = usePathname();
+
+  console.log(pathname.includes("/"));
 
   return (
     <nav ref={navbarRef} className="bg-white border-Orange border-b-2 ">
       <div className="max-w-screen-xl flex flex-wrap items-center justify-between mx-auto p-4">
-        <a
-          href="/"
-          className="flex items-center space-x-1 rtl:space-x-reverse"
-        >
+        <a href="/" className="flex items-center space-x-1 rtl:space-x-reverse">
           <span
             className={`${mouseMemoirs.className} self-center text-4xl whitespace-nowrap text-Orange`}
           >
@@ -101,9 +103,10 @@ export default function Navbar() {
                   href={link.href}
                   className={clsx(
                     "block py-2 px-3 rounded-sm md:p-0 transition-colors",
-                    pathname === link.href
-                      ? "bg-Orange text-white md:bg-transparent md:text-Orange  "
-                      : "text-gray-900  md:hover:bg-transparent hover:text-Orange "
+                    (pathname.includes("/book") && link.href === "/") ||
+                      pathname === link.href
+                      ? "bg-Orange text-white md:bg-transparent md:text-Orange"
+                      : "text-gray-900 md:hover:bg-transparent hover:text-Orange"
                   )}
                 >
                   {link.name}
