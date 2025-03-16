@@ -99,10 +99,10 @@ export default function CardPrice() {
               </label>
               {pemesananData.tiket.penumpang.map((tiket, index) => (
                 <div key={tiket.id} className="flex flex-col">
-                  <span key={index}>
+                  <p key={index}>
                     {tiket.kelas} (Dewasa x{tiket.jumlah_dewasa}
                     {tiket.jumlah_anak > 0 && `, Anak x${tiket.jumlah_anak}`})
-                  </span>
+                  </p>
                 </div>
               ))}
             </div>
