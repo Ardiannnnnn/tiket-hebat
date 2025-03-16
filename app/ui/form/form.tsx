@@ -6,7 +6,7 @@ export default function Form() {
   return (
     <div className={`${poppins.className} flex flex-col items-center gap-6`}>
       <div className="mt-6 flex items-center justify-center gap-4">
-        <div className="bg-Blue rounded-full p-2 w-12 text-white font-bold flex justify-center text-2xl">
+        <div className="bg-Blue rounded-full p-1 w-10 text-white font-bold flex justify-center text-2xl">
           2
         </div>
         <p className="text-2xl font-semibold">

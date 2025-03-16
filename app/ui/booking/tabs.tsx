@@ -12,7 +12,7 @@ export default function TiketTabs() {
   return (
     <div className={`${poppins.className} md:w-1/2 md:space-y-10 mt-4 md:mt-10`}>
       <div className="flex text-xl items-center justify-center gap-4 ">
-        <div className="px-4 py-1.5  flex items-center justify-center bg-Blue rounded-full font-semibold text-white">
+        <div className="p-1 w-10 text-2xl flex items-center justify-center bg-Blue rounded-full font-semibold text-white">
           1
         </div>
         <h1 className="text-2xl font-semibold">Booking Tiket</h1>
