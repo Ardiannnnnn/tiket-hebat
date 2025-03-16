@@ -63,11 +63,11 @@ export default function Info() {
       <CardFooter className="border-t py-4">
         <div className="text-sm w-full">
           <div className="flex justify-between">
-            <span className="font-medium">Total Kendaraan</span>
+          <span className="font-medium text-start flex flex-col md:flex-row md:gap-1">Total <span>Kendaraan</span></span>
             <span className="text-end">{order.totalKendaraan}</span>
           </div>
           <div className="mt-2 flex justify-between">
-            <span className="font-medium ">Total Penumpang</span>
+            <span className="font-medium text-start flex flex-col md:flex-row md:gap-1">Total <span>Penumpang</span></span>
             <div className="mt-1 flex flex-col gap-1 text-end">
               {order.totalPenumpang.map((p, index) => (
                 <p
