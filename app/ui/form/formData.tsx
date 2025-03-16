@@ -13,6 +13,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
+import { Label } from "@radix-ui/react-label";
 
 interface Penumpang {
   kelas: string;
@@ -38,8 +39,9 @@ const pemesananData = {
     { id: 2, jenisKendaraan: 2 },
   ],
   jumlah_penumpang: [
-    { id: 1, kelas: "Ekonomi", dewasa: 1, anak: 1 },
-    { id: 2, kelas: "Bisnis", dewasa: 1, anak: 0 },
+    { id: 1, jenis: "Dewasa", kelas: "Ekonomi", dewasa: 1, anak: 0 },
+    { id: 1, jenis: "Anak-anak", kelas: "Ekonomi", dewasa: 0, anak: 1 },
+    { id: 2, jenis: "Dewasa", kelas: "Bisnis", dewasa: 1, anak: 0 },
   ],
 };
 
@@ -87,12 +89,12 @@ export default function FormPenumpang() {
   };
 
   return (
-    <form className="space-y-6">
+    <form className="md:space-y-6 space-y-8">
       {/* Form Data Pemesan */}
       <Card className={cn("py-0 border-l")}>
         <CardContent className={cn("px-0")}>
           <CardHeader className="p-4 border-b text-center">
-            Isi Data penumpang
+            Isi Data Kendaraan
           </CardHeader>
           <div className="p-6">
             <div className="bg-red-300 flex items-center gap-6 p-4 rounded-lg">
@@ -111,7 +113,7 @@ export default function FormPenumpang() {
               </div>
             </div>
             {pemesananData.jumlah_kendaraan.map((vihicle, index) => (
-              <div key={vihicle.id} className="mt-4 text-sm ">
+              <div key={index} className="mt-4 text-sm ">
                 <p className="text-end">Kendaraan {vihicle.id}</p>
                 <div className="mt-2 flex justify-between gap-4">
                   <div className="w-full">
@@ -134,26 +136,85 @@ export default function FormPenumpang() {
         </CardContent>
       </Card>
       {/* Form Penumpang */}
-      {/* {pemesananData.jumlah_penumpang.map((field, index) => (
-        <Card key={field.id} className="border-l-4 border-blue-500">
-          <CardContent className="p-6 space-y-4">
-            <h3 className="font-bold text-lg">
-              Detail Penumpang ({field.kelas})
-            </h3>
+      {pemesananData.jumlah_penumpang.map((field, index) => (
+        <Card key={index} className={cn("py-0 gap-0")}>
+          <CardHeader className="p-4 border-b flex flex-row justify-between">
+            <p className="flex flex-col md:flex-row md:gap-2">
+              Isi Data Penumpang{" "}
+              <span className="font-bold">({field.kelas})</span>
+            </p>
+            <p>{field.jenis}</p>
+          </CardHeader>
+          <CardContent className="p-4 md:px-8">
+            <div className="grid grid-cols-3 gap-6 md:text-sm">
+              {/* Jenis Kelamin */}
+              <div className="col-span-1">
+                <Label className="text-gray-600 md:block hidden">Jenis Kelamin</Label>
+                <Label className="md:hidden">JK</Label>
+                <Select>
+                  <SelectTrigger className="w-full h-10 placeholder:text-sm">
+                    <SelectValue placeholder="Pria" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="pria">Pria</SelectItem>
+                    <SelectItem value="wanita">Wanita</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
 
-            <div className="grid grid-cols-2 gap-4">
-              <Input placeholder="Nama Lengkap" />
+              {/* Nama Lengkap */}
+              <div className="col-span-2">
+                <Label className="text-gray-600">Nama Lengkap</Label>
+                <Input className="h-10 text-sm placeholder:text-sm" placeholder="Masukkan Nama" />
+                <p className="text-xs text-gray-500 mt-1">
+                  Isi sesuai dengan KTP/SIM/Paspor (tanpa gelar khusus)
+                </p>
+              </div>
+
+              {/* Jenis ID */}
+              <div className="col-span-1">
+                <Label className="text-gray-600">Jenis ID</Label>
+                <Select>
+                  <SelectTrigger className="w-full h-10 placeholder:text-sm">
+                    <SelectValue placeholder="KTP" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="ktp">KTP</SelectItem>
+                    <SelectItem value="sim">SIM</SelectItem>
+                    <SelectItem value="paspor">Paspor</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Nomor Identitas */}
+              <div className="col-span-2">
+                <Label className="text-gray-600">Nomor Identitas</Label>
+                <Input
+                  className="h-10 placeholder:text-sm"
+                  placeholder="Masukkan Nomor"
+                />
+                <p className="text-xs text-gray-500 mt-1">
+                  Penumpang di bawah 18 tahun, isi dengan tanggal lahir
+                  (hhbbtttt)
+                </p>
+              </div>
+
+              {/* Usia */}
+              <div className="col-span-1">
+                <Label className="text-gray-600">Usia</Label>
+                <Input className="h-10 placeholder:text-sm" type="number" placeholder="18" />
+              </div>
+
+              {/* Alamat */}
+              <div className="col-span-2">
+                <Label className="text-gray-600">Alamat</Label>
+                <Input className="h-10 placeholder:text-sm" placeholder="Masukkan alamat" />
+                <p className="text-xs text-gray-500 mt-1">Contoh: Air Dingin</p>
+              </div>
             </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <Input placeholder="Nomor Identitas" />
-            </div>
-
-            <Input readOnly className="bg-gray-100" />
           </CardContent>
         </Card>
-      ))} */}
-
+      ))}
       <Button type="submit" className="w-full bg-Blue text-white">
         Lanjutkan
       </Button>
