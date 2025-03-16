@@ -14,6 +14,8 @@ import {
 } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 import { Label } from "@radix-ui/react-label";
+import { useRouter } from "next/navigation";
+import { FormEvent } from "react";
 
 interface Penumpang {
   kelas: string;
@@ -46,6 +48,7 @@ const pemesananData = {
 };
 
 export default function FormPenumpang() {
+  const router = useRouter();
   // const { control, handleSubmit, register, setValue } = useForm<FormData>({
   //   defaultValues: {
   //     pemesan: { nama: "", email: "", nomor_telepon: "" },
@@ -84,12 +87,16 @@ export default function FormPenumpang() {
   //   // eslint-disable-next-line react-hooks/exhaustive-deps
   // }, []);
 
-  const onSubmit = (data: FormData) => {
-    console.log("Data Pemesan & Penumpang:", data);
+  const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const formData = new FormData(e.currentTarget); 
+    console.log("Data Pemesan & Penumpang:", formData);
+    router.push("/book/form/verifikasi")
+    
   };
 
   return (
-    <form className="md:space-y-6 space-y-8">
+    <form onSubmit={(handleSubmit)} className="md:space-y-6 space-y-8">
       {/* Form Data Pemesan */}
       <Card className={cn("py-0 border-l")}>
         <CardContent className={cn("px-0")}>
