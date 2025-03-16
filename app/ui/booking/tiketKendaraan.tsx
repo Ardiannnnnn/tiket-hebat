@@ -127,7 +127,7 @@ export default function TiketKendaraan({ setTabValue }: TiketKendaraanProps) {
           <Plus className="w-4 h-4x" />
         </Button>
         <div className="w-full flex justify-center md:justify-end mt-14 md:mt-0">
-          <Button type="button" onClick={() => setTabValue("penumpang")} className="w-full md:w-fit bg-Blue text-white">
+          <Button type="button" onClick={() => setTabValue("penumpang")} className="w-full md:w-fit bg-Blue text-white hover:bg-teal-600">
             Lanjut ke Tiket Penumpang
           </Button>
         </div>

@@ -60,7 +60,7 @@ export function Form() {
         </div>
         <button
           type="submit"
-          className="bg-Blue text-white rounded-lg p-2.5 hover:bg-blue-600"
+          className="bg-Blue text-white rounded-lg p-2.5 hover:bg-teal-600"
         >
           Cari
         </button>

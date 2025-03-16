@@ -222,7 +222,7 @@ export default function FormPenumpang() {
           </CardContent>
         </Card>
       ))}
-      <Button type="submit" className="w-full bg-Blue text-white">
+      <Button type="submit" className="w-full bg-Blue text-white hover:bg-teal-600">
         Lanjutkan
       </Button>
     </form>
