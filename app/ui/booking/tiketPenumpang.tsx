@@ -187,7 +187,7 @@ export default function TiketPenumpang({ setTabValue }: TiketPenumpangProps) {
           >
             Sebelumnya
           </Button>
-          <Button type="submit" className="bg-Blue text-white">
+          <Button type="submit" className="bg-Blue text-white hover:bg-teal-600">
             Lanjutkan
           </Button>
         </div>

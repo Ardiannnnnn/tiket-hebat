@@ -16,6 +16,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import Link from "next/link";
 
 const DataVerifikasi = {
   jumlah_kendaraan: [
@@ -145,6 +146,14 @@ export default function Data() {
           </div>
         </CardContent>
       </Card>
+      <div className=" bg-Blue p-2 rounded-xl text-center text-white hover:bg-teal-600 font-semibold">
+        <Link
+            href=""
+        >
+            Pesan Tiket
+        </Link>
+      </div>
     </div>
+    
   );
 }

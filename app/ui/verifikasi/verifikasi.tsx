@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { poppins } from "../fonts";
 import Data from "./data";
 import Info from "./info";
