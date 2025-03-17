@@ -17,6 +17,13 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import Link from "next/link";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { Button } from "@/components/ui/button";
+import { poppins } from "../fonts";
 
 const DataVerifikasi = {
   jumlah_kendaraan: [
@@ -26,7 +33,7 @@ const DataVerifikasi = {
   jumlah_penumpang: [
     {
       id: 1,
-      Nama: "Ardian",
+      nama: "Ardian",
       kelas: "Ekonomi",
       jk: "Pria",
       jenisID: "KTP",
@@ -36,7 +43,7 @@ const DataVerifikasi = {
     },
     {
       id: 2,
-      Nama: "Plut",
+      nama: "Plut",
       kelas: "Bisnis",
       jk: "Wanita",
       jenisID: "KTP",
@@ -46,7 +53,7 @@ const DataVerifikasi = {
     },
     {
       id: 1,
-      Nama: "Kupi",
+      nama: "Kupi",
       kelas: "VIP",
       jk: "Pria",
       jenisID: "KTP",
@@ -56,6 +63,64 @@ const DataVerifikasi = {
     },
   ],
 };
+
+interface Passenger {
+  nama: string;
+  kelas: string;
+  usia: number;
+  jk: string;
+  id: number;
+  noID: string;
+  alamat: string;
+  jenisID: string;
+
+}
+
+const Detail = ({penumpang} : {penumpang: Passenger}) => {
+    return (
+      <Popover>
+      <PopoverTrigger asChild>
+        <Button variant="outline">Detail</Button>
+      </PopoverTrigger>
+      <PopoverContent className={`${poppins.className} w-64 p-4 shadow-lg rounded-lg bg-[#F7FAFF]`}>
+        <div className="space-y-2 text-sm">
+           <table>
+              <tbody>
+                <tr>
+                  <td className="pr-4 font-semibold">Nama</td>
+                  <td>: {penumpang.nama}</td>
+                </tr>
+                <tr>
+                  <td className="font-semibold">Alamat</td>
+                  <td>: {penumpang.alamat}</td>
+                </tr>
+                <tr>
+                  <td className="font-semibold">Umur</td>
+                  <td>: {penumpang.usia}</td>
+                </tr>
+                <tr>
+                  <td className="font-semibold">JK</td>
+                  <td>: {penumpang.jk}</td>
+                </tr>
+                <tr>
+                  <td className="font-semibold">ID</td>
+                  <td>: {penumpang.jenisID}</td>
+                </tr>
+                <tr>
+                  <td className="font-semibold">NoID</td>
+                  <td>: {penumpang.noID}</td>
+                </tr>
+                <tr>
+                  <td className="font-semibold">Kelas</td>
+                  <td>: {penumpang.kelas}</td>
+                </tr>
+              </tbody>
+           </table>
+        </div>
+      </PopoverContent>
+    </Popover>
+    )
+}
 
 const KelasBadge = ({ kelas }: { kelas: string }) => {
   const kelasStyles: Record<string, string> = {
@@ -93,7 +158,9 @@ export default function Data() {
                     <TableCell className="font-medium px-4 py-4">
                       {kendaraan.jenisKendaraan}
                     </TableCell>
-                    <TableCell className="text-right">{kendaraan.nomor}</TableCell>
+                    <TableCell className="text-right">
+                      {kendaraan.nomor}
+                    </TableCell>
                   </TableRow>
                 </TableBody>
               ))}
@@ -118,7 +185,7 @@ export default function Data() {
                     {/* Nama & ID */}
                     <TableCell className="px-8">
                       <div className="flex flex-col">
-                        <span className="font-medium">{penumpang.Nama}</span>
+                        <span className="font-medium">{penumpang.nama}</span>
                         <span className="text-sm text-gray-500">
                           {penumpang.noID}
                         </span>
@@ -127,12 +194,7 @@ export default function Data() {
 
                     {/* Tombol Detail */}
                     <TableCell className="px-12">
-                      <a
-                        href="#"
-                        className="border px-4 py-1 rounded-lg bg-gray-100 text-gray-700"
-                      >
-                        Detail
-                      </a>
+                      <Detail penumpang={penumpang}/>
                     </TableCell>
 
                     {/* Kelas Penumpang */}
@@ -147,13 +209,8 @@ export default function Data() {
         </CardContent>
       </Card>
       <div className=" bg-Blue p-2 rounded-xl text-center text-white hover:bg-teal-600 font-semibold">
-        <Link
-            href=""
-        >
-            Pesan Tiket
-        </Link>
+        <Link href="">Pesan Tiket</Link>
       </div>
     </div>
-    
   );
 }
