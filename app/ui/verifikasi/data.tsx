@@ -209,7 +209,7 @@ export default function Data() {
         </CardContent>
       </Card>
       <div className=" bg-Blue p-2 rounded-xl text-center text-white hover:bg-teal-600 font-semibold">
-        <Link href="">Pesan Tiket</Link>
+        <Link href="/book/invoice">Pesan Tiket</Link>
       </div>
     </div>
   );
