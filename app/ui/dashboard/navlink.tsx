@@ -17,7 +17,7 @@ import clsx from "clsx";
 // 🔹 Link untuk bagian Dashboard
 export const dashboardLinks = [
   { name: "Beranda", href: "/beranda", icon: RiDashboardHorizontalFill },
-  { name: "Tiket", href: "/beranda/tiket", icon: RiTicketFill },
+  { name: "Tiket", href: "/tiket-dashboard", icon: RiTicketFill },
 ];
 
 // 🔹 Link untuk bagian Menu
