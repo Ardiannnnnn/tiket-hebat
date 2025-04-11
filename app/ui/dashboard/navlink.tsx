@@ -22,12 +22,12 @@ export const dashboardLinks = [
 
 // 🔹 Link untuk bagian Menu
 export const menuLinks = [
-  { name: "Pengguna", href: "/beranda/pengguna", icon: RiUserFill },
-  { name: "Kapal", href: "/beranda/kapal", icon: RiShipFill },
-  { name: "Pelabuhan", href: "/beranda/pelabuhan", icon: RiAnchorFill },
-  { name: "Rute Perjalanan", href: "/beranda/rute", icon: RiRoadMapFill },
-  { name: "Upload Jadwal", href: "/beranda/upload-jadwal", icon: RiCalendarFill },
-  { name: "Tiket Kapal", href: "/beranda/tiket-kapal", icon: RiFileListFill },
+  { name: "Pengguna", href: "/pengguna", icon: RiUserFill },
+  { name: "Kapal", href: "/kapal", icon: RiShipFill },
+  { name: "Pelabuhan", href: "/pelabuhan", icon: RiAnchorFill },
+  { name: "Rute Perjalanan", href: "/rute", icon: RiRoadMapFill },
+  { name: "Upload Jadwal", href: "/upload-jadwal", icon: RiCalendarFill },
+  { name: "Tiket Kapal", href: "/tiket-kapal", icon: RiFileListFill },
 ];
 
 export default function NavLinks({ links }: { links: typeof dashboardLinks }) {
