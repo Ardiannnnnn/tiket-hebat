@@ -4,18 +4,18 @@ import Verifikasi from "@/app/ui/petugas/verifikasi"
 
 export default function Home() {
   return (
-    <div className="grid grid-cols-4">
-      <div className="col-span-3 h-fit">
-        <div>
+    <div className="flex">
+      <div className="flex w-full">
+        <div className="w-1/2">
           <OrderTable />
         </div>
-        <div className="border-t mt-8">
+        <div className="w-1/2">
           <Verifikasi />
         </div>
       </div>
-      <div className="h-screen">
+      {/* <div className="h-screen">
         <Keterangan />
-      </div>
+      </div> */}
     </div>
   );
 }
