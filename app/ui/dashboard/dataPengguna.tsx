@@ -173,6 +173,50 @@ export default function PenggunaDashboard() {
     });
   };
 
+  // ubah nanti disini jika menggunakan API
+  // ubah menjadi seperti ini
+  // const handleAddUser = async (newUser: Omit<User, "id">) => {
+  // const handleAddUser = async (newUser: Omit<User, "id">) => {
+  //   try {
+  //     const res = await fetch("/api/users", {
+  //       method: "POST",
+  //       headers: {
+  //         "Content-Type": "application/json",
+  //       },
+  //       body: JSON.stringify(newUser),
+  //     });
+
+  //     if (!res.ok) throw new Error("Gagal menambahkan pengguna");
+
+  //     const createdUser = await res.json();
+  //     setData((prev) => [...prev, createdUser]);
+  //   } catch (error) {
+  //     console.error("Gagal menambah pengguna:", error);
+  //   }
+  // };
+
+  // atau
+
+  // const handleAddUser = async (newUser: Omit<User, "id">) => {
+  //   try {
+  //     const res = await fetch("/api/users", {
+  //       method: "POST",
+  //       headers: {
+  //         "Content-Type": "application/json",
+  //       },
+  //       body: JSON.stringify(newUser),
+  //     });
+  
+  //     if (!res.ok) throw new Error("Gagal menambahkan pengguna");
+  
+  //     const createdUser = await res.json();
+  //     setData((prev) => [...prev, createdUser]);
+  //   } catch (error) {
+  //     console.error("Gagal menambah pengguna:", error);
+  //   }
+  // };
+  
+
   const onAdd = (newUser: Omit<User, "id">) => {
     const newId = data.length + 1;
     setData((prev) => [...prev, { id: newId, ...newUser }]);
@@ -198,6 +242,7 @@ export default function PenggunaDashboard() {
             onChange={onChange}
             onReset={onReset}
             onAdd={onAdd}
+            judul="Pengguna"  
           />
           <Input
             placeholder="Cari pengguna..."

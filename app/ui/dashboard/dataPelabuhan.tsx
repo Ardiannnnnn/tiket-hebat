@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import TambahModal, { DynamicField } from "./tambah";
 
 const pelabuhanData = [
   {
@@ -54,6 +55,44 @@ const pelabuhanData = [
 export default function DataPelabuhanPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
+  const [formData, setFormData] = useState({
+    name: "",
+    status: "",
+    kapal: "",
+    years: "",
+  });
+  const [fields] = useState<DynamicField[]>([
+    { name: "name", label: "Nama Pelabuhan" },
+    { name: "status", label: "Status" },
+    { name: "kapal", label: "Kapal" },
+    { name: "years", label: "Periode" },
+  ]);
+
+  const onChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      const { name, value } = e.target;
+      setFormData((prev) => ({
+        ...prev,
+        [name]: value,
+      }));
+    },
+    []
+  );
+
+  const onReset = useCallback(() => {
+    setFormData({
+      name: "",
+      status: "",
+      kapal: "",
+      years: "",
+    });
+  }, []);
+
+  const onAdd = useCallback(() => {
+    // Logic to add new data (e.g., API call)
+    console.log("Data added:", formData);
+    onReset();
+  }, [formData, onReset]);
 
   const handleSearch = useDebouncedCallback((term: string) => {
     setDebouncedSearch(term);
@@ -70,12 +109,9 @@ export default function DataPelabuhanPage() {
   const filteredData = useMemo(() => {
     const search = debouncedSearch.toLowerCase();
     return pelabuhanData.filter((item) =>
-      [
-        item.name,
-        item.status,
-        item.kapal,
-        item.years,
-      ].some((field) => field.toLowerCase().includes(search))
+      [item.name, item.status, item.kapal, item.years].some((field) =>
+        field.toLowerCase().includes(search)
+      )
     );
   }, [debouncedSearch]);
 
@@ -84,9 +120,14 @@ export default function DataPelabuhanPage() {
       <div className="flex justify-between items-center mb-4">
         <h1 className="text-xl font-bold">Data Pelabuhan</h1>
         <div className="flex gap-4 items-center">
-          <Button variant="outline" className="bg-Blue text-white">
-            Tambah
-          </Button>
+          <TambahModal
+            fields={fields}
+            formData={formData}
+            onChange={onChange}
+            onReset={onReset}
+            onAdd={onAdd}
+            judul="Pelabuhan"
+          />
           <Input
             placeholder="Cari kapal..."
             value={searchTerm}
@@ -97,7 +138,9 @@ export default function DataPelabuhanPage() {
       </div>
 
       <Table>
-        <TableCaption>Data status pelabuhan dan kapal yang beroperasi</TableCaption>
+        <TableCaption>
+          Data status pelabuhan dan kapal yang beroperasi
+        </TableCaption>
         <TableHeader>
           <TableRow>
             <TableHead>ID</TableHead>
