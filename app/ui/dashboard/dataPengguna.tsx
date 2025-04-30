@@ -12,8 +12,19 @@ import {
 } from "@/components/ui/table";
 import { useCallback, useMemo, useState } from "react";
 import { useDebouncedCallback } from "use-debounce";
+import TambahModal, { DynamicField } from "./tambah";
 
-const data = [
+interface User {
+  id: number;
+  name: string;
+  address: string;
+  age: number;
+  Jk: string;
+  Role: string;
+  Harbor: string;
+}
+
+const initialData: User[] = [
   {
     id: 1,
     name: "Joko",
@@ -107,8 +118,17 @@ const data = [
 ];
 
 export default function PenggunaDashboard() {
+  const [data, setData] = useState<User[]>(initialData);
   const [searchTerm, setSearchTerm] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
+  const [formData, setFormData] = useState<Omit<User, "id">>({
+    name: "",
+    address: "",
+    age: 0,
+    Jk: "",
+    Role: "",
+    Harbor: "",
+  });
 
   const handleSearch = useDebouncedCallback((term: string) => {
     setDebouncedSearch(term);
@@ -135,24 +155,59 @@ export default function PenggunaDashboard() {
         item.id.toString(),
       ].some((field) => field.toLowerCase().includes(lower))
     );
-  }, [debouncedSearch]);
+  }, [debouncedSearch, data]);
+
+  const onChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const onReset = () => {
+    setFormData({
+      name: "",
+      address: "",
+      age: 0,
+      Jk: "",
+      Role: "",
+      Harbor: "",
+    });
+  };
+
+  const onAdd = (newUser: Omit<User, "id">) => {
+    const newId = data.length + 1;
+    setData((prev) => [...prev, { id: newId, ...newUser }]);
+  };
+
+  const fields: DynamicField[] = [
+    { name: "name", label: "Nama" },
+    { name: "address", label: "Alamat" },
+    { name: "age", label: "Umur", type: "number" },
+    { name: "Jk", label: "Jenis Kelamin" },
+    { name: "Role", label: "Role" },
+    { name: "Harbor", label: "Pelabuhan" },
+  ];
 
   return (
     <div className="p-4">
       <div className="flex justify-between items-center mb-4">
         <h1 className="text-xl font-bold">Data Pengguna</h1>
         <div className="flex gap-4 items-center">
-          <Button variant="outline" className="bg-Blue text-white">
-            Tambah
-          </Button>
+          <TambahModal
+            fields={fields}
+            formData={formData}
+            onChange={onChange}
+            onReset={onReset}
+            onAdd={onAdd}
+          />
           <Input
-            placeholder="Cari kapal..."
+            placeholder="Cari pengguna..."
             value={searchTerm}
             onChange={handleSearchChange}
             className="w-64"
           />
         </div>
       </div>
+
       <Table>
         <TableCaption>Daftar pengguna pelabuhan.</TableCaption>
         <TableHeader>
@@ -168,8 +223,8 @@ export default function PenggunaDashboard() {
           </TableRow>
         </TableHeader>
         <TableBody>
-          {filteredData.map((item, index) => (
-            <TableRow key={index}>
+          {filteredData.map((item) => (
+            <TableRow key={item.id}>
               <TableCell className="p-4">{item.id}</TableCell>
               <TableCell className="p-4">{item.name}</TableCell>
               <TableCell className="p-4">{item.address}</TableCell>

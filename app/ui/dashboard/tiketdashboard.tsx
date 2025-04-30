@@ -17,9 +17,8 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Button } from "@/components/ui/button";
 import { useCallback, useMemo, useState } from "react";
-import TambahModal from "./tambah";
+import TambahModal, { DynamicField } from "./tambah";
 import { useDebouncedCallback } from "use-debounce";
 import { Toaster } from "sonner";
 
@@ -140,6 +139,52 @@ export default function Tiket() {
   const [searchTerm, setSearchTerm] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
 
+  const [formData, setFormData] = useState<Order>({
+    id: "",
+    name: "",
+    address: "",
+    age: 0,
+    gender: "",
+    idType: "",
+    idNumber: "",
+    class: "",
+  });
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+
+    setFormData((prev) => ({
+      ...prev,
+      [name]: name === "age" ? parseInt(value) || 0 : value,
+    }));
+  };
+
+  const resetForm = () => {
+    setFormData({
+      id: "",
+      name: "",
+      address: "",
+      age: 0,
+      gender: "",
+      idType: "",
+      idNumber: "",
+      class: "",
+    });
+  };
+
+  const orderFields: DynamicField[] = [
+    { name: "id", label: "ID" },
+    { name: "name", label: "Nama" },
+    { name: "address", label: "Alamat" },
+    { name: "age", label: "Umur", type: "number" },
+    { name: "gender", label: "Jenis Kelamin" , type: "select", options: ["Pria", "Wanita"] },
+    { name: "idType", label: "Tipe ID", type: "select", options: ["KTP", "SIM", "Paspor"] },
+    { name: "idNumber", label: "Nomor ID" },
+    { name: "class", label: "Kelas", type: "select", options: ["Ekonomi", "Bisnis", "VIP"] },
+  ];
+
+  // Fungsi untuk menambahkan order baru
+
   const handleAddOrder = (newOrder: Order) => {
     setSchedulesData((prev) =>
       prev.map((schedule) =>
@@ -215,9 +260,13 @@ export default function Tiket() {
             />
           </div>
 
-          <TambahModal
+          <TambahModal<Order>
             selectedSchedule={selectedSchedule}
-            onAddOrder={handleAddOrder}
+            onAdd={handleAddOrder}
+            fields={orderFields}
+            formData={formData}
+            onChange={handleChange}
+            onReset={resetForm}
           />
         </div>
       </div>
