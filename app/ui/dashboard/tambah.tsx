@@ -33,6 +33,7 @@ interface TambahModalProps<T> {
   formData: T;
   onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   onReset: () => void;
+  judul: string;
 }
 
 export default function TambahModal<T>({
@@ -42,6 +43,7 @@ export default function TambahModal<T>({
   formData,
   onChange,
   onReset,
+  judul,
 }: TambahModalProps<T>) {
   const [open, setOpen] = useState(false);
 
@@ -65,12 +67,12 @@ export default function TambahModal<T>({
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogTrigger asChild>
           <Button className={`${poppins.className} bg-Blue hover:bg-teal-600`}>
-            Tambah
+            Tambah {judul}
           </Button>
         </DialogTrigger>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Tambah</DialogTitle>
+            <DialogTitle>Tambah {judul}</DialogTitle>
           </DialogHeader>
 
           {/* Looping fields untuk render form input */}

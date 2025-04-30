@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/table";
 import { useDebouncedCallback } from "use-debounce";
 import clsx from "clsx";
+import TambahModal, { DynamicField } from "./tambah";
 
 const kapalData = [
   {
@@ -56,6 +57,50 @@ const kapalData = [
 export default function KapalPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
+  const [formData, setFormData] = useState({
+    name: "",
+    route: "",
+    status: "",
+    noKapal: "",
+    type: "",
+    years: "",
+  });
+  const fields: DynamicField[] =[
+    { name: "name", label: "Nama Kapal" },
+    { name: "route", label: "Rute" },
+    { name: "status", label: "Status" },
+    { name: "noKapal", label: "No Kapal" },
+    { name: "type", label: "Jenis" },
+    { name: "years", label: "Tahun Operasi" },
+  ];
+
+  const onChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+  };
+
+  const onReset = () => {
+    setFormData({
+      name: "",
+      route: "",
+      status: "",
+      noKapal: "",
+      type: "",
+      years: "",
+    });
+  };
+
+  const onAdd = () => {
+    if (!formData.name || !formData.route || !formData.status) return;
+    kapalData.push({
+      id: kapalData.length + 1,
+      ...formData,
+    });
+    onReset();
+  };
 
   const handleSearch = useDebouncedCallback((term: string) => {
     setDebouncedSearch(term);
@@ -83,14 +128,22 @@ export default function KapalPage() {
     );
   }, [debouncedSearch]);
 
+  // 
+
+
   return (
     <div className="p-4">
       <div className="flex justify-between items-center mb-4">
         <h1 className="text-xl font-bold">Data Kapal</h1>
         <div className="flex gap-4 items-center">
-          <Button variant="outline" className="bg-Blue text-white">
-            Tambah
-          </Button>
+          <TambahModal
+            fields={fields}
+            formData={formData}
+            onChange={onChange}
+            onReset={onReset}
+            onAdd={onAdd}
+            judul="Kapal"
+          />
           <Input
             placeholder="Cari kapal..."
             value={searchTerm}

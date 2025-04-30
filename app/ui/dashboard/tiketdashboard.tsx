@@ -267,6 +267,7 @@ export default function Tiket() {
             formData={formData}
             onChange={handleChange}
             onReset={resetForm}
+            judul="Order"
           />
         </div>
       </div>
