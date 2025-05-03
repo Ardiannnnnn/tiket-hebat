@@ -67,12 +67,12 @@ export default function JadwalKapal() {
             <TableRow className="bg-teal-200 ">
               <TableHead className="w-12">No</TableHead>
               <TableHead>Rute</TableHead>
-              <TableHead>Hari</TableHead>
-              <TableHead>Tanggal</TableHead>
-              <TableHead>Jam</TableHead>
-              <TableHead>Hari</TableHead>
-              <TableHead>Tanggal</TableHead>
-              <TableHead>Jam</TableHead>
+              <TableHead>Hari Berangkat</TableHead>
+              <TableHead>Tanggal Berangkat</TableHead>
+              <TableHead>Jam Berangkat</TableHead>
+              <TableHead>Hari Tiba</TableHead>
+              <TableHead>Tanggal Tiba</TableHead>
+              <TableHead>Jam Tiba</TableHead>
               <TableHead>Kapal</TableHead>
             </TableRow>
           </TableHeader>
