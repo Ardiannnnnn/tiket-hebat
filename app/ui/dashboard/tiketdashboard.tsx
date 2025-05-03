@@ -21,6 +21,18 @@ import { useCallback, useMemo, useState } from "react";
 import TambahModal, { DynamicField } from "./tambah";
 import { useDebouncedCallback } from "use-debounce";
 import { Toaster } from "sonner";
+import ReusableTable, { ColumnDef } from "./table";
+
+const orderColumns: ColumnDef<Order>[] = [
+  { key: "id", label: "Pesanan" },
+  { key: "name", label: "Nama" },
+  { key: "address", label: "Alamat" },
+  { key: "age", label: "Umur" },
+  { key: "gender", label: "Jenis Kelamin" },
+  { key: "idType", label: "Tipe ID" },
+  { key: "idNumber", label: "No ID" },
+  { key: "class", label: "Kelas" },
+];
 
 const schedules = [
   {
@@ -177,10 +189,25 @@ export default function Tiket() {
     { name: "name", label: "Nama" },
     { name: "address", label: "Alamat" },
     { name: "age", label: "Umur", type: "number" },
-    { name: "gender", label: "Jenis Kelamin" , type: "select", options: ["Pria", "Wanita"] },
-    { name: "idType", label: "Tipe ID", type: "select", options: ["KTP", "SIM", "Paspor"] },
+    {
+      name: "gender",
+      label: "Jenis Kelamin",
+      type: "select",
+      options: ["Pria", "Wanita"],
+    },
+    {
+      name: "idType",
+      label: "Tipe ID",
+      type: "select",
+      options: ["KTP", "SIM", "Paspor"],
+    },
     { name: "idNumber", label: "Nomor ID" },
-    { name: "class", label: "Kelas", type: "select", options: ["Ekonomi", "Bisnis", "VIP"] },
+    {
+      name: "class",
+      label: "Kelas",
+      type: "select",
+      options: ["Ekonomi", "Bisnis", "VIP"],
+    },
   ];
 
   // Fungsi untuk menambahkan order baru
@@ -272,35 +299,14 @@ export default function Tiket() {
         </div>
       </div>
       <div>
-        <Table>
-          <TableCaption>A list of your recent invoices.</TableCaption>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Pesanan</TableHead>
-              <TableHead>Nama</TableHead>
-              <TableHead>Alamat</TableHead>
-              <TableHead>Umur</TableHead>
-              <TableHead>Jenis Kelamin</TableHead>
-              <TableHead>ID</TableHead>
-              <TableHead>No ID</TableHead>
-              <TableHead>Kelas</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {selectedOrders.map((item, index) => (
-              <TableRow key={index}>
-                <TableCell className="p-4">{item.id}</TableCell>
-                <TableCell className="p-4">{item.name}</TableCell>
-                <TableCell className="p-4">{item.address}</TableCell>
-                <TableCell className="p-4">{item.age}</TableCell>
-                <TableCell className="p-4">{item.gender}</TableCell>
-                <TableCell className="p-4">{item.idType}</TableCell>
-                <TableCell className="p-4">{item.idNumber}</TableCell>
-                <TableCell className="p-4">{item.class}</TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
+        <ReusableTable
+          columns={orderColumns}
+          data={selectedOrders}
+          showActions
+          caption="Daftar Pesanan"
+          onEdit={(item) => console.log("Edit", item)}
+          onDelete={(item) => console.log("Delete", item)}
+        />
       </div>
     </div>
   );

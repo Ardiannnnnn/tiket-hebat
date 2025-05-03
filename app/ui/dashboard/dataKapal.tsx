@@ -1,5 +1,5 @@
 "use client";
-import { useState, useMemo, useCallback } from "react";
+import { useState, useMemo, useCallback, useEffect } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import {
@@ -14,65 +14,45 @@ import {
 import { useDebouncedCallback } from "use-debounce";
 import clsx from "clsx";
 import TambahModal, { DynamicField } from "./tambah";
-
-const kapalData = [
-  {
-    id: 1,
-    name: "Aceh Hebat 1",
-    route: "Sinabang - Calang",
-    status: "Beroperasi",
-    noKapal: "AC001",
-    type: "Roll-on Roll-off",
-    years: "1980 - 2025",
-  },
-  {
-    id: 2,
-    name: "Teluk Singkil",
-    route: "Sinabang - Meulaboh",
-    status: "Dock",
-    noKapal: "AC002",
-    type: "Roll-on Roll-off",
-    years: "1980 - 2024",
-  },
-  {
-    id: 3,
-    name: "Aceh Hebat 3",
-    route: "Singkil - Gunung Sitoli",
-    status: "Beroperasi",
-    noKapal: "AC003",
-    type: "Roll-on Roll-off",
-    years: "1995 - 2030",
-  },
-  {
-    id: 4,
-    name: "Teluk Sinabang",
-    route: "Calang - Meulaboh",
-    status: "Dock",
-    noKapal: "AC004",
-    type: "Roll-on Roll-off",
-    years: "1990 - 2028",
-  },
-];
+import { getShips } from "@/service/shipService";
+import { Ship } from "@/types/ship";  // gunakan tipe baru Ship
 
 export default function KapalPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
+  const [kapalData, setKapalData] = useState<Ship[]>([]); // dari API
   const [formData, setFormData] = useState({
     name: "",
-    route: "",
     status: "",
-    noKapal: "",
-    type: "",
-    years: "",
+    ship_type: "",
+    year: "",
+    image: "",
+    Description: "",
   });
-  const fields: DynamicField[] =[
+
+  const fields: DynamicField[] = [
     { name: "name", label: "Nama Kapal" },
-    { name: "route", label: "Rute" },
     { name: "status", label: "Status" },
-    { name: "noKapal", label: "No Kapal" },
-    { name: "type", label: "Jenis" },
-    { name: "years", label: "Tahun Operasi" },
+    { name: "ship_type", label: "Jenis" },
+    { name: "year", label: "Tahun Operasi" },
+    { name: "image", label: "Gambar" },
+    { name: "Description", label: "Deskripsi" },
   ];
+
+  // Fetch data dari API
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const response = await getShips();
+        if (response.status) {
+          setKapalData(response.data);
+        }
+      } catch (error) {
+        console.error("Gagal mengambil data kapal:", error);
+      }
+    };
+    fetchData();
+  }, []);
 
   const onChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -85,20 +65,26 @@ export default function KapalPage() {
   const onReset = () => {
     setFormData({
       name: "",
-      route: "",
       status: "",
-      noKapal: "",
-      type: "",
-      years: "",
+      ship_type: "",
+      year: "",
+      image: "",
+      Description: "",
     });
   };
 
   const onAdd = () => {
-    if (!formData.name || !formData.route || !formData.status) return;
-    kapalData.push({
-      id: kapalData.length + 1,
-      ...formData,
-    });
+    // Untuk sekarang hanya local push, bisa diubah menjadi POST ke API
+    if (!formData.name || !formData.status) return;
+    setKapalData((prev) => [
+      ...prev,
+      {
+        id: prev.length + 1,
+        ...formData,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      },
+    ]);
     onReset();
   };
 
@@ -119,17 +105,13 @@ export default function KapalPage() {
     return kapalData.filter((item) =>
       [
         item.name,
-        item.route,
         item.status,
-        item.noKapal,
-        item.type,
-        item.years,
-      ].some((field) => field.toLowerCase().includes(search))
+        item.ship_type,
+        item.year,
+        item.Description,
+      ].some((field) => field?.toLowerCase().includes(search))
     );
-  }, [debouncedSearch]);
-
-  // 
-
+  }, [debouncedSearch, kapalData]);
 
   return (
     <div className="p-4">
@@ -159,11 +141,10 @@ export default function KapalPage() {
           <TableRow>
             <TableHead>ID</TableHead>
             <TableHead>Nama Kapal</TableHead>
-            <TableHead>Rute</TableHead>
             <TableHead>Status</TableHead>
-            <TableHead>No Kapal</TableHead>
             <TableHead>Jenis</TableHead>
-            <TableHead>Tahun Operasi</TableHead>
+            <TableHead>Tahun</TableHead>
+            <TableHead>Deskripsi</TableHead>
             <TableHead>Aksi</TableHead>
           </TableRow>
         </TableHeader>
@@ -172,7 +153,6 @@ export default function KapalPage() {
             <TableRow key={item.id}>
               <TableCell>{item.id}</TableCell>
               <TableCell>{item.name}</TableCell>
-              <TableCell>{item.route}</TableCell>
               <TableCell>
                 <span
                   className={clsx(
@@ -186,9 +166,9 @@ export default function KapalPage() {
                   {item.status}
                 </span>
               </TableCell>
-              <TableCell>{item.noKapal}</TableCell>
-              <TableCell>{item.type}</TableCell>
-              <TableCell>{item.years}</TableCell>
+              <TableCell>{item.ship_type}</TableCell>
+              <TableCell>{item.year}</TableCell>
+              <TableCell>{item.Description}</TableCell>
               <TableCell>
                 <Button className="bg-yellow-300 text-black hover:bg-yellow-400 mr-2">
                   Edit

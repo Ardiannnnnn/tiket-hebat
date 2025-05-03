@@ -25,9 +25,9 @@ export const menuLinks = [
   { name: "Pengguna", href: "/pengguna", icon: RiUserFill },
   { name: "Kapal", href: "/kapal", icon: RiShipFill },
   { name: "Pelabuhan", href: "/pelabuhan", icon: RiAnchorFill },
-  { name: "Rute Perjalanan", href: "/rute", icon: RiRoadMapFill },
-  { name: "Upload Jadwal", href: "/upload-jadwal", icon: RiCalendarFill },
-  { name: "Tiket Kapal", href: "/tiket-kapal", icon: RiFileListFill },
+  { name: "Rute Perjalanan", href: "/dataRute", icon: RiRoadMapFill },
+  { name: "Upload Jadwal", href: "/uploadJadwal", icon: RiCalendarFill },
+  { name: "Tiket Kapal", href: "/dataTiket", icon: RiFileListFill },
 ];
 
 export default function NavLinks({ links }: { links: typeof dashboardLinks }) {

@@ -1,31 +1,17 @@
-export interface ClassInfo {
-    id: number;
-    name: string;
-  }
-  
-  export interface ShipInfo {
-    id: number;
-    name: string;
-  }
-  
-  export interface ShipClass {
-    id: number;
-    class: ClassInfo;
-    ship: ShipInfo;
-    capacity: number;
-  }
-  
-  export interface Ship {
-    id: number;
-    name: string;
-    ship_classes: ShipClass[];
-    created_at: string;
-    updated_at: string;
-  }
-  
-  export interface ShipResponse {
-    status: boolean;
-    message: string;
-    data: Ship[];
-  }
-  
+export interface Ship {
+  id: number;
+  name: string;
+  status: string;
+  ship_type: string;
+  year: string;
+  image: string;
+  Description: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ShipResponse {
+  status: string;
+  message: string;
+  data: Ship[];
+}
