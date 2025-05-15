@@ -105,7 +105,7 @@ export default function TiketPenumpang({
   }
   const value = form.getValues(`passengers.${index}.${type}`);
   form.setValue(`passengers.${index}.${type}`, value + 1);
-};  
+};
 
   // Kurangi penumpang, minimal 0
   const decrease = (index: number, type: "adults" | "children") => {
