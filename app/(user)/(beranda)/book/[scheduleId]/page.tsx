@@ -5,7 +5,7 @@ import Booking from "@/app/ui/booking/book";
 export default function BookDetailPage({
   params,
 }: {
-  params: { scheduleid: string };
+  params: { scheduleId: string };
 }) {
-  return <Booking scheduleid={params.scheduleid} />;
+  return <Booking scheduleid={params.scheduleId} />;
 }

@@ -18,7 +18,7 @@ export function Form() {
     tujuan: "",
     jadwal: "",
     kapal: "",
-    scheduleid: "",
+    scheduleId: "",
   });
 
   // Ambil data schedule dari API saat mount
@@ -50,12 +50,12 @@ export function Form() {
           newSelected.jadwal = new Date(foundSchedule.arrival_datetime)
             .toISOString()
             .split("T")[0];
-          newSelected.scheduleid = String(foundSchedule.id); // simpan ID-nya
+          newSelected.scheduleId = String(foundSchedule.id); // simpan ID-nya
         } else {
           newSelected.tujuan = "";
           newSelected.kapal = "";
           newSelected.jadwal = "";
-          newSelected.scheduleid = ""; // kosongkan jika tidak ada
+          newSelected.scheduleId = ""; // kosongkan jika tidak ada
         }
       }
 
@@ -121,13 +121,13 @@ export function Form() {
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
-    if (!selected.scheduleid) {
+    if (!selected.scheduleId) {
       alert("Silakan pilih jadwal terlebih dahulu.");
       return;
     }
     
 
-    router.push(`/book/${selected.scheduleid}`);
+    router.push(`/book/${selected.scheduleId}`);
   };
 
   return (
@@ -156,7 +156,7 @@ export function Form() {
         <button
           type="submit"
           className="bg-Blue text-white rounded-lg p-2.5 hover:bg-teal-600"
-          disabled={!selected.scheduleid}
+          disabled={!selected.scheduleId}
         >
           Pilih Jadwal
         </button>
