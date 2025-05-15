@@ -1,11 +1,14 @@
-export const dynamic = "force-static";
-
 import Booking from "@/app/ui/booking/book";
+import { FC } from "react";
 
-export default function BookDetailPage({
-  params,
-}: {
-  params: { scheduleId: string };
-}) {
-  return <Booking scheduleId={params.scheduleId} />;
+interface BookDetailPageProps {
+  params: {
+    scheduleId: string;
+  };
 }
+
+const BookDetailPage: FC<BookDetailPageProps> = ({ params }) => {
+  return <Booking scheduleId={params.scheduleId} />;
+};
+
+export default BookDetailPage;
