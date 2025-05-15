@@ -212,16 +212,27 @@ export default function Tiket() {
 
   // Fungsi untuk menambahkan order baru
 
-  const handleAddOrder = (newOrder: Order) => {
-    setSchedulesData((prev) =>
-      prev.map((schedule) =>
-        schedule.id === selectedScheduleId
-          ? { ...schedule, orders: [...schedule.orders, newOrder] }
-          : schedule
-      )
-    );
-  };
+  const handleAddOrder = async (
+    newOrder: Order
+  ): Promise<{ success: boolean; message: string }> => {
+    try {
+      setSchedulesData((prev) =>
+        prev.map((schedule) =>
+          schedule.id === selectedScheduleId
+            ? { ...schedule, orders: [...schedule.orders, newOrder] }
+            : schedule
+        )
+      );
 
+      // Mengembalikan response sukses jika data berhasil ditambahkan
+      return { success: true, message: "Pesanan berhasil ditambahkan!" };
+    } catch (error) {
+      console.error("Error saat menambahkan pesanan:", error);
+
+      // Mengembalikan response gagal jika terjadi kesalahan
+      return { success: false, message: "Gagal menambahkan pesanan." };
+    }
+  };
   const handleSearch = useDebouncedCallback((term: string) => {
     setDebouncedSearch(term);
   }, 500); // delay 0.5 detik
@@ -290,6 +301,7 @@ export default function Tiket() {
           <TambahModal<Order>
             selectedSchedule={selectedSchedule}
             onAdd={handleAddOrder}
+            requireSchedule={true}
             fields={orderFields}
             formData={formData}
             onChange={handleChange}

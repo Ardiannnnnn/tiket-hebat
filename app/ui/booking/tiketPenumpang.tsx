@@ -1,6 +1,7 @@
 "use client";
 
-import { useForm, useFieldArray } from "react-hook-form";
+import { useEffect, useState } from "react";
+import { useForm, FormProvider } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@/components/ui/button";
@@ -13,124 +14,172 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Card, CardContent } from "@/components/ui/card";
-import { User, CreditCard, Plus, Trash, Minus } from "lucide-react";
 import { Input } from "@/components/ui/input";
-import { useId } from "react";
 import { useRouter } from "next/navigation";
-import { cn } from "@/lib/utils";
-import { CiCircleMinus } from "react-icons/ci";
-
-const classes = [
-  { id: "1", label: "Ekonomi", value: "ekonomi", jumlahtiket: 200 },
-  { id: "2", label: "Bisnis", value: "bisnis", jumlahtiket: 100 },
-  { id: "3", label: "VIP", value: "vip", jumlahtiket: 50 },
-];
-
-interface TiketPenumpangProps {
-  setTabValue: (value: string) => void;
-}
-
-interface FormValues {
-  passengers: { quantity: number }[];
-}
-
-// const ticketAvailability: Record<string, number> = { ekonomi: 200, bisnis: 100, vip: 50 };
+import { toast } from "sonner";
 
 const FormSchema = z.object({
   passengers: z.array(
     z.object({
-      class: z.string().min(1, "Pilih kelas"),
-      adults: z.string().min(1, "Pilih jumlah penumpang dewasa"),
-      children: z.string(),
+      classId: z.number(),
+      className: z.string(),
+      adults: z.number().min(0),
+      children: z.number().min(0),
     })
   ),
 });
 
-export default function TiketPenumpang({ setTabValue }: TiketPenumpangProps) {
+type FormValues = z.infer<typeof FormSchema>;
+
+interface TiketPenumpangProps {
+  setTabValue: (value: string) => void;
+  scheduleId: string;
+}
+
+interface ClassAvailability {
+  class_id: number;
+  class_name: string;
+  total_capacity: number;
+  available_capacity: number;
+  price: number;
+  currency: string;
+}
+
+export default function TiketPenumpang({
+  setTabValue,
+  scheduleId,
+}: TiketPenumpangProps) {
   const router = useRouter();
-  const form = useForm({
+  const [classes, setClasses] = useState<ClassAvailability[]>([]);
+  const form = useForm<FormValues>({
+    resolver: zodResolver(FormSchema),
     defaultValues: {
-      passengers: classes.map(() => ({ adults: 0, children: 0 })),
+      passengers: [],
     },
   });
 
-  const increase = (index: number, type: "adults" | "children") => {
-    const currentValue = form.getValues(`passengers.${index}.${type}`);
-    form.setValue(`passengers.${index}.${type}`, currentValue + 1);
-  };
+  // Fetch quota data
+  useEffect(() => {
+    const fetchQuota = async () => {
+      try {
+        const res = await fetch(
+          `https://tikethebat.ambitiousflower-0b7495d3.southeastasia.azurecontainerapps.io/api/v1/schedule/${scheduleId}/quota/`
+        );
+        const json = await res.json();
+        const availability = json?.data?.classes_availability || [];
+        setClasses(availability);
 
-  const decrease = (index: number, type: "adults" | "children") => {
-    const currentValue = form.getValues(`passengers.${index}.${type}`);
-    form.setValue(
-      `passengers.${index}.${type}`,
-      currentValue > 0 ? currentValue - 1 : 0
+        // Set default values for each class
+        const defaultPassengers = availability.map((cls: ClassAvailability) => ({
+          classId: cls.class_id,
+          className: cls.class_name,
+          adults: 0,
+          children: 0,
+        }));
+        form.reset({ passengers: defaultPassengers });
+      } catch (error) {
+        console.error("Gagal mengambil data kuota:", error);
+      }
+    };
+
+    if (scheduleId) {
+      fetchQuota();
+    }
+  }, [scheduleId]);
+
+  // Hitung total penumpang (dewasa + anak-anak)
+  const getTotalPassengers = () => {
+    const passengers = form.getValues("passengers");
+    return passengers.reduce(
+      (total, p) => total + (p.adults || 0) + (p.children || 0),
+      0
     );
   };
 
-  const onSubmit = (data: {
-    passengers: { adults: number; children: number }[];
-  }) => {
-    console.log(data);
-    router.push("/book/form");
+  // Tambah penumpang dengan cek maksimal 5
+ const increase = (index: number, type: "adults" | "children") => {
+  const total = getTotalPassengers();
+  if (total >= 5) {
+    toast.error("Maksimal 5 tiket yang dapat dipesan.");
+    return; // jangan tambah
+  }
+  const value = form.getValues(`passengers.${index}.${type}`);
+  form.setValue(`passengers.${index}.${type}`, value + 1);
+};  
+
+  // Kurangi penumpang, minimal 0
+  const decrease = (index: number, type: "adults" | "children") => {
+    const value = form.getValues(`passengers.${index}.${type}`);
+    form.setValue(`passengers.${index}.${type}`, value > 0 ? value - 1 : 0);
+  };
+
+  // Disable tombol "+" jika sudah mencapai batas 5
+  const isIncreaseDisabled = () => {
+    return getTotalPassengers() >= 5;
+  };
+
+  // Submit form
+  const onSubmit = (data: FormValues) => {
+    const total = data.passengers.reduce(
+      (total, p) => total + p.adults + p.children,
+      0
+    );
+    if (total > 5) {
+      alert("Jumlah tiket maksimal adalah 5.");
+      return;
+    }
+    console.log("Data Tiket:", data);
+    router.push(`/book/${scheduleId}/form`);
   };
 
   return (
     <Form {...form}>
       <form className="space-y-6" onSubmit={form.handleSubmit(onSubmit)}>
-        {classes.map((field, index) => {
-          const adultsId = useId();
-          const childrenId = useId();
+        {classes.map((cls, index) => {
+          const adultsId = `adults-${cls.class_id}`;
+          const childrenId = `children-${cls.class_id}`;
           return (
-            <Card key={field.id}>
-              <CardContent className="p-4 space-y-10">
-                <div className="flex justify-center items-center">
-                  {/* Kelas */}
-                  <div className="flex flex-col items-center">
-                    <p className="font-semibold">{field.label}</p>
-                    <span className="text-gray-500">Sisa Tiket</span>
-                    <div className="flex items-center gap-2 mt-2">
-                      <CreditCard className="text-teal-500" />
-                      <span className="text-lg font-semibold">
-                        {field.jumlahtiket}
-                      </span>
-                    </div>
-                  </div>
+            <Card key={cls.class_id}>
+              <CardContent className="p-4 space-y-6">
+                <div className="text-center">
+                  <p className="text-lg">{cls.class_name}</p>
+                  <p className="text-gray-500">Sisa Tiket: {cls.available_capacity}</p>
+                  <p className="text-teal-600 font-semibold">
+                    Harga: {cls.currency} {cls.price.toLocaleString("id-ID")}
+                  </p>
                 </div>
-                {/* Jumlah Penumpang */}
-                <div className="md:gap-34 justify-center gap-8 flex items-center">
+
+                <div className="flex justify-center gap-10">
                   <FormField
                     control={form.control}
                     name={`passengers.${index}.adults`}
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel
-                          htmlFor={adultsId}
-                          className="text-center flex justify-center"
-                        >
+                        <FormLabel htmlFor={adultsId} className="flex justify-center">
                           Dewasa
                         </FormLabel>
                         <div className="flex items-center gap-1.5">
-                          <button
-                            className="border-2 border-Blue text-Orange flex items-center justify-center px-2 rounded-full"
+                          <Button
                             type="button"
+                            variant="outline"
                             onClick={() => decrease(index, "adults")}
                           >
                             -
-                          </button>
+                          </Button>
                           <Input
                             id={adultsId}
                             className="w-10 text-center"
-                            type="number"
                             {...field}
                             readOnly
                           />
-                          <button
-                            onClick={() => increase(index, "adults")}
+                          <Button
                             type="button"
-                            className="px-1.5 border-2 rounded-full border-Blue flex items-center justify-center text-Orange"
+                            variant="outline"
+                            onClick={() => increase(index, "adults")}
+                            disabled={isIncreaseDisabled()}
                           >
                             +
-                          </button>
+                          </Button>
                         </div>
                       </FormItem>
                     )}
@@ -141,34 +190,31 @@ export default function TiketPenumpang({ setTabValue }: TiketPenumpangProps) {
                     name={`passengers.${index}.children`}
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel
-                          htmlFor={childrenId}
-                          className="text-center flex justify-center"
-                        >
+                        <FormLabel htmlFor={childrenId} className="flex justify-center">
                           Anak-Anak
                         </FormLabel>
                         <div className="flex items-center gap-1.5">
-                          <button
-                            onClick={() => decrease(index, "children")}
+                          <Button
                             type="button"
-                            className="border-2 border-Blue text-Orange flex items-center justify-center px-2 rounded-full"
+                            variant="outline"
+                            onClick={() => decrease(index, "children")}
                           >
                             -
-                          </button>
+                          </Button>
                           <Input
                             id={childrenId}
                             className="w-10 text-center"
-                            type="text"
                             {...field}
                             readOnly
                           />
-                          <button
-                            onClick={() => increase(index, "children")}
+                          <Button
                             type="button"
-                            className="px-1.5 border-2 rounded-full border-Blue flex items-center justify-center text-Orange"
+                            variant="outline"
+                            onClick={() => increase(index, "children")}
+                            disabled={isIncreaseDisabled()}
                           >
                             +
-                          </button>
+                          </Button>
                         </div>
                       </FormItem>
                     )}
@@ -178,7 +224,7 @@ export default function TiketPenumpang({ setTabValue }: TiketPenumpangProps) {
             </Card>
           );
         })}
-        {/* Tombol Navigasi */}
+
         <div className="flex justify-between">
           <Button
             type="button"

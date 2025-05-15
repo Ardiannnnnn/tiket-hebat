@@ -28,7 +28,7 @@ export default function InfoShips() {
         {items.map((item) => (
           <Card
             key={item.id}
-            className="relative border-none overflow-hidden shadow-lg rounded-2xl transition-transform duration-300 hover:scale-105 h-[550px]"
+            className="relative border-none overflow-hidden shadow-lg rounded-2xl transition-all duration-300 ease-in-out transform hover:scale-105 hover:shadow-2xl h-[550px]"
           >
             {/* Gambar sebagai Background */}
             <div className="inset-0">
@@ -55,7 +55,7 @@ export default function InfoShips() {
                 className="w-full font-semibold flex gap-22 items-center border text-gray-700 border-gray-300 p-6 rounded-full bg-white shadow-md text-lg"
               >
                 Info Kapal
-                <FaArrowRight className="ml-10 text-Orange"/>
+                <FaArrowRight className="ml-10 text-Orange" />
               </Button>
             </CardContent>
           </Card>
@@ -67,7 +67,7 @@ export default function InfoShips() {
           {items.map((item, index) => (
             <Card
               key={item.id}
-              className="relative border-none overflow-hidden shadow-lg rounded-2xl transition-transform duration-300 hover:scale-105 w-[80vw] max-w-[350px] h-[450px] flex-shrink-0 space-x-6"
+              className="relative border-none overflow-hidden shadow-lg rounded-2xl ease-in-out transition-transform duration-300 hover:scale-105 w-[80vw] max-w-[350px] h-[450px] flex-shrink-0 space-x-6"
             >
               {/* Gambar sebagai Background */}
               <div className="absolute inset-0">

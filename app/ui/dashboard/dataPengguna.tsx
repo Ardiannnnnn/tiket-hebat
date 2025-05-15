@@ -216,10 +216,19 @@ export default function PenggunaDashboard() {
   //   }
   // };
   
-
-  const onAdd = (newUser: Omit<User, "id">) => {
-    const newId = data.length + 1;
-    setData((prev) => [...prev, { id: newId, ...newUser }]);
+  const onAdd = async (newUser: Omit<User, "id">): Promise<{ success: boolean; message: string }> => {
+    try {
+      const newId = data.length + 1;
+      setData((prev) => [...prev, { id: newId, ...newUser }]);
+  
+      // Simulate a successful response
+      return { success: true, message: "Pengguna berhasil ditambahkan!" };
+    } catch (error) {
+      console.error("Gagal menambahkan pengguna:", error);
+  
+      // Return a failure response
+      return { success: false, message: "Gagal menambahkan pengguna." };
+    }
   };
 
   const fields: DynamicField[] = [

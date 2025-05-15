@@ -143,3 +143,18 @@ body {
   }
 }
 
+/* Animasi spin untuk loader */
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.animate-spin {
+  animation: spin 1s linear infinite;
+}
+
+/* Transisi halus untuk semua elemen */
+* {
+  transition: background-color 0.2s, opacity 0.2s;
+}
+

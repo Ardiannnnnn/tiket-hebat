@@ -10,43 +10,86 @@ import {
 } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
 import { poppins } from "@/app/ui/fonts";
-import { useState, useMemo, useCallback } from "react";
+import { useState, useMemo, useCallback, useEffect } from "react";
 import { useDebouncedCallback } from "use-debounce";
-import schedules from "@/lib/data/schedule.json";
+import { Schedule } from "@/types/schedule";
+import { toast } from "sonner";
+import { getSchedule } from "@/service/schedule";
+
+// Helper functions for date formatting
+const getFormattedDate = (datetime: string) => {
+  const date = new Date(datetime);
+  if (isNaN(date.getTime())) return "-";
+  return date.toLocaleDateString("id-ID", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+  });
+};
+
+const getFormattedTime = (datetime: string) => {
+  const date = new Date(datetime);
+  if (isNaN(date.getTime())) return "-";
+  return date.toLocaleTimeString("id-ID", {
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+};
+
+const getFormattedDay = (datetime: string) => {
+  const date = new Date(datetime);
+  if (isNaN(date.getTime())) return "-";
+  return date.toLocaleDateString("id-ID", {
+    weekday: "long",
+  });
+};
 
 export default function JadwalKapal() {
-    const [searchTerm, setSearchTerm] = useState<string>("");
-    const [debouncedSearch, setDebouncedSearch] = useState<string>("");
-  
-    const handleSearch = useDebouncedCallback((term: string) => {
-        setDebouncedSearch(term);
-      }, 1000);
-  
-      const filteredSchedules = useMemo(() => {
-        return schedules.filter((schedule) => {
-          const searchLower = debouncedSearch.toLowerCase();
-          return (
-            schedule.route.toLowerCase().includes(searchLower) ||
-            schedule.departureDay.toLowerCase().includes(searchLower) ||
-            schedule.departureDate.toLowerCase().includes(searchLower) ||
-            schedule.departureTime.toLowerCase().includes(searchLower) ||
-            schedule.arrivalDay.toLowerCase().includes(searchLower) ||
-            schedule.arrivalDate.toLowerCase().includes(searchLower) ||
-            schedule.arrivalTime.toLowerCase().includes(searchLower) ||
-            schedule.ship.toLowerCase().includes(searchLower)
-          );
-        });
-      }, [debouncedSearch]);
+  const [scheduleData, setScheduleData] = useState<Schedule[]>([]);
+  const [searchTerm, setSearchTerm] = useState<string>("");
+  const [debouncedSearch, setDebouncedSearch] = useState<string>("");
 
-    const handleSearchChange = useCallback(
-        (e: React.ChangeEvent<HTMLInputElement>) => {
-          setSearchTerm(e.target.value);
-          handleSearch(e.target.value);
-        },
-        [handleSearch]
-      );
+  const handleSearch = useDebouncedCallback((term: string) => {
+    setDebouncedSearch(term);
+  }, 1000);
 
-      console.log(filteredSchedules);
+  useEffect(() => {
+    const fetchData = async () => {
+      const response = await getSchedule();
+      if (response && response.status) {
+        setScheduleData(response.data || []);
+      } else {
+        toast.error("Gagal memuat data");
+      }
+    };
+
+    fetchData();
+  }, []);
+
+  const filteredData = useMemo(() => {
+  const search = debouncedSearch.toLowerCase();
+  return scheduleData.filter((item) =>
+    [
+      item.route.departure_harbor.harbor_name,
+      item.route.arrival_harbor.harbor_name,
+      item.ship.ship_name,
+      getFormattedDate(item.departure_datetime),
+      getFormattedTime(item.departure_datetime),
+      getFormattedDay(item.departure_datetime),
+      getFormattedDate(item.arrival_datetime),
+      getFormattedTime(item.arrival_datetime),
+      getFormattedDay(item.arrival_datetime),
+    ].some((field) => String(field).toLowerCase().includes(search))
+  );
+}, [debouncedSearch, scheduleData]);
+
+  const handleSearchChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      setSearchTerm(e.target.value);
+      handleSearch(e.target.value);
+    },
+    [handleSearch]
+  );
 
   return (
     <div className={`${poppins.className} md:m-24 m-4 mt-10`}>
@@ -62,9 +105,10 @@ export default function JadwalKapal() {
             Jadwal Keberangkatan Kapal Feri PT ASDP Singkil
           </h2>
         </div>
+
         <Table className="mt-4 mb-4">
           <TableHeader>
-            <TableRow className="bg-teal-200 ">
+            <TableRow className="bg-teal-200">
               <TableHead className="w-12">No</TableHead>
               <TableHead>Rute</TableHead>
               <TableHead>Hari Berangkat</TableHead>
@@ -76,20 +120,22 @@ export default function JadwalKapal() {
               <TableHead>Kapal</TableHead>
             </TableRow>
           </TableHeader>
+
           <TableBody>
-            {filteredSchedules.map((schedule, index) => (
+            {filteredData.map((schedule, index) => (
               <TableRow key={schedule.id}>
                 <TableCell className="p-4">{index + 1}.</TableCell>
                 <TableCell className="font-semibold">
-                  {schedule.route}
+                  {schedule.route.departure_harbor.harbor_name} -{" "}
+                  {schedule.route.arrival_harbor.harbor_name}
                 </TableCell>
-                <TableCell>{schedule.departureDay}</TableCell>
-                <TableCell>{schedule.departureDate}</TableCell>
-                <TableCell>{schedule.departureTime}</TableCell>
-                <TableCell>{schedule.arrivalDay}</TableCell>
-                <TableCell>{schedule.arrivalDate}</TableCell>
-                <TableCell>{schedule.arrivalTime}</TableCell>
-                <TableCell>{schedule.ship}</TableCell>
+                <TableCell>{getFormattedDay(schedule.departure_datetime)}</TableCell>
+                <TableCell>{getFormattedDate(schedule.departure_datetime)}</TableCell>
+                <TableCell>{getFormattedTime(schedule.departure_datetime)}</TableCell>
+                <TableCell>{getFormattedDay(schedule.arrival_datetime)}</TableCell>
+                <TableCell>{getFormattedDate(schedule.arrival_datetime)}</TableCell>
+                <TableCell>{getFormattedTime(schedule.arrival_datetime)}</TableCell>
+                <TableCell>{schedule.ship.ship_name}</TableCell>
               </TableRow>
             ))}
           </TableBody>
