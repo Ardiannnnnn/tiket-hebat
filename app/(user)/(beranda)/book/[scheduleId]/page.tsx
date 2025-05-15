@@ -1,9 +1,11 @@
+export const dynamic = "force-static";
+
 import Booking from "@/app/ui/booking/book";
 
-interface Props {
-  params: Promise<{ scheduleId: string }>;
-}
-
-export default function BookDetailPage({params,}: {params: { scheduleId: string };}) {
-  return <Booking scheduleId={params.scheduleId} />;
+export default function BookDetailPage({
+  params,
+}: {
+  params: { scheduleid: string };
+}) {
+  return <Booking scheduleid={params.scheduleid} />;
 }

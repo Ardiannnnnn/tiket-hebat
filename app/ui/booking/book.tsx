@@ -4,14 +4,14 @@ import TiketTabs from "./tabs";
 import { Toaster } from "sonner";
 
 interface BookingProps {
-  scheduleId: string;
+  scheduleid: string;
 }
 
-export default function Booking({ scheduleId }: BookingProps) {
+export default function Booking({ scheduleid }: BookingProps) {
   return (
     <div className="flex flex-col justify-center items-center">
       <Toaster position="top-center" />
-      <TiketTabs scheduleId={scheduleId} />
+      <TiketTabs scheduleId={scheduleid} />
     </div>
   );
 }
