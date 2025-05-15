@@ -1,14 +1,9 @@
 import Booking from "@/app/ui/booking/book";
-import { FC } from "react";
 
-interface BookDetailPageProps {
-  params: {
-    scheduleId: string;
-  };
-}
-
-const BookDetailPage: FC<BookDetailPageProps> = ({ params }) => {
+export default function BookDetailPage({
+  params,
+}: {
+  params: { scheduleId: string };
+}) {
   return <Booking scheduleId={params.scheduleId} />;
-};
-
-export default BookDetailPage;
+}
