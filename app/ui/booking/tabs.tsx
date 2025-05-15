@@ -7,10 +7,10 @@ import TiketKendaraan from "./tiketKendaraan";
 import TiketPenumpang from "./tiketPenumpang";
 
 interface TiketTabsProps {
-  scheduleId: string;
+  scheduleid: string;
 }
 
-export default function TiketTabs({ scheduleId }: TiketTabsProps) {
+export default function TiketTabs({ scheduleid }: TiketTabsProps) {
   const [tabValue, setTabValue] = useState<string>("kendaraan");
 
   return (
@@ -35,10 +35,10 @@ export default function TiketTabs({ scheduleId }: TiketTabsProps) {
           </TabsTrigger>
         </TabsList>
         <TabsContent value="kendaraan">
-          <TiketKendaraan setTabValue={setTabValue} scheduleId={scheduleId}/>
+          <TiketKendaraan setTabValue={setTabValue} scheduleid={scheduleid}/>
         </TabsContent>
         <TabsContent value="penumpang">
-          <TiketPenumpang setTabValue={setTabValue} scheduleId={scheduleId}/>
+          <TiketPenumpang setTabValue={setTabValue} scheduleid={scheduleid}/>
         </TabsContent>
       </Tabs>
     </div>

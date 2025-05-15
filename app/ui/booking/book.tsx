@@ -11,7 +11,7 @@ export default function Booking({ scheduleid }: BookingProps) {
   return (
     <div className="flex flex-col justify-center items-center">
       <Toaster position="top-center" />
-      <TiketTabs scheduleId={scheduleid} />
+      <TiketTabs scheduleid={scheduleid} />
     </div>
   );
 }

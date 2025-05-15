@@ -33,7 +33,7 @@ type FormValues = z.infer<typeof FormSchema>;
 
 interface TiketPenumpangProps {
   setTabValue: (value: string) => void;
-  scheduleId: string;
+  scheduleid: string;
 }
 
 interface ClassAvailability {
@@ -47,7 +47,7 @@ interface ClassAvailability {
 
 export default function TiketPenumpang({
   setTabValue,
-  scheduleId,
+  scheduleid,
 }: TiketPenumpangProps) {
   const router = useRouter();
   const [classes, setClasses] = useState<ClassAvailability[]>([]);
@@ -63,7 +63,7 @@ export default function TiketPenumpang({
     const fetchQuota = async () => {
       try {
         const res = await fetch(
-          `https://tikethebat.ambitiousflower-0b7495d3.southeastasia.azurecontainerapps.io/api/v1/schedule/${scheduleId}/quota/`
+          `https://tikethebat.ambitiousflower-0b7495d3.southeastasia.azurecontainerapps.io/api/v1/schedule/${scheduleid}/quota`
         );
         const json = await res.json();
         const availability = json?.data?.classes_availability || [];
@@ -82,10 +82,10 @@ export default function TiketPenumpang({
       }
     };
 
-    if (scheduleId) {
+    if (scheduleid) {
       fetchQuota();
     }
-  }, [scheduleId]);
+  }, [scheduleid]);
 
   // Hitung total penumpang (dewasa + anak-anak)
   const getTotalPassengers = () => {
@@ -129,7 +129,7 @@ export default function TiketPenumpang({
       return;
     }
     console.log("Data Tiket:", data);
-    router.push(`/book/${scheduleId}/form`);
+    router.push(`/book/${scheduleid}/form`);
   };
 
   return (
