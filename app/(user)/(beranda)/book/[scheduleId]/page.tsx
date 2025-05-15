@@ -1,9 +1,9 @@
 import Booking from "@/app/ui/booking/book";
 
-export default function BookDetailPage({
-  params,
-}: {
-  params: { scheduleId: string };
-}) {
+interface Props {
+  params: Promise<{ scheduleId: string }>;
+}
+
+export default function BookDetailPage({params,}: {params: { scheduleId: string };}) {
   return <Booking scheduleId={params.scheduleId} />;
 }
