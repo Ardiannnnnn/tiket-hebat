@@ -1,11 +1,13 @@
-export const dynamic = "force-static";
-
+// app/(user)/(beranda)/book/[scheduleId]/page.tsx
 import Booking from "@/app/ui/booking/book";
 
-export default function BookDetailPage({
-  params,
-}: {
-  params: { scheduleId: string };
-}) {
-  return <Booking scheduleid={params.scheduleId} />;
+interface BookDetailPageProps {
+  params: {
+    scheduleId: string;
+  };
+}
+
+export default function BookDetailPage({ params }: BookDetailPageProps) {
+  const { scheduleId } = params;
+  return <Booking scheduleid={scheduleId} />;
 }
