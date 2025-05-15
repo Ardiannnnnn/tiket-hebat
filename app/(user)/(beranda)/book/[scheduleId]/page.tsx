@@ -1,3 +1,5 @@
+export const dynamic = "force-static";
+
 import Booking from "@/app/ui/booking/book";
 
 export default function BookDetailPage({
