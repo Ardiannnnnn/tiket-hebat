@@ -6,7 +6,11 @@ import { poppins } from "@/app/ui/fonts";
 import TiketKendaraan from "./tiketKendaraan";
 import TiketPenumpang from "./tiketPenumpang";
 
-export default function TiketTabs() {
+interface TiketTabsProps {
+  scheduleId: string;
+}
+
+export default function TiketTabs({ scheduleId }: TiketTabsProps) {
   const [tabValue, setTabValue] = useState<string>("kendaraan");
 
   return (
@@ -20,7 +24,7 @@ export default function TiketTabs() {
       <Tabs
         value={tabValue}
         onValueChange={setTabValue}
-        className="p-6"
+        className=""
       >
         <TabsList className="w-full flex justify-between">
           <TabsTrigger disabled value="kendaraan">
@@ -31,10 +35,10 @@ export default function TiketTabs() {
           </TabsTrigger>
         </TabsList>
         <TabsContent value="kendaraan">
-          <TiketKendaraan setTabValue={setTabValue} />
+          <TiketKendaraan setTabValue={setTabValue} scheduleId={scheduleId}/>
         </TabsContent>
         <TabsContent value="penumpang">
-          <TiketPenumpang setTabValue={setTabValue} />
+          <TiketPenumpang setTabValue={setTabValue} scheduleId={scheduleId}/>
         </TabsContent>
       </Tabs>
     </div>

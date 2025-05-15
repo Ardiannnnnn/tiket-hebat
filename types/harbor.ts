@@ -1,6 +1,8 @@
 export interface Harbor {
     id: number;
-    name: string;
+    harbor_name: string;
+    status: string;
+    year_operation: string;
     created_at: string;
     updated_at: string;
   }

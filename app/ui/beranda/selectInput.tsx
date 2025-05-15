@@ -1,38 +1,49 @@
 import { JSX } from "react";
 
-export default function SelectInput(props: {
+interface SelectInputProps {
   title: string;
   id: string;
   option: string[];
   icon: JSX.Element;
-}) {
+  value?: string;
+  onChange?: (value: string) => void;
+}
+
+export default function SelectInput({
+  title,
+  id,
+  option,
+  icon,
+  value = '',
+  onChange,
+}: SelectInputProps) {
   return (
     <div className="mb-5">
       <label
-        htmlFor={props.id}
+        htmlFor={id}
         className="block mb-2 text-sm font-medium text-gray-900"
       >
-        {props.title}
+        {title}
       </label>
       <div className="relative">
-        {/* Ikon Kapal */}
+        {/* Ikon */}
         <div className="absolute inset-y-0 left-3 flex items-center text-Blue">
-          {props.icon}
+          {icon}
         </div>
 
         <select
-          id={props.id}
-          defaultValue=""
-          // required
+          id={id}
+          value={value}
+          onChange={(e) => onChange?.(e.target.value)}
           className="bg-gray-50 border-2 border-Orange text-gray-900 text-sm rounded-lg 
-          focus:ring-blue-500 focus:border-Orange block w-full p-3.5 pl-10 pr-10 appearance-none focus:outline-none"
+            focus:ring-blue-500 focus:border-Orange block w-full p-3.5 pl-10 pr-10 appearance-none focus:outline-none"
         >
           <option value="" disabled>
-            {props.title}
+            {title}
           </option>
-          {props.option.map((option) => (
-            <option key={option} value={option}>
-              {option}
+          {option.map((opt) => (
+            <option key={opt} value={opt}>
+              {opt}
             </option>
           ))}
         </select>

@@ -1,5 +1,5 @@
 export interface Ship {
-  id: number;
+  id: string;
   name: string;
   status: string;
   ship_type: string;
@@ -11,7 +11,7 @@ export interface Ship {
 }
 
 export interface ShipResponse {
-  status: string;
-  message: string;
+  status: boolean;
+  message?: string;
   data: Ship[];
 }
