@@ -24,7 +24,7 @@ import {
 
 interface TiketKendaraanProps {
   setTabValue: React.Dispatch<React.SetStateAction<string>>;
-  scheduleId: string; // tambahkan props ini
+  scheduleid: string; // tambahkan props ini
 }
 
 const vehicleOptions = [
@@ -52,13 +52,13 @@ interface TiketKendaraanProps {
   setTabValue: React.Dispatch<React.SetStateAction<string>>;
 }
 
-export default function TiketKendaraan({ setTabValue, scheduleId }: TiketKendaraanProps) {
+export default function TiketKendaraan({ setTabValue, scheduleid }: TiketKendaraanProps) {
   const form = useForm<z.infer<typeof FormSchema>>({
     resolver: zodResolver(FormSchema),
     defaultValues: { vehicles: [{ type: "" }] },
   });
 
-  console.log("Schedule ID di TiketKendaraan:", scheduleId);
+  console.log("Schedule ID di TiketKendaraan:", scheduleid);
 
 
   const [availability, setAvailability] = useState<{ [key: number]: number }>({});
