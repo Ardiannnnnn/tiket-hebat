@@ -17,6 +17,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
+import { lockTickets } from "@/service/session";
+import { LockTicketItem } from "@/types/lock";
 
 const FormSchema = z.object({
   passengers: z.array(
@@ -70,12 +72,14 @@ export default function TiketPenumpang({
         setClasses(availability);
 
         // Set default values for each class
-        const defaultPassengers = availability.map((cls: ClassAvailability) => ({
-          classId: cls.class_id,
-          className: cls.class_name,
-          adults: 0,
-          children: 0,
-        }));
+        const defaultPassengers = availability.map(
+          (cls: ClassAvailability) => ({
+            classId: cls.class_id,
+            className: cls.class_name,
+            adults: 0,
+            children: 0,
+          })
+        );
         form.reset({ passengers: defaultPassengers });
       } catch (error) {
         console.error("Gagal mengambil data kuota:", error);
@@ -97,15 +101,15 @@ export default function TiketPenumpang({
   };
 
   // Tambah penumpang dengan cek maksimal 5
- const increase = (index: number, type: "adults" | "children") => {
-  const total = getTotalPassengers();
-  if (total >= 5) {
-    toast.error("Maksimal 5 tiket yang dapat dipesan.");
-    return; // jangan tambah
-  }
-  const value = form.getValues(`passengers.${index}.${type}`);
-  form.setValue(`passengers.${index}.${type}`, value + 1);
-};
+  const increase = (index: number, type: "adults" | "children") => {
+    const total = getTotalPassengers();
+    if (total >= 5) {
+      toast.error("Maksimal 5 tiket yang dapat dipesan.");
+      return; // jangan tambah
+    }
+    const value = form.getValues(`passengers.${index}.${type}`);
+    form.setValue(`passengers.${index}.${type}`, value + 1);
+  };
 
   // Kurangi penumpang, minimal 0
   const decrease = (index: number, type: "adults" | "children") => {
@@ -119,19 +123,43 @@ export default function TiketPenumpang({
   };
 
   // Submit form
-  const onSubmit = (data: FormValues) => {
-    const total = data.passengers.reduce(
-      (total, p) => total + p.adults + p.children,
-      0
-    );
-    if (total > 5) {
-      alert("Jumlah tiket maksimal adalah 5.");
-      return;
-    }
-    console.log("Data Tiket:", data);
-    router.push(`/book/${scheduleid}/form`);
-  };
+  const onSubmit = async (data: FormValues) => {
+  const total = data.passengers.reduce(
+    (total, p) => total + p.adults + p.children,
+    0
+  );
+  if (total > 5) {
+    alert("Jumlah tiket maksimal adalah 5.");
+    return;
+  }
 
+  const items: LockTicketItem[] = data.passengers
+    .filter((p) => p.adults + p.children > 0)
+    .map((p) => ({
+      class_id: p.classId,
+      quantity: p.adults + p.children,
+    }));
+
+ const payload = {
+  schedule_id: Number(scheduleid),
+  items,
+};
+
+  if (!payload.items || payload.items.length === 0) {
+    toast.warning("Pilih tiket terlebih dahulu");
+    return;
+  }
+
+  try {
+    const lockedData = await lockTickets(payload);
+    const sessionId = lockedData.data.session_id;
+    console.log("✅ Tiket berhasil dilock:", lockedData);
+    router.push(`/book/${scheduleid}/form?session_id=${sessionId}`);
+  } catch (error) {
+    console.error("❌ Gagal mengunci tiket:", error);
+    toast.error("Terjadi kesalahan saat mengunci tiket");
+  }
+};
   return (
     <Form {...form}>
       <form className="space-y-6" onSubmit={form.handleSubmit(onSubmit)}>
@@ -143,7 +171,9 @@ export default function TiketPenumpang({
               <CardContent className="p-4 space-y-6">
                 <div className="text-center">
                   <p className="text-lg">{cls.class_name}</p>
-                  <p className="text-gray-500">Sisa Tiket: {cls.available_capacity}</p>
+                  <p className="text-gray-500">
+                    Sisa Tiket: {cls.available_capacity}
+                  </p>
                   <p className="text-teal-600 font-semibold">
                     Harga: {cls.currency} {cls.price.toLocaleString("id-ID")}
                   </p>
@@ -155,7 +185,10 @@ export default function TiketPenumpang({
                     name={`passengers.${index}.adults`}
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel htmlFor={adultsId} className="flex justify-center">
+                        <FormLabel
+                          htmlFor={adultsId}
+                          className="flex justify-center"
+                        >
                           Dewasa
                         </FormLabel>
                         <div className="flex items-center gap-1.5">
@@ -190,7 +223,10 @@ export default function TiketPenumpang({
                     name={`passengers.${index}.children`}
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel htmlFor={childrenId} className="flex justify-center">
+                        <FormLabel
+                          htmlFor={childrenId}
+                          className="flex justify-center"
+                        >
                           Anak-Anak
                         </FormLabel>
                         <div className="flex items-center gap-1.5">
@@ -233,7 +269,10 @@ export default function TiketPenumpang({
           >
             Sebelumnya
           </Button>
-          <Button type="submit" className="bg-Blue text-white hover:bg-teal-600">
+          <Button
+            type="submit"
+            className="bg-Blue text-white hover:bg-teal-600"
+          >
             Lanjutkan
           </Button>
         </div>

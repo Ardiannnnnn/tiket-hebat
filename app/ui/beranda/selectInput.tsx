@@ -1,3 +1,10 @@
+import {
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
+  SelectItem,
+} from "@/components/ui/select";
 import { JSX } from "react";
 
 interface SelectInputProps {
@@ -7,6 +14,7 @@ interface SelectInputProps {
   icon: JSX.Element;
   value?: string;
   onChange?: (value: string) => void;
+  isLoading?: boolean;
 }
 
 export default function SelectInput({
@@ -14,8 +22,9 @@ export default function SelectInput({
   id,
   option,
   icon,
-  value = '',
+  value = "",
   onChange,
+  isLoading = false,
 }: SelectInputProps) {
   return (
     <div className="mb-5">
@@ -25,34 +34,18 @@ export default function SelectInput({
       >
         {title}
       </label>
+
       <div className="relative">
-        {/* Ikon */}
-        <div className="absolute inset-y-0 left-3 flex items-center text-Blue">
+        {/* Ikon kiri */}
+        <div className="absolute inset-y-0 left-0 flex items-center pl-3 text-Blue">
           {icon}
         </div>
 
-        <select
-          id={id}
-          value={value}
-          onChange={(e) => onChange?.(e.target.value)}
-          className="bg-gray-50 border-2 border-Orange text-gray-900 text-sm rounded-lg 
-            focus:ring-blue-500 focus:border-Orange block w-full p-3.5 pl-10 pr-10 appearance-none focus:outline-none"
-        >
-          <option value="" disabled>
-            {title}
-          </option>
-          {option.map((opt) => (
-            <option key={opt} value={opt}>
-              {opt}
-            </option>
-          ))}
-        </select>
-
-        {/* Ikon Dropdown */}
-        <div className="absolute inset-y-0 right-3 flex items-center pointer-events-none">
+        {/* Ikon kanan custom */}
+        <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none text-Blue">
           <svg
             xmlns="http://www.w3.org/2000/svg"
-            className="w-5 h-5 text-Blue"
+            className="w-5 h-5"
             viewBox="0 0 20 20"
             fill="currentColor"
           >
@@ -63,6 +56,36 @@ export default function SelectInput({
             />
           </svg>
         </div>
+
+        <Select onValueChange={onChange} value={value}>
+          <SelectTrigger
+            id={id}
+            className="w-full md:py-5.5 pl-10 pr-10 py-3.5 text-sm text-gray-900 bg-gray-50 border-2 border-Orange rounded-lg 
+              focus:outline-none disabled:opacity-70 
+              transition-colors appearance-none [&>svg]:hidden"
+          >
+            <SelectValue placeholder={title} />
+          </SelectTrigger>
+
+          <SelectContent>
+            {isLoading ? (
+              <SelectItem disabled value="loading">
+                Memuat Data...
+              </SelectItem>
+            ) : (
+                <>
+                <SelectItem disabled value={title}>
+                  {title}
+                </SelectItem>
+                {option.map((opt) => (
+                  <SelectItem key={opt} value={opt}>
+                    {opt}
+                  </SelectItem>
+                ))}
+              </>
+            )}
+          </SelectContent>
+        </Select>
       </div>
     </div>
   );

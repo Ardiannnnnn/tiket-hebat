@@ -1,26 +1,110 @@
+"use client";
 import CardPrice from "./cardPrice";
-import KendaraanForm from "./formData";
+import FormData from "./formData";
 import { poppins } from "@/app/ui/fonts";
+import { useEffect, useState, useRef } from "react";
+import { useSearchParams, useRouter } from "next/navigation";
+import { getSessionById, cancelSession } from "@/service/session";
+import type { SessionData } from "@/types/session";
+import { AlertDialog, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+import { Button } from "@/components/ui/button";
 
 export default function Form() {
+  const searchParams = useSearchParams();
+  const sessionId = searchParams.get("session_id");
+  const [session, setSession] = useState<SessionData | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [showDialog, setShowDialog] = useState(false);
+  const triggeredRef = useRef(false); // Flag untuk mencegah loop
+  const router = useRouter();
+
+  useEffect(() => {
+    const fetchSession = async () => {
+      if (!sessionId) return;
+
+      try {
+        const res = await getSessionById(sessionId);
+        const data = res?.data ?? null;
+        setSession(data);
+      } catch (error) {
+        console.error("Gagal fetch session:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchSession();
+  }, [sessionId]);
+
+  useEffect(() => {
+    const handlePopState = (e: PopStateEvent) => {
+      if (!triggeredRef.current) {
+        e.preventDefault();
+        triggeredRef.current = true;
+        setShowDialog(true);
+      }
+    };
+
+    history.pushState(null, "", location.href); // Tambah 1 dummy history
+    window.addEventListener("popstate", handlePopState);
+
+    return () => {
+      window.removeEventListener("popstate", handlePopState);
+    };
+  }, []);
+
+  const handleLeave = async () => {
+    if (sessionId) {
+      try {
+        await cancelSession(sessionId);
+      } catch (error) {
+        console.error("Gagal membatalkan sesi:", error);
+      }
+    }
+
+    // Tutup dialog dan pindah ke halaman sebelumnya
+    setShowDialog(false);
+    router.back();
+  };
+
+  if (loading) return <p>Loading...</p>;
+  if (!session) return <p>Session tidak ditemukan.</p>;
+
   return (
-    <div className={`${poppins.className} flex flex-col items-center gap-6`}>
-      <div className="mt-6 flex items-center justify-center gap-4">
-        <div className="bg-Blue rounded-full p-1 w-10 text-white font-bold flex justify-center text-2xl">
-          2
+    <>
+      <div className={`${poppins.className} flex flex-col items-center gap-6`}>
+        <div className="mt-6 flex items-center justify-center gap-4">
+          <div className="bg-Blue rounded-full p-1 w-10 text-white font-bold flex justify-center text-2xl">
+            2
+          </div>
+          <p className="text-2xl font-semibold">Isi Data Diri</p>
         </div>
-        <p className="text-2xl font-semibold">
-            Isi Data Diri
-        </p>
+        <div className="flex flex-col-reverse md:flex-row gap-4 justify-center">
+          <div className="flex justify-center m-2">
+            <FormData session={session} />
+          </div>
+          <div className="flex justify-center m-2">
+            <CardPrice session={session} />
+          </div>
+        </div>
       </div>
-      <div className="flex flex-col-reverse md:flex-row gap-4 justify-center">
-        <div className="flex justify-center m-2">
-          <KendaraanForm />
-        </div>
-        <div className="flex justify-center m-2">
-          <CardPrice />
-        </div>
-      </div>
-    </div>
+
+      <AlertDialog open={showDialog} onOpenChange={setShowDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Konfirmasi Keluar</AlertDialogTitle>
+            <AlertDialogDescription>
+              Apakah yakin untuk keluar? Jika keluar maka sesi anda berakhir!
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => (triggeredRef.current = false)}>
+              Batal
+            </AlertDialogCancel>
+            <Button onClick={handleLeave}>Kembali ke halaman sebelumnya</Button>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
   );
 }

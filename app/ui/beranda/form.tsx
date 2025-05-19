@@ -7,12 +7,12 @@ import { IoMdHome } from "react-icons/io";
 import { FaCalendarWeek } from "react-icons/fa";
 import { useRouter } from "next/navigation";
 import { getSchedule } from "@/service/schedule";
-import { Schedule } from "@/types/schedule"; // contoh import service dan tipe
-// import { encryptId } from "@/utils/encrypt";
+import { Schedule } from "@/types/schedule";
 
 export function Form() {
   const router = useRouter();
   const [schedules, setSchedules] = useState<Schedule[]>([]);
+  const [loading, setLoading] = useState(true);
   const [selected, setSelected] = useState({
     asal: "",
     tujuan: "",
@@ -21,24 +21,25 @@ export function Form() {
     scheduleid: "",
   });
 
-  // Ambil data schedule dari API saat mount
   useEffect(() => {
-    async function fetchSchedules() {
-      const res = await getSchedule();
+  async function fetchSchedules() {
+    setLoading(true);
+    const res = await getSchedule();
 
-      if (res?.status) {
-        setSchedules(res.data);
-      }
+    if (res?.status) {
+      setSchedules(res.data);
     }
-    fetchSchedules();
-  }, []);
+    // Tambahkan delay 1 detik agar loading terlihat
+    // await new Promise(resolve => setTimeout(resolve, 5000));
+    setLoading(false);
+  }
+  fetchSchedules();
+}, []);
 
-  // Fungsi handleChange untuk update selected dan otomatis isi field lain kalau asal dipilih
   const handleChange = (field: keyof typeof selected, value: string) => {
     setSelected((prev) => {
       const newSelected = { ...prev, [field]: value };
 
-      // Jika yang diubah asal, otomatis isi field tujuan, kapal, jadwal
       if (field === "asal") {
         const foundSchedule = schedules.find(
           (sch) => sch.route.departure_harbor.harbor_name === value
@@ -50,12 +51,12 @@ export function Form() {
           newSelected.jadwal = new Date(foundSchedule.arrival_datetime)
             .toISOString()
             .split("T")[0];
-          newSelected.scheduleid = String(foundSchedule.id); // simpan ID-nya
+          newSelected.scheduleid = String(foundSchedule.id);
         } else {
           newSelected.tujuan = "";
           newSelected.kapal = "";
           newSelected.jadwal = "";
-          newSelected.scheduleid = ""; // kosongkan jika tidak ada
+          newSelected.scheduleid = "";
         }
       }
 
@@ -63,7 +64,6 @@ export function Form() {
     });
   };
 
-  // Data option dinamis dari schedules, filter unik asal, tujuan, kapal, jadwal
   const asalOptions = Array.from(
     new Set(schedules.map((sch) => sch.route.departure_harbor.harbor_name))
   );
@@ -92,6 +92,7 @@ export function Form() {
       icon: <IoMdHome className="w-5 h-5" />,
       value: selected.asal,
       onChange: (v: string) => handleChange("asal", v),
+      isLoading: loading,
     },
     {
       title: "Pilih Tujuan",
@@ -100,6 +101,7 @@ export function Form() {
       icon: <IoMdHome className="w-5 h-5" />,
       value: selected.tujuan,
       onChange: (v: string) => handleChange("tujuan", v),
+      isLoading: loading,
     },
     {
       title: "Pilih Jadwal",
@@ -108,6 +110,7 @@ export function Form() {
       icon: <FaCalendarWeek className="w-4 h-4" />,
       value: selected.jadwal,
       onChange: (v: string) => handleChange("jadwal", v),
+      isLoading: loading,
     },
     {
       title: "Pilih Kapal",
@@ -116,8 +119,10 @@ export function Form() {
       icon: <RiShipFill className="w-5 h-5" />,
       value: selected.kapal,
       onChange: (v: string) => handleChange("kapal", v),
+      isLoading: loading,
     },
   ];
+
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
@@ -125,7 +130,6 @@ export function Form() {
       alert("Silakan pilih jadwal terlebih dahulu.");
       return;
     }
-    
 
     router.push(`/book/${selected.scheduleid}`);
   };
@@ -134,7 +138,6 @@ export function Form() {
     <div className="p-6 md:p-8 rounded-lg bg-amber-50 md:w-1/2">
       <form
         onSubmit={handleSubmit}
-        action=""
         className="flex flex-col justify-center space-y-2 md:space-y-10"
       >
         <h2 className="text-2xl font-semibold text-Orange text-center">
@@ -143,13 +146,14 @@ export function Form() {
         <div className="grid md:grid-cols-2 md:gap-4">
           {propsExample.map((prop) => (
             <SelectInput
-              icon={prop.icon}
               key={prop.id}
+              icon={prop.icon}
               title={prop.title}
               id={prop.id}
               option={prop.options}
               value={prop.value}
               onChange={prop.onChange}
+              isLoading={prop.isLoading}
             />
           ))}
         </div>
