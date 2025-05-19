@@ -1,7 +1,4 @@
 "use client";
-
-import { useEffect } from "react";
-import { useForm, useFieldArray } from "react-hook-form";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -14,151 +11,107 @@ import {
 } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 import { Label } from "@radix-ui/react-label";
-import { useRouter } from "next/navigation";
-import { FormEvent } from "react";
+import { useParams, useRouter } from "next/navigation";
+import { useEffect } from "react";
+import { useSearchParams } from "next/navigation";
+import { useForm, useFieldArray } from "react-hook-form";
+import type { SessionData, SessionTicket } from "@/types/session";
 
 interface Penumpang {
-  kelas: string;
-  jenis_kelamin: string;
   nama: string;
+  jenis_kelamin: string;
   jenis_id: string;
   nomor_identitas: string;
-  usia: "Dewasa" | "Anak-anak";
+  usia: string;
+  alamat: string;
 }
 
-// interface FormData {
-//   pemesan: {
-//     nama: string;
-//     email: string;
-//     nomor_telepon: string;
-//   };
-//   penumpang: Penumpang[];
-// }
+interface FormValues {
+  penumpang: Penumpang[];
+}
 
-const pemesananData = {
-  jumlah_kendaraan: [
-    { id: 1, jenisKendaraan: 1 },
-    { id: 2, jenisKendaraan: 2 },
-  ],
-  jumlah_penumpang: [
-    { id: 1, jenis: "Dewasa", kelas: "Ekonomi", dewasa: 1, anak: 0 },
-    { id: 1, jenis: "Anak-anak", kelas: "Ekonomi", dewasa: 0, anak: 1 },
-    { id: 2, jenis: "Dewasa", kelas: "Bisnis", dewasa: 1, anak: 0 },
-  ],
-};
+interface FormPenumpangProps {
+  session: SessionData;
+}
 
-export default function FormPenumpang() {
+export default function FormPenumpang({ session }: FormPenumpangProps) {
   const router = useRouter();
-  // const { control, handleSubmit, register, setValue } = useForm<FormData>({
-  //   defaultValues: {
-  //     pemesan: { nama: "", email: "", nomor_telepon: "" },
-  //     penumpang: [],
-  //   },
-  // });
+  const params = useParams();
+  const id = params?.id as string;
+  const searchParams = useSearchParams();
+  const sessionId = searchParams.get("session_id");
+  const { control, register, handleSubmit, setValue, watch } = useForm<FormValues>({
+    defaultValues: {
+      penumpang: [],
+    },
+  });
 
-  // const { fields, append } = useFieldArray({
-  //   control,
-  //   name: "penumpang",
-  // });
+  const { fields, replace } = useFieldArray({
+    control,
+    name: "penumpang",
+  });
 
-  // // useEffect(() => {
-  // //   pemesananData.jumlah_penumpang.forEach((p) => {
-  // //     for (let i = 0; i < p.dewasa; i++) {
-  // //       append({
-  // //         kelas: p.kelas,
-  // //         jenis_kelamin: "",
-  // //         nama: "",
-  // //         jenis_id: "KTP",
-  // //         nomor_identitas: "",
-  // //         usia: "Dewasa",
-  // //       });
-  // //     }
-  // //     for (let i = 0; i < p.anak; i++) {
-  // //       append({
-  // //         kelas: p.kelas,
-  // //         jenis_kelamin: "",
-  // //         nama: "",
-  // //         jenis_id: "KTP",
-  // //         nomor_identitas: "",
-  // //         usia: "Anak-anak",
-  // //       });
-  // //     }
-  // //   });
-  //   // eslint-disable-next-line react-hooks/exhaustive-deps
-  // }, []);
+  // Ambil value terkini dari react-hook-form
+  const penumpangValues = watch("penumpang");
 
-  const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    const formData = new FormData(e.currentTarget); 
-    console.log("Data Pemesan & Penumpang:", formData);
-    router.push("/book/form/verifikasi")
-    
+  useEffect(() => {
+    if (session?.tickets) {
+      const defaultFields = session.tickets.map(() => ({
+        nama: "",
+        jenis_kelamin: "",
+        jenis_id: "",
+        nomor_identitas: "",
+        usia: "",
+        alamat: "",
+      }));
+      replace(defaultFields);
+    }
+  }, [session, replace]);
+
+  const onSubmit = (data: FormValues) => {
+    const penumpangDenganKelas = data.penumpang.map((item, index) => ({
+      ...item,
+      kelas: session.tickets[index]?.class.class_name || "Tidak diketahui",
+      ticket_id: session.tickets[index]?.ticket_id,
+    }));
+
+    console.log("DEBUG: penumpangDenganKelas hasil mapping:", penumpangDenganKelas);
+
+    localStorage.setItem("dataPenumpang", JSON.stringify(penumpangDenganKelas));
+    console.log(
+      "Data penumpang disimpan ke localStorage:",
+      penumpangDenganKelas
+    );
+
+    router.push(`/book/${id}/form/verifikasi?session_id=${sessionId}`);
   };
 
   return (
-    <form onSubmit={(handleSubmit)} className="md:space-y-6 space-y-8">
-      {/* Form Data Pemesan */}
-      <Card className={cn("py-0 border-l")}>
-        <CardContent className={cn("px-0")}>
-          <CardHeader className="p-4 border-b text-center">
-            Isi Data Kendaraan
-          </CardHeader>
-          <div className="p-6">
-            <div className="bg-red-300 flex items-center gap-6 p-4 rounded-lg">
-              <div className="text-xl h-4 w-4 p-4 border border-red-500 rounded-full flex items-center justify-center">
-                i
-              </div>
-              <div className="text-xs text-gray-600">
-                <p>
-                  1. Isi Nomor Polisi sesuai dengan Nomor Polisi yang tertera
-                  pada STNK.
-                </p>
-                <p>
-                  2. Golongan Kendaraan yang tidak sesuai akan dikenakan biaya
-                  tambahan.
-                </p>
-              </div>
-            </div>
-            {pemesananData.jumlah_kendaraan.map((vihicle, index) => (
-              <div key={index} className="mt-4 text-sm ">
-                <p className="text-end">Kendaraan {vihicle.id}</p>
-                <div className="mt-2 flex justify-between gap-4">
-                  <div className="w-full">
-                    <label htmlFor="">Nomor Polisi</label>
-                    <Input className={cn("h-12")} placeholder="BL XXXX XX" />
-                  </div>
-                  <div className="w-full">
-                    <label htmlFor="">Golongan</label>
-                    <Input
-                      className={cn("h-12")}
-                      placeholder={`Golongan ${vihicle.jenisKendaraan}`}
-                      type="text"
-                      readOnly
-                    />
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
-      {/* Form Penumpang */}
-      {pemesananData.jumlah_penumpang.map((field, index) => (
-        <Card key={index} className={cn("py-0 gap-0")}>
+    <form onSubmit={handleSubmit(onSubmit)} className="md:space-y-6 space-y-8">
+      {fields.map((field, index) => (
+        <Card key={field.id} className={cn("py-0 gap-0")}>
           <CardHeader className="p-4 border-b flex flex-row justify-between">
             <p className="flex flex-col md:flex-row md:gap-2">
               Isi Data Penumpang{" "}
-              <span className="font-bold">({field.kelas})</span>
+              <span className="font-bold">
+                ({session.tickets[index]?.class.class_name})
+              </span>
             </p>
-            <p>{field.jenis}</p>
           </CardHeader>
           <CardContent className="p-4 md:px-8">
             <div className="grid grid-cols-3 gap-6 md:text-sm">
               {/* Jenis Kelamin */}
               <div className="col-span-1">
-                <Label className="text-gray-600 md:block hidden">Jenis Kelamin</Label>
+                <Label className="text-gray-600 md:block hidden">
+                  Jenis Kelamin
+                </Label>
                 <Label className="md:hidden">JK</Label>
-                <Select>
+                <Select
+                  value={penumpangValues?.[index]?.jenis_kelamin || ""}
+                  onValueChange={(val) =>
+                    setValue(`penumpang.${index}.jenis_kelamin`, val)
+                  }
+                >
                   <SelectTrigger className="w-full h-10 placeholder:text-sm">
                     <SelectValue placeholder="Pria" />
                   </SelectTrigger>
@@ -172,7 +125,11 @@ export default function FormPenumpang() {
               {/* Nama Lengkap */}
               <div className="col-span-2">
                 <Label className="text-gray-600">Nama Lengkap</Label>
-                <Input className="h-10 text-sm placeholder:text-sm" placeholder="Masukkan Nama" />
+                <Input
+                  className="h-10 text-sm placeholder:text-sm"
+                  placeholder="Masukkan Nama"
+                  {...register(`penumpang.${index}.nama`)}
+                />
                 <p className="text-xs text-gray-500 mt-1">
                   Isi sesuai dengan KTP/SIM/Paspor (tanpa gelar khusus)
                 </p>
@@ -181,12 +138,17 @@ export default function FormPenumpang() {
               {/* Jenis ID */}
               <div className="col-span-1">
                 <Label className="text-gray-600">Jenis ID</Label>
-                <Select>
+                <Select
+                  value={penumpangValues?.[index]?.jenis_id || ""}
+                  onValueChange={(val) =>
+                    setValue(`penumpang.${index}.jenis_id`, val)
+                  }
+                >
                   <SelectTrigger className="w-full h-10 placeholder:text-sm">
-                    <SelectValue placeholder="KTP" />
+                    <SelectValue placeholder="NIK" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="ktp">KTP</SelectItem>
+                    <SelectItem value="ktp">NIK</SelectItem>
                     <SelectItem value="sim">SIM</SelectItem>
                     <SelectItem value="paspor">Paspor</SelectItem>
                   </SelectContent>
@@ -199,6 +161,7 @@ export default function FormPenumpang() {
                 <Input
                   className="h-10 placeholder:text-sm"
                   placeholder="Masukkan Nomor"
+                  {...register(`penumpang.${index}.nomor_identitas`)}
                 />
                 <p className="text-xs text-gray-500 mt-1">
                   Penumpang di bawah 18 tahun, isi dengan tanggal lahir
@@ -209,20 +172,34 @@ export default function FormPenumpang() {
               {/* Usia */}
               <div className="col-span-1">
                 <Label className="text-gray-600">Usia</Label>
-                <Input className="h-10 placeholder:text-sm" type="number" placeholder="18" />
+                <Input
+                  className="h-10 placeholder:text-sm"
+                  type="number"
+                  placeholder="18"
+                  {...register(`penumpang.${index}.usia`, {
+                    valueAsNumber: true,
+                  })}
+                />
               </div>
 
               {/* Alamat */}
               <div className="col-span-2">
                 <Label className="text-gray-600">Alamat</Label>
-                <Input className="h-10 placeholder:text-sm" placeholder="Masukkan alamat" />
+                <Input
+                  className="h-10 placeholder:text-sm"
+                  placeholder="Masukkan alamat"
+                  {...register(`penumpang.${index}.alamat`)}
+                />
                 <p className="text-xs text-gray-500 mt-1">Contoh: Air Dingin</p>
               </div>
             </div>
           </CardContent>
         </Card>
       ))}
-      <Button type="submit" className="w-full bg-Blue text-white hover:bg-teal-600">
+      <Button
+        type="submit"
+        className="w-full bg-Blue text-white hover:bg-teal-600"
+      >
         Lanjutkan
       </Button>
     </form>
