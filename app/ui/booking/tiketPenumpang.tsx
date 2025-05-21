@@ -19,6 +19,7 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { lockTickets } from "@/service/session";
 import { LockTicketItem } from "@/types/lock";
+import { ClassAvailability } from "@/types/classAvailability";
 
 const FormSchema = z.object({
   passengers: z.array(
@@ -36,20 +37,13 @@ type FormValues = z.infer<typeof FormSchema>;
 interface TiketPenumpangProps {
   setTabValue: (value: string) => void;
   scheduleid: string;
-}
-
-interface ClassAvailability {
-  class_id: number;
-  class_name: string;
-  total_capacity: number;
-  available_capacity: number;
-  price: number;
-  currency: string;
+  quota: ClassAvailability[];
 }
 
 export default function TiketPenumpang({
   setTabValue,
   scheduleid,
+  quota,
 }: TiketPenumpangProps) {
   const router = useRouter();
   const [classes, setClasses] = useState<ClassAvailability[]>([]);

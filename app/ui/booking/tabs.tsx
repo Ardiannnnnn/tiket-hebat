@@ -5,12 +5,14 @@ import { useState } from "react";
 import { poppins } from "@/app/ui/fonts";
 import TiketKendaraan from "./tiketKendaraan";
 import TiketPenumpang from "./tiketPenumpang";
+import { ClassAvailability } from "@/types/classAvailability";
 
 interface TiketTabsProps {
   scheduleid: string;
+  quota: ClassAvailability[];
 }
 
-export default function TiketTabs({ scheduleid }: TiketTabsProps) {
+export default function TiketTabs({ scheduleid, quota }: TiketTabsProps) {
   const [tabValue, setTabValue] = useState<string>("kendaraan");
 
   return (
@@ -24,7 +26,7 @@ export default function TiketTabs({ scheduleid }: TiketTabsProps) {
       <Tabs
         value={tabValue}
         onValueChange={setTabValue}
-        className=""
+        className="p-4"
       >
         <TabsList className="w-full flex justify-between">
           <TabsTrigger disabled value="kendaraan">
@@ -38,7 +40,7 @@ export default function TiketTabs({ scheduleid }: TiketTabsProps) {
           <TiketKendaraan setTabValue={setTabValue} scheduleid={scheduleid}/>
         </TabsContent>
         <TabsContent value="penumpang">
-          <TiketPenumpang setTabValue={setTabValue} scheduleid={scheduleid}/>
+          <TiketPenumpang setTabValue={setTabValue} scheduleid={scheduleid} quota={quota}/>
         </TabsContent>
       </Tabs>
     </div>

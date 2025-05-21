@@ -122,18 +122,18 @@ export default function TiketKendaraan({ setTabValue, scheduleid }: TiketKendara
                   <div className="border p-2 rounded-lg bg-gray-100 text-sm text-gray-700 min-w-[60px] text-center">
                     {availability[index] !== undefined ? availability[index] : "-"}
                   </div>
-                  <Button variant="ghost" size="icon" onClick={() => removeVehicle(index)}>
+                  {/* <Button variant="ghost" size="icon" onClick={() => removeVehicle(index)}>
                     <Trash2 className="w-5 h-5 text-red-500" />
-                  </Button>
+                  </Button> */}
                 </div>
                 <FormMessage />
               </FormItem>
             )}
           />
         ))}
-        <Button type="button" onClick={addVehicle} className="flex items-center bg-Orange w-10 md:w-fit">
+        {/* <Button type="button" onClick={addVehicle} className="flex items-center bg-Orange w-10 md:w-fit">
           <Plus className="w-4 h-4x" />
-        </Button>
+        </Button> */}
         <div className="w-full flex justify-center md:justify-end mt-14 md:mt-0">
           <Button type="button" onClick={() => setTabValue("penumpang")} className="w-full md:w-fit bg-Blue text-white hover:bg-teal-600">
             Lanjut ke Tiket Penumpang
