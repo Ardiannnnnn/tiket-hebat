@@ -11,28 +11,18 @@ import {
 } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 import { Label } from "@radix-ui/react-label";
-import { useParams, useRouter } from "next/navigation";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { useEffect } from "react";
-import { useSearchParams } from "next/navigation";
 import { useForm, useFieldArray } from "react-hook-form";
-import type { SessionData, SessionTicket } from "@/types/session";
-
-interface Penumpang {
-  nama: string;
-  jenis_kelamin: string;
-  jenis_id: string;
-  nomor_identitas: string;
-  usia: string;
-  alamat: string;
-}
-
-interface FormValues {
-  penumpang: Penumpang[];
-}
+import { zodResolver } from "@hookform/resolvers/zod";
+import { penumpangSchema, PenumpangFormSchema } from "@/lib/penumpangSchema";
+import type { SessionData } from "@/types/session";
 
 interface FormPenumpangProps {
   session: SessionData;
 }
+
+const STORAGE_KEY = "dataPenumpang";
 
 export default function FormPenumpang({ session }: FormPenumpangProps) {
   const router = useRouter();
@@ -40,7 +30,17 @@ export default function FormPenumpang({ session }: FormPenumpangProps) {
   const id = params?.id as string;
   const searchParams = useSearchParams();
   const sessionId = searchParams.get("session_id");
-  const { control, register, handleSubmit, setValue, watch } = useForm<FormValues>({
+
+  const {
+    control,
+    register,
+    handleSubmit,
+    setValue,
+    watch,
+    formState: { errors },
+    reset,
+  } = useForm<PenumpangFormSchema>({
+    resolver: zodResolver(penumpangSchema),
     defaultValues: {
       penumpang: [],
     },
@@ -51,38 +51,83 @@ export default function FormPenumpang({ session }: FormPenumpangProps) {
     name: "penumpang",
   });
 
-  // Ambil value terkini dari react-hook-form
+  // Watch form values for saving to localStorage
   const penumpangValues = watch("penumpang");
 
+  
+  // Load saved data from localStorage or from session on mount
   useEffect(() => {
+    const savedData = localStorage.getItem(STORAGE_KEY);
+    if (savedData) {
+      try {
+        const parsedData = JSON.parse(savedData);
+        if (Array.isArray(parsedData) && parsedData.length === session.tickets.length) {
+          replace(parsedData);
+          reset({ penumpang: parsedData });
+          return;
+        }
+      } catch {
+        // parsing gagal
+      }
+    }
+
+    // Default field dari session
     if (session?.tickets) {
       const defaultFields = session.tickets.map(() => ({
         nama: "",
-        jenis_kelamin: "",
-        jenis_id: "",
+        jenis_kelamin: "pria" as const,
+        jenis_id: "nik" as const,
         nomor_identitas: "",
         usia: "",
         alamat: "",
       }));
       replace(defaultFields);
+      reset({ penumpang: defaultFields });
     }
-  }, [session, replace]);
+  }, [session, replace, reset]);
 
-  const onSubmit = (data: FormValues) => {
+  // Simpan ke localStorage hanya jika tab aktif
+  useEffect(() => {
+    const saveIfVisible = () => {
+      if (document.visibilityState === "visible" && penumpangValues.length > 0) {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(penumpangValues));
+      }
+    };
+
+    document.addEventListener("visibilitychange", saveIfVisible);
+    return () => {
+      document.removeEventListener("visibilitychange", saveIfVisible);
+    };
+  }, [penumpangValues]);
+
+  // Simpan langsung saat data berubah jika tab aktif
+  useEffect(() => {
+    if (document.visibilityState === "visible" && penumpangValues.length > 0) {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(penumpangValues));
+    }
+  }, [penumpangValues]);
+
+  // Hapus localStorage saat tab/browser ditutup
+  useEffect(() => {
+    const cleanup = () => {
+      localStorage.removeItem(STORAGE_KEY);
+    };
+
+    window.addEventListener("beforeunload", cleanup);
+    return () => {
+      window.removeEventListener("beforeunload", cleanup);
+    };
+  }, []);
+
+  const onSubmit = (data: PenumpangFormSchema) => {
     const penumpangDenganKelas = data.penumpang.map((item, index) => ({
       ...item,
+      usia: Number(item.usia),
       kelas: session.tickets[index]?.class.class_name || "Tidak diketahui",
       ticket_id: session.tickets[index]?.ticket_id,
     }));
 
-    console.log("DEBUG: penumpangDenganKelas hasil mapping:", penumpangDenganKelas);
-
-    localStorage.setItem("dataPenumpang", JSON.stringify(penumpangDenganKelas));
-    console.log(
-      "Data penumpang disimpan ke localStorage:",
-      penumpangDenganKelas
-    );
-
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(penumpangDenganKelas));
     router.push(`/book/${id}/form/verifikasi?session_id=${sessionId}`);
   };
 
@@ -108,7 +153,7 @@ export default function FormPenumpang({ session }: FormPenumpangProps) {
                 <Label className="md:hidden">JK</Label>
                 <Select
                   value={penumpangValues?.[index]?.jenis_kelamin || ""}
-                  onValueChange={(val) =>
+                  onValueChange={(val: "pria" | "wanita") =>
                     setValue(`penumpang.${index}.jenis_kelamin`, val)
                   }
                 >
@@ -120,6 +165,11 @@ export default function FormPenumpang({ session }: FormPenumpangProps) {
                     <SelectItem value="wanita">Wanita</SelectItem>
                   </SelectContent>
                 </Select>
+                {errors.penumpang?.[index]?.jenis_kelamin && (
+                  <p className="text-xs text-red-500 mt-1">
+                    {errors.penumpang[index].jenis_kelamin?.message}
+                  </p>
+                )}
               </div>
 
               {/* Nama Lengkap */}
@@ -133,6 +183,11 @@ export default function FormPenumpang({ session }: FormPenumpangProps) {
                 <p className="text-xs text-gray-500 mt-1">
                   Isi sesuai dengan KTP/SIM/Paspor (tanpa gelar khusus)
                 </p>
+                {errors.penumpang?.[index]?.nama && (
+                  <p className="text-xs text-red-500 mt-1">
+                    {errors.penumpang[index].nama?.message}
+                  </p>
+                )}
               </div>
 
               {/* Jenis ID */}
@@ -140,7 +195,7 @@ export default function FormPenumpang({ session }: FormPenumpangProps) {
                 <Label className="text-gray-600">Jenis ID</Label>
                 <Select
                   value={penumpangValues?.[index]?.jenis_id || ""}
-                  onValueChange={(val) =>
+                  onValueChange={(val: "nik" | "sim" | "paspor") =>
                     setValue(`penumpang.${index}.jenis_id`, val)
                   }
                 >
@@ -148,11 +203,16 @@ export default function FormPenumpang({ session }: FormPenumpangProps) {
                     <SelectValue placeholder="NIK" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="ktp">NIK</SelectItem>
+                    <SelectItem value="nik">NIK</SelectItem>
                     <SelectItem value="sim">SIM</SelectItem>
                     <SelectItem value="paspor">Paspor</SelectItem>
                   </SelectContent>
                 </Select>
+                {errors.penumpang?.[index]?.jenis_id && (
+                  <p className="text-xs text-red-500 mt-1">
+                    {errors.penumpang[index].jenis_id?.message}
+                  </p>
+                )}
               </div>
 
               {/* Nomor Identitas */}
@@ -167,6 +227,11 @@ export default function FormPenumpang({ session }: FormPenumpangProps) {
                   Penumpang di bawah 18 tahun, isi dengan tanggal lahir
                   (hhbbtttt)
                 </p>
+                {errors.penumpang?.[index]?.nomor_identitas && (
+                  <p className="text-xs text-red-500 mt-1">
+                    {errors.penumpang[index].nomor_identitas?.message}
+                  </p>
+                )}
               </div>
 
               {/* Usia */}
@@ -180,6 +245,11 @@ export default function FormPenumpang({ session }: FormPenumpangProps) {
                     valueAsNumber: true,
                   })}
                 />
+                {errors.penumpang?.[index]?.usia && (
+                  <p className="text-xs text-red-500 mt-1">
+                    {errors.penumpang[index].usia?.message}
+                  </p>
+                )}
               </div>
 
               {/* Alamat */}
@@ -191,6 +261,11 @@ export default function FormPenumpang({ session }: FormPenumpangProps) {
                   {...register(`penumpang.${index}.alamat`)}
                 />
                 <p className="text-xs text-gray-500 mt-1">Contoh: Air Dingin</p>
+                {errors.penumpang?.[index]?.alamat && (
+                  <p className="text-xs text-red-500 mt-1">
+                    {errors.penumpang[index].alamat?.message}
+                  </p>
+                )}
               </div>
             </div>
           </CardContent>

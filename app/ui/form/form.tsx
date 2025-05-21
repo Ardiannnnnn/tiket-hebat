@@ -3,10 +3,19 @@ import CardPrice from "./cardPrice";
 import FormData from "./formData";
 import { poppins } from "@/app/ui/fonts";
 import { useEffect, useState, useRef } from "react";
-import { useSearchParams, useRouter } from "next/navigation";
+import { useSearchParams, useRouter, useParams } from "next/navigation";
 import { getSessionById, cancelSession } from "@/service/session";
 import type { SessionData } from "@/types/session";
-import { AlertDialog, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+import {
+  AlertDialog,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 
 export default function Form() {
@@ -17,54 +26,70 @@ export default function Form() {
   const [showDialog, setShowDialog] = useState(false);
   const triggeredRef = useRef(false); // Flag untuk mencegah loop
   const router = useRouter();
+  const hasShownDialogRef = useRef(false);
+  const params = useParams();
+  const bookId = params.id;
 
   useEffect(() => {
     const fetchSession = async () => {
       if (!sessionId) return;
-
       try {
         const res = await getSessionById(sessionId);
-        const data = res?.data ?? null;
-        setSession(data);
+        setSession(res?.data ?? null);
       } catch (error) {
         console.error("Gagal fetch session:", error);
       } finally {
         setLoading(false);
       }
     };
-
     fetchSession();
   }, [sessionId]);
 
   useEffect(() => {
-    const handlePopState = (e: PopStateEvent) => {
-      if (!triggeredRef.current) {
-        e.preventDefault();
-        triggeredRef.current = true;
+    history.pushState(null, "", location.href);
+
+    const handlePopState = () => {
+      if (!hasShownDialogRef.current) {
         setShowDialog(true);
+        hasShownDialogRef.current = true;
+        history.pushState(null, "", location.href);
       }
     };
 
-    history.pushState(null, "", location.href); // Tambah 1 dummy history
     window.addEventListener("popstate", handlePopState);
-
     return () => {
       window.removeEventListener("popstate", handlePopState);
     };
   }, []);
 
+  useEffect(() => {
+    const handleBeforeUnload = async () => {
+      if (session) {
+        try {
+          await cancelSession(session.id);
+        } catch {}
+      }
+    };
+
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    return () => window.removeEventListener("beforeunload", handleBeforeUnload);
+  }, [session]);
+
   const handleLeave = async () => {
-    if (sessionId) {
+    setShowDialog(false);
+    if (session) {
       try {
-        await cancelSession(sessionId);
+        await cancelSession(session.id);
       } catch (error) {
         console.error("Gagal membatalkan sesi:", error);
       }
     }
 
-    // Tutup dialog dan pindah ke halaman sebelumnya
-    setShowDialog(false);
-    router.back();
+    if (bookId) {
+      router.push(`/book/${bookId}`);
+    } else {
+      router.push("/book");
+    }
   };
 
   if (loading) return <p>Loading...</p>;

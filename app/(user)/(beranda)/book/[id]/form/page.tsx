@@ -1,6 +1,6 @@
 import FormData from "@/app/ui/form/form"
 
-export default function Form(){
+export default async function Form(){
     return(
       <FormData/>
     )

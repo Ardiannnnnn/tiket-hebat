@@ -1,6 +1,6 @@
 import api from "./api";
 import { LockTicketPayload } from "@/types/lock";
-import { SessionResponse } from "@/types/session"; 
+import { SessionResponse } from "@/types/session";
 
 export const lockTickets = async (payload: LockTicketPayload) => {
   try {
@@ -13,10 +13,13 @@ export const lockTickets = async (payload: LockTicketPayload) => {
   }
 };
 
-
-export const getSessionById = async (sessionId: string): Promise<SessionResponse | null> => {
+export const getSessionById = async (
+  sessionId: string
+): Promise<SessionResponse | null> => {
   try {
-    const response = await api.get<SessionResponse>(`/session/uuid/${sessionId}`);
+    const response = await api.get<SessionResponse>(
+      `/session/uuid/${sessionId}`
+    );
     return response.data;
   } catch (error) {
     console.error("Gagal mengambil data session:", error);
@@ -24,8 +27,12 @@ export const getSessionById = async (sessionId: string): Promise<SessionResponse
   }
 };
 
-export async function cancelSession(sessionId: string) {
-  return await fetch(`/api/session/${sessionId}`, {
-    method: "DELETE",
-  });
+export async function cancelSession(id: Number) {
+  try {
+    const response = await api.delete(`/session/${id}`);
+    return response.data;
+  } catch (error) {
+    console.error("Gagal membatalkan sesi:", error);
+    throw error;
+  }
 }
