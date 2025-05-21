@@ -15,8 +15,8 @@ export const penumpangSchema = z.object({
         .string()
         .min(1, { message: "Nomor identitas tidak boleh kosong" }),
       usia: z.union([
+          z.number().min(0, { message: "Usia tidak boleh negatif" }),
         z.string().min(1, { message: "Usia wajib diisi" }),
-        z.number().min(0, { message: "Usia tidak boleh negatif" }),
       ]),
       alamat: z.string().min(1, { message: "Alamat tidak boleh kosong" }),
     })

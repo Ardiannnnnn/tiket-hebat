@@ -54,31 +54,32 @@ export default function FormPenumpang({ session }: FormPenumpangProps) {
   // Watch form values for saving to localStorage
   const penumpangValues = watch("penumpang");
 
-  
   // Load saved data from localStorage or from session on mount
   useEffect(() => {
-    const savedData = localStorage.getItem(STORAGE_KEY);
+    // Ambil data dari localStorage
+    const savedData = sessionStorage.getItem(STORAGE_KEY);
     if (savedData) {
       try {
         const parsedData = JSON.parse(savedData);
+        // Pastikan data sesuai struktur dan length sama dengan session tickets
         if (Array.isArray(parsedData) && parsedData.length === session.tickets.length) {
           replace(parsedData);
-          reset({ penumpang: parsedData });
+          reset({ penumpang: parsedData }); // sync react-hook-form state
           return;
         }
       } catch {
-        // parsing gagal
+        // Jika error parsing, abaikan dan load default dari session
       }
     }
 
-    // Default field dari session
+    // Jika tidak ada data tersimpan, inisialisasi form dari session
     if (session?.tickets) {
       const defaultFields = session.tickets.map(() => ({
         nama: "",
         jenis_kelamin: "pria" as const,
         jenis_id: "nik" as const,
         nomor_identitas: "",
-        usia: "",
+        usia: "", // bisa string atau number sesuai schema
         alamat: "",
       }));
       replace(defaultFields);
@@ -86,38 +87,12 @@ export default function FormPenumpang({ session }: FormPenumpangProps) {
     }
   }, [session, replace, reset]);
 
-  // Simpan ke localStorage hanya jika tab aktif
+  // Simpan data form ke localStorage setiap ada perubahan di penumpangValues
   useEffect(() => {
-    const saveIfVisible = () => {
-      if (document.visibilityState === "visible" && penumpangValues.length > 0) {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(penumpangValues));
-      }
-    };
-
-    document.addEventListener("visibilitychange", saveIfVisible);
-    return () => {
-      document.removeEventListener("visibilitychange", saveIfVisible);
-    };
-  }, [penumpangValues]);
-
-  // Simpan langsung saat data berubah jika tab aktif
-  useEffect(() => {
-    if (document.visibilityState === "visible" && penumpangValues.length > 0) {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(penumpangValues));
+    if (penumpangValues && penumpangValues.length > 0) {
+      sessionStorage.setItem(STORAGE_KEY, JSON.stringify(penumpangValues));
     }
   }, [penumpangValues]);
-
-  // Hapus localStorage saat tab/browser ditutup
-  useEffect(() => {
-    const cleanup = () => {
-      localStorage.removeItem(STORAGE_KEY);
-    };
-
-    window.addEventListener("beforeunload", cleanup);
-    return () => {
-      window.removeEventListener("beforeunload", cleanup);
-    };
-  }, []);
 
   const onSubmit = (data: PenumpangFormSchema) => {
     const penumpangDenganKelas = data.penumpang.map((item, index) => ({
@@ -127,7 +102,11 @@ export default function FormPenumpang({ session }: FormPenumpangProps) {
       ticket_id: session.tickets[index]?.ticket_id,
     }));
 
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(penumpangDenganKelas));
+
+    console.log("Data yang disimpan:", penumpangDenganKelas);
+
+
+    sessionStorage.setItem(STORAGE_KEY, JSON.stringify(penumpangDenganKelas));
     router.push(`/book/${id}/form/verifikasi?session_id=${sessionId}`);
   };
 
