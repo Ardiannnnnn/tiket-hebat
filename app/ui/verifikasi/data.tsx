@@ -106,7 +106,7 @@ export default function Data({ sessionId }: DataProps) {
   const id = params?.id as string;
 
   useEffect(() => {
-    const stored = localStorage.getItem("dataPenumpang");
+    const stored = sessionStorage.getItem("dataPenumpang");
     if (stored) {
       try {
         const parsed = JSON.parse(stored) as any[];
