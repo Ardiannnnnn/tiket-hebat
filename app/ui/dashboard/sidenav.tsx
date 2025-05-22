@@ -6,16 +6,29 @@ import { RiDashboardFill, RiShipFill } from "react-icons/ri";
 import { FaUser, FaShip, FaRoute, FaCalendarAlt } from "react-icons/fa";
 import { IoTicketOutline } from "react-icons/io5";
 import { MdOutlineUploadFile } from "react-icons/md";
-import { useState } from "react";
+import { FormEvent, useState } from "react";
 import Image from "next/image";
 import NavLinks from "./navlink";
 import logo from "@/public/image/asdp_2.png";
 import adminImg from "@/public/image/ardian.png";
 import {dashboardLinks} from "./navlink";
 import {menuLinks} from "./navlink";
+import { logoutUser } from "@/service/auth";
+import { useRouter } from "next/navigation";
 
 export default function SideNav() {
   const [isOpen, setIsOpen] = useState(false);
+  const router = useRouter();
+
+   const handleLogout = async (e: FormEvent) => {
+    e.preventDefault(); // cegah reload
+    try {
+      await logoutUser();
+      router.push("/login"); // redirect setelah logout
+    } catch (err) {
+      console.error("Gagal logout", err);
+    }
+  };
 
   return (
     <>
@@ -68,7 +81,7 @@ export default function SideNav() {
           </div>
 
           {/* Logout Button */}
-          <form className="mt-4">
+          <form onSubmit={handleLogout} className="mt-4">
             <button className="flex w-full items-center gap-3 text-gray-600 hover:text-red-600 p-2 rounded-lg hover:bg-red-100">
               <LuPower className="h-5 w-5" />
               <span>Keluar</span>
