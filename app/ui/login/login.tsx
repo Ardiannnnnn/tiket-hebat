@@ -44,8 +44,7 @@ export default function PageLogin() {
       // Ganti ini dengan API login kamu
       const data = await loginUser(values);
         console.log("Login berhasil", data);
-      // await loginUser(values);
-      router.push("/beranda");
+      // await loginUser(values)
     } catch (err) {
       console.error("Login gagal", err);
     } finally {
