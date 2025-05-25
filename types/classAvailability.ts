@@ -5,4 +5,5 @@ export interface ClassAvailability {
   available_capacity: number;
   price: number;
   currency: string;
+  type: string;
 }

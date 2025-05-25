@@ -77,8 +77,8 @@ export default function SelectInput({
                 <SelectItem disabled value={title}>
                   {title}
                 </SelectItem>
-                {option.map((opt) => (
-                  <SelectItem key={opt} value={opt}>
+                {option.map((opt, index) => (
+                  <SelectItem key={index} value={opt}>
                     {opt}
                   </SelectItem>
                 ))}

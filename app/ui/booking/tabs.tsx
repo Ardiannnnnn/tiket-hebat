@@ -14,6 +14,8 @@ interface TiketTabsProps {
 
 export default function TiketTabs({ scheduleid, quota }: TiketTabsProps) {
   const [tabValue, setTabValue] = useState<string>("kendaraan");
+  // Tambahan
+const [selectedVehicleClass, setSelectedVehicleClass] = useState<ClassAvailability | null>(null);
 
   return (
     <div className={`${poppins.className} md:w-1/2 md:space-y-10 mt-4 md:mt-10`}>
@@ -37,10 +39,10 @@ export default function TiketTabs({ scheduleid, quota }: TiketTabsProps) {
           </TabsTrigger>
         </TabsList>
         <TabsContent value="kendaraan">
-          <TiketKendaraan setTabValue={setTabValue} scheduleid={scheduleid}/>
+          <TiketKendaraan setTabValue={setTabValue} scheduleid={scheduleid} setSelectedVehicleClass={setSelectedVehicleClass}/>
         </TabsContent>
         <TabsContent value="penumpang">
-          <TiketPenumpang setTabValue={setTabValue} scheduleid={scheduleid} quota={quota}/>
+          <TiketPenumpang setTabValue={setTabValue} scheduleid={scheduleid} quota={quota} selectedVehicleClass={selectedVehicleClass}/>
         </TabsContent>
       </Tabs>
     </div>
