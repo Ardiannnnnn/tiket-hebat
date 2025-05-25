@@ -4,7 +4,7 @@ import { Schedule, ScheduleResponse } from "@/types/schedule";
 
 export const getSchedule = async (): Promise<ScheduleResponse | null> => {
   try {
-    const response = await api.get<ScheduleResponse>("/schedules");
+    const response = await api.get<ScheduleResponse>("/schedules/active");
     console.log("response", response.data);
     return response.data;
   } catch (error) {

@@ -17,22 +17,45 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
+import { clearSessionCookie, getCookie, setSessionCookie } from "@/utils/cookies";
+import { toast } from "sonner";
 
 export default function Form() {
-  const searchParams = useSearchParams();
-  const sessionId = searchParams.get("session_id");
+   const searchParams = useSearchParams();
+  const sessionId = searchParams?.get("session_id");
   const [session, setSession] = useState<SessionData | null>(null);
   const [loading, setLoading] = useState(true);
   const [showDialog, setShowDialog] = useState(false);
-  const triggeredRef = useRef(false); // Flag untuk mencegah loop
+  const triggeredRef = useRef(false);
   const router = useRouter();
   const hasShownDialogRef = useRef(false);
   const params = useParams();
-  const bookId = params.id;
+  const bookId = params?.id;
 
+   // Validasi cookie dan ambil session
   useEffect(() => {
+    if (!sessionId) {
+      alert("Session ID tidak ditemukan.");
+      router.push(`/book/${bookId}`);
+      return;
+    }
+
+    const cookie = getCookie("session_id");
+
+    // Set cookie jika belum ada
+    if (!cookie) {
+      setSessionCookie(sessionId);
+    }
+
+    // Jika cookie berbeda → redirect
+    if (cookie && cookie !== sessionId) {
+      toast("Sesi Anda telah berakhir, silakan mulai booking ulang.");
+      router.push(`/book/${bookId}`);
+      return;
+    }
+
+    // Ambil data sesi
     const fetchSession = async () => {
-      if (!sessionId) return;
       try {
         const res = await getSessionById(sessionId);
         setSession(res?.data ?? null);
@@ -43,11 +66,20 @@ export default function Form() {
       }
     };
     fetchSession();
-  }, [sessionId]);
 
+    // Timer 5 menit
+    const timer = setTimeout(() => {
+      toast("Sesi habis, silakan booking ulang.");
+      clearSessionCookie();
+      router.push(`/book/${bookId}`);
+    }, 5 * 60 * 1000);
+
+    return () => clearTimeout(timer);
+  }, [sessionId, router, bookId]);
+
+  // Handle tombol back
   useEffect(() => {
     history.pushState(null, "", location.href);
-
     const handlePopState = () => {
       if (!hasShownDialogRef.current) {
         setShowDialog(true);
@@ -55,19 +87,18 @@ export default function Form() {
         history.pushState(null, "", location.href);
       }
     };
-
     window.addEventListener("popstate", handlePopState);
-    return () => {
-      window.removeEventListener("popstate", handlePopState);
-    };
+    return () => window.removeEventListener("popstate", handlePopState);
   }, []);
 
+  // Batalkan sesi saat unload (tanpa hapus cookie)
   useEffect(() => {
-    const handleBeforeUnload = async () => {
+    const handleBeforeUnload = () => {
       if (session) {
-        try {
-          await cancelSession(session.id);
-        } catch {}
+        navigator.sendBeacon(
+          "/api/cancel-session",
+          JSON.stringify({ id: session.id })
+        );
       }
     };
 
@@ -75,20 +106,21 @@ export default function Form() {
     return () => window.removeEventListener("beforeunload", handleBeforeUnload);
   }, [session]);
 
+  // Jika user tekan tombol "Keluar"
   const handleLeave = async () => {
     setShowDialog(false);
     if (session) {
       try {
         await cancelSession(session.id);
+        clearSessionCookie();
       } catch (error) {
         console.error("Gagal membatalkan sesi:", error);
       }
     }
-
     if (bookId) {
       router.push(`/book/${bookId}`);
     } else {
-      router.push("/book");
+      router.push("/");
     }
   };
 

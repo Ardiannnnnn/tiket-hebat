@@ -20,6 +20,7 @@ import { toast } from "sonner";
 import { lockTickets } from "@/service/session";
 import { LockTicketItem } from "@/types/lock";
 import { ClassAvailability } from "@/types/classAvailability";
+import { setSessionCookie } from "@/utils/cookies"; 
 
 const FormSchema = z.object({
   passengers: z.array(
@@ -38,12 +39,14 @@ interface TiketPenumpangProps {
   setTabValue: (value: string) => void;
   scheduleid: string;
   quota: ClassAvailability[];
+  selectedVehicleClass: ClassAvailability | null;
 }
 
 export default function TiketPenumpang({
   setTabValue,
   scheduleid,
   quota,
+  selectedVehicleClass,
 }: TiketPenumpangProps) {
   const router = useRouter();
   const [classes, setClasses] = useState<ClassAvailability[]>([]);
@@ -56,34 +59,49 @@ export default function TiketPenumpang({
 
   // Fetch quota data
   useEffect(() => {
-    const fetchQuota = async () => {
-      try {
-        const res = await fetch(
-          `https://tikethebat.ambitiousflower-0b7495d3.southeastasia.azurecontainerapps.io/api/v1/schedule/${scheduleid}/quota`
-        );
-        const json = await res.json();
-        const availability = json?.data?.classes_availability || [];
-        setClasses(availability);
+  const fetchQuota = async () => {
+    try {
+      const res = await fetch(
+        `https://tikethebat.ambitiousflower-0b7495d3.southeastasia.azurecontainerapps.io/api/v1/schedule/${scheduleid}/quota`
+      );
+      const json = await res.json();
+      const availability = json?.data?.classes_availability || [];
+      setClasses(availability);
 
-        // Set default values for each class
-        const defaultPassengers = availability.map(
-          (cls: ClassAvailability) => ({
-            classId: cls.class_id,
-            className: cls.class_name,
-            adults: 0,
-            children: 0,
-          })
-        );
-        form.reset({ passengers: defaultPassengers });
-      } catch (error) {
-        console.error("Gagal mengambil data kuota:", error);
-      }
-    };
+      const defaultPassengers = availability.map((cls: ClassAvailability) => {
+        let adults = 0;
 
-    if (scheduleid) {
-      fetchQuota();
+        if (cls.type === "passenger" && selectedVehicleClass) {
+          if (selectedVehicleClass.class_name === "Golongan I") {
+            // Motor => 1 tiket
+            if (cls.class_name === "ECONOMY") adults = 1;
+          } else if (selectedVehicleClass.class_name === "Golongan II") {
+            // Mobil => 5 tiket
+            if (cls.class_name === "ECONOMY") adults = 5;
+          }
+        }
+
+        return {
+          classId: cls.class_id,
+          className: cls.class_name,
+          adults,
+          children: 0,
+        };
+      });
+
+      form.reset({ passengers: defaultPassengers });
+    } catch (error) {
+      console.error("Gagal mengambil data kuota:", error);
     }
-  }, [scheduleid]);
+  };
+
+  if (scheduleid) {
+    fetchQuota();
+  }
+}, [scheduleid, selectedVehicleClass]);
+
+
+  console.log("datanya",classes);
 
   // Hitung total penumpang (dewasa + anak-anak)
   const getTotalPassengers = () => {
@@ -117,47 +135,48 @@ export default function TiketPenumpang({
   };
 
   // Submit form
-  const onSubmit = async (data: FormValues) => {
-  const total = data.passengers.reduce(
-    (total, p) => total + p.adults + p.children,
-    0
-  );
-  if (total > 5) {
-    alert("Jumlah tiket maksimal adalah 5.");
-    return;
-  }
+ const onSubmit = async (data: FormValues) => {
+    const total = data.passengers.reduce(
+      (total, p) => total + p.adults + p.children,
+      0
+    );
+    if (total > 5) {
+      alert("Jumlah tiket maksimal adalah 5.");
+      return;
+    }
 
-  const items: LockTicketItem[] = data.passengers
-    .filter((p) => p.adults + p.children > 0)
-    .map((p) => ({
-      class_id: p.classId,
-      quantity: p.adults + p.children,
-    }));
+    const items: LockTicketItem[] = data.passengers
+      .filter((p) => p.adults + p.children > 0)
+      .map((p) => ({
+        class_id: p.classId,
+        quantity: p.adults + p.children,
+      }));
 
- const payload = {
-  schedule_id: Number(scheduleid),
-  items,
-};
+    const payload = {
+      schedule_id: Number(scheduleid),
+      items,
+    };
 
-  if (!payload.items || payload.items.length === 0) {
-    toast.warning("Pilih tiket terlebih dahulu");
-    return;
-  }
+    if (!payload.items || payload.items.length === 0) {
+      toast.warning("Pilih tiket terlebih dahulu");
+      return;
+    }
 
-  try {
-    const lockedData = await lockTickets(payload);
-    const sessionId = lockedData.data.session_id;
-    console.log("✅ Tiket berhasil dilock:", lockedData);
-    router.push(`/book/${scheduleid}/form?session_id=${sessionId}`);
-  } catch (error) {
-    console.error("❌ Gagal mengunci tiket:", error);
-    toast.error("Terjadi kesalahan saat mengunci tiket");
-  }
-};
+    try {
+      const lockedData = await lockTickets(payload);
+      const sessionId = lockedData.data.session_id;
+      setSessionCookie(sessionId);  // <-- SET COOKIE SESSION DI SINI
+      console.log("✅ Tiket berhasil dilock:", lockedData);
+      router.push(`/book/${scheduleid}/form?session_id=${sessionId}`);
+    } catch (error) {
+      console.error("❌ Gagal mengunci tiket:", error);
+      toast.error("Terjadi kesalahan saat mengunci tiket");
+    }
+  };
   return (
     <Form {...form}>
       <form className="space-y-6" onSubmit={form.handleSubmit(onSubmit)}>
-        {classes.map((cls, index) => {
+        {classes.filter(item => item.type === "passenger").map((cls, index) => {
           const adultsId = `adults-${cls.class_id}`;
           const childrenId = `children-${cls.class_id}`;
           return (

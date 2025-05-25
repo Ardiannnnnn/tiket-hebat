@@ -1,11 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Button } from "@/components/ui/button";
-import { Plus, Trash2 } from "lucide-react";
 import {
   Form,
   FormControl,
@@ -21,69 +20,73 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { ClassAvailability } from "@/types/classAvailability";
 
 interface TiketKendaraanProps {
   setTabValue: React.Dispatch<React.SetStateAction<string>>;
-  scheduleid: string; // tambahkan props ini
+  scheduleid: string;
+  setSelectedVehicleClass: React.Dispatch<React.SetStateAction<ClassAvailability | null>>;
 }
 
-const vehicleOptions = [
-  { label: "Motor", value: "motor" },
-  { label: "Mobil", value: "mobil" },
-  { label: "Bus", value: "bus" },
-];
-
-// Data sisa tiket per jenis kendaraan
-const ticketAvailability: Record<string, number> = {
-  motor: 100,
-  mobil: 50,
-  bus: 20,
-};
 
 const FormSchema = z.object({
-  vehicles: z.array(
-    z.object({
-      type: z.string().min(1, "Pilih jenis kendaraan"),
-    })
-  ),
+  vehicle: z.string().min(1, "Pilih jenis kendaraan"),
 });
 
-interface TiketKendaraanProps {
-  setTabValue: React.Dispatch<React.SetStateAction<string>>;
-}
-
-export default function TiketKendaraan({ setTabValue, scheduleid }: TiketKendaraanProps) {
+export default function TiketKendaraan({
+  setTabValue,
+  scheduleid,
+  setSelectedVehicleClass,
+}: TiketKendaraanProps) {
   const form = useForm<z.infer<typeof FormSchema>>({
     resolver: zodResolver(FormSchema),
-    defaultValues: { vehicles: [{ type: "" }] },
+    defaultValues: { vehicle: "" },
   });
 
-  console.log("Schedule ID di TiketKendaraan:", scheduleid);
+  const [vehicleOptions, setVehicleOptions] = useState<ClassAvailability[]>([]);
+  const [selectedVehicle, setSelectedVehicle] =
+    useState<ClassAvailability | null>(null);
 
+  useEffect(() => {
+    const fetchVehicleData = async () => {
+      try {
+        const res = await fetch(
+          `https://tikethebat.ambitiousflower-0b7495d3.southeastasia.azurecontainerapps.io/api/v1/schedule/${scheduleid}/quota`
+        );
+        const json = await res.json();
+        const allClasses = json?.data?.classes_availability || [];
+        const vehiclesOnly = allClasses.filter(
+          (item: any) => item.type === "vehicle"
+        );
+        setVehicleOptions(vehiclesOnly);
+      } catch (error) {
+        console.error("Gagal mengambil data kendaraan:", error);
+      }
+    };
 
-  const [availability, setAvailability] = useState<{ [key: number]: number }>({});
-
-  const addVehicle = () => {
-    form.setValue("vehicles", [...form.getValues("vehicles"), { type: "" }]);
-  };
-
-  const removeVehicle = (index: number) => {
-    const vehicles = form.getValues("vehicles");
-    if (vehicles.length > 1) {
-      vehicles.splice(index, 1);
-      form.setValue("vehicles", [...vehicles]);
-
-      setAvailability((prev) => {
-        const newState = { ...prev };
-        delete newState[index];
-        return newState;
-      });
+    if (scheduleid) {
+      fetchVehicleData();
     }
+  }, [scheduleid]);
+
+  console.log("Vehicle Options:", vehicleOptions);
+
+  const getVehicleName = (className: string): string => {
+    const map: Record<string, string> = {
+      "Golongan I": "Motor",
+      "Golongan II": "Mobil",
+      // Tambahkan mapping lain jika ada
+    };
+    return map[className] || className; // fallback: pakai className asli kalau tidak ditemukan
   };
 
-  const handleVehicleChange = (index: number, value: string) => {
-    form.setValue(`vehicles.${index}.type`, value);
-    setAvailability((prev) => ({ ...prev, [index]: ticketAvailability[value] || 0 }));
+  const handleVehicleChange = (value: string) => {
+    form.setValue("vehicle", value);
+    const selected = vehicleOptions.find(
+      (v) => v.class_id.toString() === value
+    );
+    setSelectedVehicle(selected || null);
+    setSelectedVehicleClass(selected || null); // <--- kirim ke induk
   };
 
   return (
@@ -92,50 +95,62 @@ export default function TiketKendaraan({ setTabValue, scheduleid }: TiketKendara
         <h1 className="text-red-400 text-sm md:text-base">
           Jika tidak membawa kendaraan lanjut saja ke tiket penumpang
         </h1>
-        {form.watch("vehicles").map((_, index) => (
-          <FormField
-            key={index}
-            control={form.control}
-            name={`vehicles.${index}.type`}
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Pilih Jenis Kendaraan {index + 1}</FormLabel>
-                <div className="flex items-center gap-4">
-                  <Select
-                    onValueChange={(value) => handleVehicleChange(index, value)}
-                    defaultValue={field.value}
-                  >
-                    <FormControl className="w-full">
-                      <SelectTrigger>
-                        <SelectValue placeholder="Pilih" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {vehicleOptions.map((option) => (
-                        <SelectItem key={option.value} value={option.value}>
-                          {option.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  {/* Menampilkan sisa tiket */}
-                  <div className="border p-2 rounded-lg bg-gray-100 text-sm text-gray-700 min-w-[60px] text-center">
-                    {availability[index] !== undefined ? availability[index] : "-"}
-                  </div>
-                  {/* <Button variant="ghost" size="icon" onClick={() => removeVehicle(index)}>
-                    <Trash2 className="w-5 h-5 text-red-500" />
-                  </Button> */}
+
+        <FormField
+          control={form.control}
+          name="vehicle"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Pilih Jenis Kendaraan</FormLabel>
+              <div className="flex items-center gap-4">
+                <Select
+                  onValueChange={(value) => handleVehicleChange(value)}
+                  defaultValue={field.value}
+                >
+                  <FormControl className="w-full">
+                    <SelectTrigger>
+                      <SelectValue placeholder="Pilih" />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    {vehicleOptions.map((item) => (
+                      <SelectItem
+                        key={item.class_id}
+                        value={item.class_id.toString()}
+                      >
+                        {getVehicleName(item.class_name)}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+
+                {/* Sisa Tiket */}
+                <div className="border p-2 rounded-lg bg-gray-100 text-sm text-gray-700 min-w-[60px] text-center">
+                  {selectedVehicle ? selectedVehicle.available_capacity : "-"}
                 </div>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-        ))}
-        {/* <Button type="button" onClick={addVehicle} className="flex items-center bg-Orange w-10 md:w-fit">
-          <Plus className="w-4 h-4x" />
-        </Button> */}
+              </div>
+
+              {/* Harga */}
+              <p className="text-sm text-gray-500">
+                Harga:{" "}
+                {selectedVehicle
+                  ? `${
+                      selectedVehicle.currency
+                    } ${selectedVehicle.price.toLocaleString("id-ID")}`
+                  : "-"}
+              </p>
+
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
         <div className="w-full flex justify-center md:justify-end mt-14 md:mt-0">
-          <Button type="button" onClick={() => setTabValue("penumpang")} className="w-full md:w-fit bg-Blue text-white hover:bg-teal-600">
+          <Button
+            type="button"
+            onClick={() => setTabValue("penumpang")}
+            className="w-full md:w-fit bg-Blue text-white hover:bg-teal-600"
+          >
             Lanjut ke Tiket Penumpang
           </Button>
         </div>

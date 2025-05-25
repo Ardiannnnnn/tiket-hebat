@@ -79,7 +79,7 @@ export function Form() {
   const jadwalOptions = Array.from(
     new Set(
       schedules.map(
-        (sch) => new Date(sch.arrival_datetime).toISOString().split("T")[0]
+        (sch) => new Date(sch.departure_datetime).toISOString().split("T")[0]
       )
     )
   );
@@ -131,7 +131,15 @@ export function Form() {
       return;
     }
 
-    router.push(`/book/${selected.scheduleid}`);
+    const selectedSchedule = schedules.find(
+      (sch) =>
+      sch.route.departure_harbor.harbor_name === selected.asal &&
+      sch.route.arrival_harbor.harbor_name === selected.tujuan &&
+      sch.departure_datetime.split("T")[0] === selected.jadwal &&
+      sch.ship.ship_name === selected.kapal
+    );
+
+    router.push(`/book/${selectedSchedule?.id}`);
   };
 
   return (

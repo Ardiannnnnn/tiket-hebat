@@ -5,6 +5,8 @@ export interface LoginPayload {
 
 export interface LoginResponse {
   accessToken: string;
+  status: boolean;
+  message: string;
   user: {
     id: string;
     name: string;

@@ -48,7 +48,7 @@ export default function Navbar() {
   }, []);
   const pathname = usePathname();
 
-  console.log(pathname.includes("/"));
+  console.log(pathname?.includes("/"));
 
   return (
     <nav ref={navbarRef} className="bg-white border-Orange border-b-2 ">
@@ -103,7 +103,7 @@ export default function Navbar() {
                   href={link.href}
                   className={clsx(
                     "block py-2 px-3 rounded-sm md:p-0 transition-colors",
-                    (pathname.includes("/book") && link.href === "/") ||
+                    (pathname?.includes("/book") && link.href === "/") ||
                       pathname === link.href
                       ? "bg-Orange text-white md:bg-transparent md:text-Orange"
                       : "text-gray-900 md:hover:bg-transparent hover:text-Orange"
