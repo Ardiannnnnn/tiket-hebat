@@ -12,7 +12,7 @@ interface BookingProps {
 
 export default function Verifikasi({ scheduleid }: BookingProps) {
   const searchParams = useSearchParams();
-  const sessionId = searchParams.get("session_id") ?? "";
+  const sessionId = searchParams?.get("session_id") ?? "";
 
   return (
     <div className={`${poppins.className}`}>
