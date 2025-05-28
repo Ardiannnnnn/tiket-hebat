@@ -3,6 +3,7 @@ export interface SessionTicket {
   class: {
     id: number;
     class_name: string;
+    type: "vehicle" | "passenger";
   };
   price: number;
 }
@@ -11,6 +12,7 @@ export interface SessionPrice {
   class: {
     id: number;
     class_name: string;
+    type: "vehicle" | "passenger";
   };
   price: number;
   quantity: number;

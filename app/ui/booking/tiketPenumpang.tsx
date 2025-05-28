@@ -20,7 +20,16 @@ import { toast } from "sonner";
 import { lockTickets } from "@/service/session";
 import { LockTicketItem } from "@/types/lock";
 import { ClassAvailability } from "@/types/classAvailability";
-import { setSessionCookie } from "@/utils/cookies"; 
+import { setSessionCookie } from "@/utils/cookies";
+import {
+  AlertDialog,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogFooter,
+  AlertDialogAction,
+  AlertDialogCancel,
+} from "@/components/ui/alert-dialog";
 
 const FormSchema = z.object({
   passengers: z.array(
@@ -50,6 +59,10 @@ export default function TiketPenumpang({
 }: TiketPenumpangProps) {
   const router = useRouter();
   const [classes, setClasses] = useState<ClassAvailability[]>([]);
+  const [openDialog, setOpenDialog] = useState(false);
+  const [dialogAction, setDialogAction] = useState<() => void>(() => () => {});
+  const [dialogMessage, setDialogMessage] = useState("Anda akan memasuki satu sesi pemesanan");
+
   const form = useForm<FormValues>({
     resolver: zodResolver(FormSchema),
     defaultValues: {
@@ -57,53 +70,46 @@ export default function TiketPenumpang({
     },
   });
 
-  // Fetch quota data
   useEffect(() => {
-  const fetchQuota = async () => {
-    try {
-      const res = await fetch(
-        `https://tikethebat.ambitiousflower-0b7495d3.southeastasia.azurecontainerapps.io/api/v1/schedule/${scheduleid}/quota`
-      );
-      const json = await res.json();
-      const availability = json?.data?.classes_availability || [];
-      setClasses(availability);
+    const fetchQuota = async () => {
+      try {
+        const res = await fetch(
+          `https://tikethebat.ambitiousflower-0b7495d3.southeastasia.azurecontainerapps.io/api/v1/schedule/${scheduleid}/quota`
+        );
+        const json = await res.json();
+        const availability = json?.data?.classes_availability || [];
+        setClasses(availability);
 
-      const defaultPassengers = availability.map((cls: ClassAvailability) => {
-        let adults = 0;
+        const defaultPassengers = availability.map((cls: ClassAvailability) => {
+          let adults = 0;
 
-        if (cls.type === "passenger" && selectedVehicleClass) {
-          if (selectedVehicleClass.class_name === "Golongan I") {
-            // Motor => 1 tiket
-            if (cls.class_name === "ECONOMY") adults = 1;
-          } else if (selectedVehicleClass.class_name === "Golongan II") {
-            // Mobil => 5 tiket
-            if (cls.class_name === "ECONOMY") adults = 5;
+          if (cls.type === "passenger" && selectedVehicleClass) {
+            if (selectedVehicleClass.class_name === "Golongan I") {
+              if (cls.class_name === "ECONOMY") adults = 1;
+            } else if (selectedVehicleClass.class_name === "Golongan II") {
+              if (cls.class_name === "ECONOMY") adults = 5;
+            }
           }
-        }
 
-        return {
-          classId: cls.class_id,
-          className: cls.class_name,
-          adults,
-          children: 0,
-        };
-      });
+          return {
+            classId: cls.class_id,
+            className: cls.class_name,
+            adults,
+            children: 0,
+          };
+        });
 
-      form.reset({ passengers: defaultPassengers });
-    } catch (error) {
-      console.error("Gagal mengambil data kuota:", error);
+        form.reset({ passengers: defaultPassengers });
+      } catch (error) {
+        console.error("Gagal mengambil data kuota:", error);
+      }
+    };
+
+    if (scheduleid) {
+      fetchQuota();
     }
-  };
+  }, [scheduleid, selectedVehicleClass]);
 
-  if (scheduleid) {
-    fetchQuota();
-  }
-}, [scheduleid, selectedVehicleClass]);
-
-
-  console.log("datanya",classes);
-
-  // Hitung total penumpang (dewasa + anak-anak)
   const getTotalPassengers = () => {
     const passengers = form.getValues("passengers");
     return passengers.reduce(
@@ -112,67 +118,88 @@ export default function TiketPenumpang({
     );
   };
 
-  // Tambah penumpang dengan cek maksimal 5
   const increase = (index: number, type: "adults" | "children") => {
     const total = getTotalPassengers();
     if (total >= 5) {
       toast.error("Maksimal 5 tiket yang dapat dipesan.");
-      return; // jangan tambah
+      return;
     }
     const value = form.getValues(`passengers.${index}.${type}`);
     form.setValue(`passengers.${index}.${type}`, value + 1);
   };
 
-  // Kurangi penumpang, minimal 0
   const decrease = (index: number, type: "adults" | "children") => {
     const value = form.getValues(`passengers.${index}.${type}`);
     form.setValue(`passengers.${index}.${type}`, value > 0 ? value - 1 : 0);
   };
 
-  // Disable tombol "+" jika sudah mencapai batas 5
   const isIncreaseDisabled = () => {
     return getTotalPassengers() >= 5;
   };
 
-  // Submit form
- const onSubmit = async (data: FormValues) => {
+  const onSubmit = async (data: FormValues) => {
     const total = data.passengers.reduce(
       (total, p) => total + p.adults + p.children,
       0
     );
+
     if (total > 5) {
-      alert("Jumlah tiket maksimal adalah 5.");
+      toast.error("Jumlah tiket maksimal adalah 5.");
       return;
     }
 
-    const items: LockTicketItem[] = data.passengers
+    const passengerItems: LockTicketItem[] = data.passengers
       .filter((p) => p.adults + p.children > 0)
       .map((p) => ({
         class_id: p.classId,
         quantity: p.adults + p.children,
+        type: "passenger",
       }));
 
-    const payload = {
-      schedule_id: Number(scheduleid),
-      items,
-    };
+    const vehicleItem: LockTicketItem[] = selectedVehicleClass
+      ? [{ class_id: selectedVehicleClass.class_id, quantity: 1, type: "vehicle" }]
+      : [];
 
-    if (!payload.items || payload.items.length === 0) {
+    const items: LockTicketItem[] = [...vehicleItem, ...passengerItems];
+
+    if (items.length === 0) {
       toast.warning("Pilih tiket terlebih dahulu");
       return;
     }
 
-    try {
-      const lockedData = await lockTickets(payload);
-      const sessionId = lockedData.data.session_id;
-      setSessionCookie(sessionId);  // <-- SET COOKIE SESSION DI SINI
-      console.log("✅ Tiket berhasil dilock:", lockedData);
-      router.push(`/book/${scheduleid}/form?session_id=${sessionId}`);
-    } catch (error) {
-      console.error("❌ Gagal mengunci tiket:", error);
-      toast.error("Terjadi kesalahan saat mengunci tiket");
+    const hasQuotaIssue = items.some(item => {
+      const match = classes.find(c => c.class_id === item.class_id);
+      return !match || item.quantity > match.available_capacity;
+    });
+
+    if (hasQuotaIssue) {
+      setDialogMessage("Maaf tiket penumpang atau kendaraan sudah habis.");
+      setDialogAction(() => () => setOpenDialog(false));
+      setOpenDialog(true);
+      return;
     }
+
+    setDialogMessage("Anda akan memasuki satu sesi pemesanan");
+    setDialogAction(() => async () => {
+      setOpenDialog(false);
+      const payload = {
+        schedule_id: Number(scheduleid),
+        items,
+      };
+
+      try {
+        const lockedData = await lockTickets(payload);
+        const sessionId = lockedData.data.session_id;
+        setSessionCookie(sessionId);
+        router.push(`/book/${scheduleid}/form?session_id=${sessionId}`);
+      } catch (error) {
+        console.error("❌ Gagal mengunci tiket:", error);
+        toast.error("Terjadi kesalahan saat mengunci tiket");
+      }
+    });
+    setOpenDialog(true);
   };
+
   return (
     <Form {...form}>
       <form className="space-y-6" onSubmit={form.handleSubmit(onSubmit)}>
@@ -198,34 +225,13 @@ export default function TiketPenumpang({
                     name={`passengers.${index}.adults`}
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel
-                          htmlFor={adultsId}
-                          className="flex justify-center"
-                        >
+                        <FormLabel htmlFor={adultsId} className="flex justify-center">
                           Dewasa
                         </FormLabel>
                         <div className="flex items-center gap-1.5">
-                          <Button
-                            type="button"
-                            variant="outline"
-                            onClick={() => decrease(index, "adults")}
-                          >
-                            -
-                          </Button>
-                          <Input
-                            id={adultsId}
-                            className="w-10 text-center"
-                            {...field}
-                            readOnly
-                          />
-                          <Button
-                            type="button"
-                            variant="outline"
-                            onClick={() => increase(index, "adults")}
-                            disabled={isIncreaseDisabled()}
-                          >
-                            +
-                          </Button>
+                          <Button type="button" variant="outline" onClick={() => decrease(index, "adults")}>-</Button>
+                          <Input id={adultsId} className="w-10 text-center" {...field} readOnly />
+                          <Button type="button" variant="outline" onClick={() => increase(index, "adults")} disabled={isIncreaseDisabled()}>+</Button>
                         </div>
                       </FormItem>
                     )}
@@ -236,34 +242,13 @@ export default function TiketPenumpang({
                     name={`passengers.${index}.children`}
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel
-                          htmlFor={childrenId}
-                          className="flex justify-center"
-                        >
+                        <FormLabel htmlFor={childrenId} className="flex justify-center">
                           Anak-Anak
                         </FormLabel>
                         <div className="flex items-center gap-1.5">
-                          <Button
-                            type="button"
-                            variant="outline"
-                            onClick={() => decrease(index, "children")}
-                          >
-                            -
-                          </Button>
-                          <Input
-                            id={childrenId}
-                            className="w-10 text-center"
-                            {...field}
-                            readOnly
-                          />
-                          <Button
-                            type="button"
-                            variant="outline"
-                            onClick={() => increase(index, "children")}
-                            disabled={isIncreaseDisabled()}
-                          >
-                            +
-                          </Button>
+                          <Button type="button" variant="outline" onClick={() => decrease(index, "children")}>-</Button>
+                          <Input id={childrenId} className="w-10 text-center" {...field} readOnly />
+                          <Button type="button" variant="outline" onClick={() => increase(index, "children")} disabled={isIncreaseDisabled()}>+</Button>
                         </div>
                       </FormItem>
                     )}
@@ -275,21 +260,26 @@ export default function TiketPenumpang({
         })}
 
         <div className="flex justify-between">
-          <Button
-            type="button"
-            onClick={() => setTabValue("kendaraan")}
-            className="bg-Orange text-white"
-          >
+          <Button type="button" onClick={() => setTabValue("kendaraan")} className="bg-Orange text-white">
             Sebelumnya
           </Button>
-          <Button
-            type="submit"
-            className="bg-Blue text-white hover:bg-teal-600"
-          >
+          <Button type="submit" className="bg-Blue text-white hover:bg-teal-600">
             Lanjutkan
           </Button>
         </div>
       </form>
+
+      <AlertDialog open={openDialog} onOpenChange={setOpenDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="font-medium text-gray-600">{dialogMessage}</AlertDialogTitle>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Batal</AlertDialogCancel>
+            <AlertDialogAction onClick={dialogAction} className="bg-Blue">Lanjutkan</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Form>
   );
 }

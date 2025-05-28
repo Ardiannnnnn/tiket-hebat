@@ -37,11 +37,12 @@ export default function CardPrice({ session }: CardPriceProps) {
   const prices = session.prices ?? [];
   const tickets = session.tickets ?? [];
 
-  const totalHargaPenumpang = prices.reduce(
-    (acc, item) => acc + item.subtotal,
-    0
-  );
-  const totalHargaKendaraan = 0; // Belum ada data kendaraan
+  const totalHargaPenumpang = prices
+    .filter((item) => item.class.type === "passenger")
+    .reduce((acc, item) => acc + item.subtotal, 0);
+  const totalHargaKendaraan = prices
+    .filter((item) => item.class.type === "vehicle")
+    .reduce((acc, item) => acc + item.subtotal, 0);
 
   return (
     <div>
@@ -71,22 +72,31 @@ export default function CardPrice({ session }: CardPriceProps) {
               <label htmlFor="" className="text-gray-500">
                 Kelas tiket
               </label>
-              {prices.map((tiket, index) => (
-                <div key={index} className="flex flex-col">
-                  <p>{tiket.class.class_name} x {tiket.quantity}</p>
-                </div>
-              ))}
+              {prices
+                .filter((item) => item.class.type === "passenger")
+                .map((tiket, index) => (
+                  <div key={index} className="flex flex-col">
+                    <p>
+                      {tiket.class.class_name} x {tiket.quantity}
+                    </p>
+                  </div>
+                ))}
             </div>
 
             {/* Kendaraan */}
             <div className="w-full mt-4">
               <label htmlFor="" className="text-gray-500">
-                Kendaraan
+                Kelas tiket
               </label>
-              {/* Belum ada data kendaraan */}
-              <p className="text-sm italic text-muted-foreground">
-                Tidak ada data kendaraan
-              </p>
+              {prices
+                .filter((item) => item.class.type === "vehicle")
+                .map((tiket, index) => (
+                  <div key={index} className="flex flex-col">
+                    <p>
+                      {tiket.class.class_name} x {tiket.quantity}
+                    </p>
+                  </div>
+                ))}
             </div>
           </div>
 
@@ -107,21 +117,27 @@ export default function CardPrice({ session }: CardPriceProps) {
               <label htmlFor="" className="text-gray-500">
                 Harga
               </label>
-              {prices.map((tiket,index) => (
-                <div key={index} className="">
-                  <p>Rp{tiket.subtotal.toLocaleString()}</p>
-                </div>
-              ))}
+              {prices
+                .filter((item) => item.class.type === "passenger")
+                .map((tiket, index) => (
+                  <div key={index} className="">
+                    <p>Rp{tiket.subtotal.toLocaleString()}</p>
+                  </div>
+                ))}
             </div>
 
             {/* Harga Motor (dummy aslinya) */}
-            <div className="w-full mt-4">
-              <label htmlFor="" className="text-white">
-                hargamotor
+            <div className="w-full mt-4 flex flex-col text-end">
+              <label htmlFor="" className="text-gray-500">
+                Harga
               </label>
-              <div className="text-end flex flex-col">
-                <span>Rp{totalHargaKendaraan.toLocaleString()}</span>
-              </div>
+              {prices
+                .filter((item) => item.class.type === "vehicle")
+                .map((tiket, index) => (
+                  <div key={index} className="">
+                    <p>Rp{tiket.subtotal.toLocaleString()}</p>
+                  </div>
+                ))}
             </div>
           </div>
         </CardContent>
