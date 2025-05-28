@@ -21,6 +21,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { ClassAvailability } from "@/types/classAvailability";
+import { toast } from "sonner";
 
 interface TiketKendaraanProps {
   setTabValue: React.Dispatch<React.SetStateAction<string>>;
@@ -32,6 +33,13 @@ interface TiketKendaraanProps {
 const FormSchema = z.object({
   vehicle: z.string().min(1, "Pilih jenis kendaraan"),
 });
+
+const vehicleBonusMap: Record<string, string> = {
+  "Golongan I": "Anda mendapatkan satu tiket gratis untuk penumpang kelas ekonomi.",
+  "Golongan II": "Anda mendapatkan lima tiket gratis untuk penumpang kelas ekonomi.",
+  // Tambah lagi jika ada golongan baru
+};
+
 
 export default function TiketKendaraan({
   setTabValue,
@@ -81,13 +89,15 @@ export default function TiketKendaraan({
   };
 
   const handleVehicleChange = (value: string) => {
-    form.setValue("vehicle", value);
-    const selected = vehicleOptions.find(
-      (v) => v.class_id.toString() === value
-    );
-    setSelectedVehicle(selected || null);
-    setSelectedVehicleClass(selected || null); // <--- kirim ke induk
-  };
+  form.setValue("vehicle", value);
+  const selected = vehicleOptions.find((v) => v.class_id.toString() === value);
+  setSelectedVehicle(selected || null);
+  setSelectedVehicleClass(selected || null);
+
+  if (selected?.class_name && vehicleBonusMap[selected.class_name]) {
+    toast.success(vehicleBonusMap[selected.class_name]);
+  }
+};
 
   return (
     <Form {...form}>
@@ -139,7 +149,6 @@ export default function TiketKendaraan({
                     } ${selectedVehicle.price.toLocaleString("id-ID")}`
                   : "-"}
               </p>
-
               <FormMessage />
             </FormItem>
           )}

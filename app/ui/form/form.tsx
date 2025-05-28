@@ -72,7 +72,7 @@ export default function Form() {
       toast("Sesi habis, silakan booking ulang.");
       clearSessionCookie();
       router.push(`/book/${bookId}`);
-    }, 5 * 60 * 1000);
+    }, 15 * 60 * 1000);
 
     return () => clearTimeout(timer);
   }, [sessionId, router, bookId]);

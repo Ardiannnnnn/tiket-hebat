@@ -1,6 +1,7 @@
 export interface LockTicketItem {
   class_id: number;
   quantity: number;
+  type: 'passenger' | 'vehicle';
 }
 
 export interface LockTicketPayload {

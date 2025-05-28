@@ -7,10 +7,12 @@ export const getSchedule = async (): Promise<ScheduleResponse | null> => {
     const response = await api.get<ScheduleResponse>("/schedules/active");
     console.log("response", response.data);
     return response.data;
-  } catch (error) {
+  } catch (error: any) {
     console.error("Failed to fetch ships:", error);
-    return null; // Return null or handle the error appropriately
-  }
+    const message = 
+      error.response?.data?.message || "Gagal mengambil jadwal aktif ";
+      throw new Error(message);
+  } 
 };
 
 export const getScheduleById = async (
@@ -24,4 +26,4 @@ export const getScheduleById = async (
     console.error(`Failed to fetch schedule with id ${id}:`, error);
     return null;
   }
-};
+};  

@@ -2,6 +2,9 @@
 import { z } from "zod";
 
 export const penumpangSchema = z.object({
+  kendaraan: z.array( z.object({
+    nomor_polisi: z.string().min(1, { message: "Nomor polisi tidak boleh kosong" })
+})),
   penumpang: z.array(
     z.object({
       nama: z.string().min(1, { message: "Nama tidak boleh kosong" }),
@@ -24,3 +27,5 @@ export const penumpangSchema = z.object({
 });
 
 export type PenumpangFormSchema = z.infer<typeof penumpangSchema>;
+
+

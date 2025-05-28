@@ -25,7 +25,7 @@ export function Form() {
   async function fetchSchedules() {
     setLoading(true);
     const res = await getSchedule();
-
+    
     if (res?.status) {
       setSchedules(res.data);
     }

@@ -14,6 +14,8 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { submitPassengerData } from "@/service/passenger";
 import { useParams } from "next/navigation";
+import { PassengerEntry, PassengerEntryPayload } from "@/types/passenger";
+import { lib } from "crypto-js";
 
 interface Passenger {
   nama: string;
@@ -26,6 +28,12 @@ interface Passenger {
   jenisID: string;
   ticket_id: number;
   seat_number: string;
+}
+
+interface Vehicle {
+  nomor_polisi: string;
+  kelas: string;
+  ticket_id: number;
 }
 
 const Detail = ({ penumpang }: { penumpang: Passenger }) => {
@@ -101,6 +109,7 @@ interface DataProps {
 
 export default function Data({ sessionId }: DataProps) {
   const [penumpangList, setPenumpangList] = useState<Passenger[]>([]);
+  const [kendaraanList, setKendaraanList] = useState<Vehicle[]>([]);
   const router = useRouter();
   const params = useParams();
   const id = params?.id as string;
@@ -109,68 +118,105 @@ export default function Data({ sessionId }: DataProps) {
     const stored = sessionStorage.getItem("dataPenumpang");
     if (stored) {
       try {
-        const parsed = JSON.parse(stored) as any[];
-        // DEBUG: cek hasil parsing
-        console.log("DEBUG: dataPenumpang dari localStorage:", parsed);
-        const transformed = parsed.map((p, idx) => {
-          // DEBUG: cek setiap penumpang dan ticket_id
-          console.log(`DEBUG: penumpang[${idx}]`, p);
-          return {
-            nama: p.nama,
-            kelas: p.kelas,
-            usia: p.usia,
-            jk: p.jenis_kelamin ?? p.jk ?? "",
-            id: p.id || 0,
-            noID: p.nomor_identitas ?? p.noID ?? "",
-            alamat: p.alamat,
-            jenisID: p.jenis_id ?? p.jenisID ?? "",
-            ticket_id: p.ticket_id,
-            seat_number: p.seat_number ?? "",
-          };
-        });
-        setPenumpangList(transformed);
+        const parsed = JSON.parse(stored);
+
+        const kendaraan = parsed.kendaraan || [];
+        const penumpang = parsed.penumpang || [];
+
+        const transformedPenumpang = penumpang.map((p: any) => ({
+          nama: p.nama,
+          kelas: p.kelas,
+          usia: Number(p.usia),
+          jk: p.jenis_kelamin ?? p.jk ?? "",
+          id: p.id || 0,
+          noID: p.nomor_identitas ?? p.noID ?? "",
+          alamat: p.alamat,
+          jenisID: p.jenis_id ?? p.jenisID ?? "",
+          ticket_id: p.ticket_id,
+          seat_number: p.seat_number ?? "",
+        }));
+
+        setPenumpangList(transformedPenumpang);
+        setKendaraanList(kendaraan);
+
+        console.log("ini data",parsed.penumpang, parsed.kendaraan);
+
       } catch (err) {
         console.error("Gagal parsing data penumpang:", err);
       }
     }
   }, []);
 
+  console.log("DEBUG: kendaraan:", kendaraanList);
+
   const handleSubmit = async () => {
-    if (!sessionId) return console.error("Session ID tidak ditemukan.");
+  if (!sessionId) {
+    console.error("Session ID tidak ditemukan.");
+    return;
+  }
 
-    // DEBUG: cek penumpangList sebelum submit
-    console.log("DEBUG: penumpangList sebelum submit:", penumpangList);
+  const passengerData: PassengerEntry[] = penumpangList.map((p, index) => {
+    const kendaraan = kendaraanList[index]; // cocokkan urutan langsung
 
-    const payload = {
-      session_id: sessionId,
-      passenger_data: penumpangList.map((p, idx) => {
-        // DEBUG: cek ticket_id sebelum submit
-        console.log(`DEBUG: passenger_data[${idx}].ticket_id:`, p.ticket_id);
-        return {
-          ticket_id: p.ticket_id,
-          passenger_name: p.nama,
-          passenger_age: p.usia,
-          address: p.alamat,
-          id_type: p.jenisID,
-          id_number: p.noID,
-          seat_number: p.seat_number,
-        };
-      }),
+    return {
+      ticket_id: p.ticket_id,
+      passenger_name: p.nama,
+      passenger_age: p.usia,
+      address: p.alamat,
+      id_type: p.jenisID,
+      id_number: p.noID,
+      seat_number: p.seat_number ?? "",
+      license_plate: kendaraan?.nomor_polisi ?? "",
     };
+  });
 
-    // DEBUG: cek payload akhir
-    console.log("Payload yang dikirim:", payload);
 
-    try {
-      await submitPassengerData(payload);
-      router.push(`/book/${id}/invoice`);
-    } catch (err) {
-      console.error("Gagal mengirim data penumpang:", err);
-    }
+  const payload: PassengerEntryPayload = {
+    session_id: sessionId,
+    passenger_data: passengerData,
   };
+
+  console.log("Payload yang dikirim:", payload);
+
+  try {
+    await submitPassengerData(payload);
+    router.push(`/book/${id}/invoice`);
+  } catch (err) {
+    console.error("Gagal mengirim data penumpang:", err);
+  }
+};
+
+
 
   return (
     <div className="space-y-8">
+      {/* kendaraan detail */}
+      <Card className={cn("py-0 gap-0")}>
+        <CardHeader className="border-b p-4 text-center">
+          <CardTitle>Detail Data Kendaraan</CardTitle>
+        </CardHeader>
+        <CardContent className="p-4 gap-4">
+          {/* kendaraan */}
+          <div className="border rounded-lg">
+            <Table>
+              {kendaraanList.map((kendaraan, index) => (
+                <TableBody key={index} className="border-b">
+                  <TableRow>
+                    <TableCell className="font-medium py-2 text-center">
+                      {kendaraan.nomor_polisi}
+                    </TableCell>
+                    <TableCell className="text-center">
+                      {kendaraan.kelas} 
+                    </TableCell>
+                  </TableRow>
+                </TableBody>
+              ))}
+            </Table>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* penumpang detail */}
       <Card className={cn("py-0 gap-0")}>
         <CardHeader className="border-b p-4 text-center">
           <CardTitle>Detail Data Penumpang</CardTitle>

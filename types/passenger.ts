@@ -6,6 +6,7 @@ export interface PassengerEntry {
   id_type: string;
   id_number: string;
   seat_number?: string;
+  license_plate?: string;
 }
 
 export interface PassengerEntryPayload {
