@@ -8,6 +8,7 @@ import { FaCalendarWeek } from "react-icons/fa";
 import { useRouter } from "next/navigation";
 import { getSchedule } from "@/service/schedule";
 import { Schedule } from "@/types/schedule";
+import { toast } from "sonner";
 
 export function Form() {
   const router = useRouter();
@@ -22,19 +23,19 @@ export function Form() {
   });
 
   useEffect(() => {
-  async function fetchSchedules() {
-    setLoading(true);
-    const res = await getSchedule();
-    
-    if (res?.status) {
-      setSchedules(res.data);
+    async function fetchSchedules() {
+      setLoading(true);
+      const res = await getSchedule();
+
+      if (res?.status) {
+        setSchedules(res.data);
+      }
+      // Tambahkan delay 1 detik agar loading terlihat
+      // await new Promise(resolve => setTimeout(resolve, 5000));
+      setLoading(false);
     }
-    // Tambahkan delay 1 detik agar loading terlihat
-    // await new Promise(resolve => setTimeout(resolve, 5000));
-    setLoading(false);
-  }
-  fetchSchedules();
-}, []);
+    fetchSchedules();
+  }, []);
 
   const handleChange = (field: keyof typeof selected, value: string) => {
     setSelected((prev) => {
@@ -126,20 +127,31 @@ export function Form() {
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
-    if (!selected.scheduleid) {
-      alert("Silakan pilih jadwal terlebih dahulu.");
+    // Validasi semua field wajib
+    if (
+      !selected.asal ||
+      !selected.tujuan ||
+      !selected.jadwal ||
+      !selected.kapal
+    ) {
+      toast("Silakan memilih jadwal sebelum melanjutkan.");
       return;
     }
 
     const selectedSchedule = schedules.find(
       (sch) =>
-      sch.route.departure_harbor.harbor_name === selected.asal &&
-      sch.route.arrival_harbor.harbor_name === selected.tujuan &&
-      sch.departure_datetime.split("T")[0] === selected.jadwal &&
-      sch.ship.ship_name === selected.kapal
+        sch.route.departure_harbor.harbor_name === selected.asal &&
+        sch.route.arrival_harbor.harbor_name === selected.tujuan &&
+        sch.departure_datetime.split("T")[0] === selected.jadwal &&
+        sch.ship.ship_name === selected.kapal
     );
 
-    router.push(`/book/${selectedSchedule?.id}`);
+    if (!selectedSchedule) {
+      toast("Jadwal yang dipilih tidak ditemukan. Pastikan data sudah benar.");
+      return;
+    }
+
+    router.push(`/book/${selectedSchedule.id}`);
   };
 
   return (
@@ -168,7 +180,6 @@ export function Form() {
         <button
           type="submit"
           className="bg-Blue text-white rounded-lg p-2.5 hover:bg-teal-600"
-          disabled={!selected.scheduleid}
         >
           Pilih Jadwal
         </button>

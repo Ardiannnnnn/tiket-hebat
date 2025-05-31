@@ -6,10 +6,17 @@ export interface PassengerEntry {
   id_type: string;
   id_number: string;
   seat_number?: string;
-  license_plate?: string;
 }
 
-export interface PassengerEntryPayload {
-  session_id: string;
-  passenger_data: PassengerEntry[];
+export interface VehicleEntry {
+  ticket_id: number;
+  license_plate: string;
 }
+
+export type TicketEntry = PassengerEntry | VehicleEntry;
+
+export interface TicketEntryPayload {
+  session_id: string;
+  ticket_data: TicketEntry[];
+}
+

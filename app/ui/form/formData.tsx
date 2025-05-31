@@ -195,7 +195,7 @@ export default function FormPenumpang({ session }: FormPenumpangProps) {
               <div className="w-full">
                 <label>Golongan</label>
                 <Input
-                  className={cn("h-10")}
+                  className={cn("h-10 placeholder:text-black")}
                   placeholder={vehicleTickets[index]?.class.class_name}
                   type="text"
                   readOnly
@@ -310,7 +310,7 @@ export default function FormPenumpang({ session }: FormPenumpangProps) {
                 <Input
                   className="h-10 placeholder:text-sm"
                   type="number"
-                  placeholder="18"
+                  placeholder="0"
                   {...register(`penumpang.${index}.usia`, {
                     valueAsNumber: true,
                   })}
