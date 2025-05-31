@@ -14,7 +14,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { submitPassengerData } from "@/service/passenger";
 import { useParams } from "next/navigation";
-import { PassengerEntry, PassengerEntryPayload } from "@/types/passenger";
+import { PassengerEntry, TicketEntryPayload } from "@/types/passenger";
 import { lib } from "crypto-js";
 
 interface Passenger {
@@ -156,8 +156,6 @@ export default function Data({ sessionId }: DataProps) {
   }
 
   const passengerData: PassengerEntry[] = penumpangList.map((p, index) => {
-    const kendaraan = kendaraanList[index]; // cocokkan urutan langsung
-
     return {
       ticket_id: p.ticket_id,
       passenger_name: p.nama,
@@ -165,15 +163,20 @@ export default function Data({ sessionId }: DataProps) {
       address: p.alamat,
       id_type: p.jenisID,
       id_number: p.noID,
-      seat_number: p.seat_number ?? "",
-      license_plate: kendaraan?.nomor_polisi ?? "",
+      seat_number: "E21",
     };
   });
 
+  const vehicleData = kendaraanList.map((k) => ({
+    ticket_id: k.ticket_id,
+    license_plate: k.nomor_polisi,
+  }))
 
-  const payload: PassengerEntryPayload = {
+  const ticketData = [ ...passengerData, ...vehicleData ];
+
+  const payload = {
     session_id: sessionId,
-    passenger_data: passengerData,
+    ticket_data: ticketData,
   };
 
   console.log("Payload yang dikirim:", payload);

@@ -22,24 +22,27 @@ import {
 } from "@/components/ui/select";
 import { ClassAvailability } from "@/types/classAvailability";
 import { toast } from "sonner";
+import { Trash2 } from "lucide-react";
 
 interface TiketKendaraanProps {
   setTabValue: React.Dispatch<React.SetStateAction<string>>;
   scheduleid: string;
-  setSelectedVehicleClass: React.Dispatch<React.SetStateAction<ClassAvailability | null>>;
+  setSelectedVehicleClass: React.Dispatch<
+    React.SetStateAction<ClassAvailability | null>
+  >;
 }
-
 
 const FormSchema = z.object({
   vehicle: z.string().min(1, "Pilih jenis kendaraan"),
 });
 
 const vehicleBonusMap: Record<string, string> = {
-  "Golongan I": "Anda mendapatkan satu tiket gratis untuk penumpang kelas ekonomi.",
-  "Golongan II": "Anda mendapatkan lima tiket gratis untuk penumpang kelas ekonomi.",
+  "Golongan I":
+    "Anda mendapatkan satu tiket gratis untuk penumpang kelas ekonomi.",
+  "Golongan II":
+    "Anda mendapatkan lima tiket gratis untuk penumpang kelas ekonomi.",
   // Tambah lagi jika ada golongan baru
 };
-
 
 export default function TiketKendaraan({
   setTabValue,
@@ -88,16 +91,40 @@ export default function TiketKendaraan({
     return map[className] || className; // fallback: pakai className asli kalau tidak ditemukan
   };
 
+  // Saat pilihan berubah
   const handleVehicleChange = (value: string) => {
-  form.setValue("vehicle", value);
-  const selected = vehicleOptions.find((v) => v.class_id.toString() === value);
-  setSelectedVehicle(selected || null);
-  setSelectedVehicleClass(selected || null);
+    form.setValue("vehicle", value);
+    const selected = vehicleOptions.find(
+      (v) => v.class_id.toString() === value
+    );
+    setSelectedVehicle(selected || null);
+    setSelectedVehicleClass(selected || null);
+    localStorage.setItem("selectedVehicle", value); // simpan di localStorage
 
-  if (selected?.class_name && vehicleBonusMap[selected.class_name]) {
-    toast.success(vehicleBonusMap[selected.class_name]);
-  }
-};
+    if (selected?.class_name && vehicleBonusMap[selected.class_name]) {
+      toast.success(vehicleBonusMap[selected.class_name]);
+    }
+  };
+
+  // Saat halaman mount, load dari localStorage
+  useEffect(() => {
+    const savedVehicle = localStorage.getItem("selectedVehicle");
+    if (savedVehicle) {
+      form.setValue("vehicle", savedVehicle);
+      const selected = vehicleOptions.find(
+        (v) => v.class_id.toString() === savedVehicle
+      );
+      setSelectedVehicle(selected || null);
+      setSelectedVehicleClass(selected || null);
+    }
+  }, [vehicleOptions]);
+
+  const handleCancelSelection = () => {
+    form.setValue("vehicle", ""); // ini akan trigger placeholder muncul lagi
+    setSelectedVehicle(null);
+    setSelectedVehicleClass(null);
+    toast("Tiket kendaraan dibatalkan.");
+  };
 
   return (
     <Form {...form}>
@@ -115,7 +142,7 @@ export default function TiketKendaraan({
               <div className="flex items-center gap-4">
                 <Select
                   onValueChange={(value) => handleVehicleChange(value)}
-                  defaultValue={field.value}
+                  value={field.value} // ganti dari defaultValue ke value
                 >
                   <FormControl className="w-full">
                     <SelectTrigger>
@@ -134,21 +161,33 @@ export default function TiketKendaraan({
                   </SelectContent>
                 </Select>
 
-                {/* Sisa Tiket */}
-                <div className="border p-2 rounded-lg bg-gray-100 text-sm text-gray-700 min-w-[60px] text-center">
-                  {selectedVehicle ? selectedVehicle.available_capacity : "-"}
-                </div>
+                {/* Batalkan tiket yang dipilih */}
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  onClick={handleCancelSelection}
+                  className="text-red-500 hover:text-red-700"
+                >
+                  <Trash2 className="w-5 h-5" />
+                </Button>
               </div>
 
-              {/* Harga */}
-              <p className="text-sm text-gray-500">
-                Harga:{" "}
-                {selectedVehicle
-                  ? `${
-                      selectedVehicle.currency
-                    } ${selectedVehicle.price.toLocaleString("id-ID")}`
-                  : "-"}
-              </p>
+              <div className="text-sm text-gray-500">
+                <p>
+                  Sisa:{" "}
+                  {selectedVehicle ? selectedVehicle.available_capacity : "-"}
+                </p>
+                {/* Harga */}
+                <p className="text-sm text-gray-500">
+                  Harga:{" "}
+                  {selectedVehicle
+                    ? `${
+                        selectedVehicle.currency
+                      } ${selectedVehicle.price.toLocaleString("id-ID")}`
+                    : "-"}
+                </p>
+              </div>
               <FormMessage />
             </FormItem>
           )}
