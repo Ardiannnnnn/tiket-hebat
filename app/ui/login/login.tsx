@@ -17,6 +17,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useState } from "react";
 import { loginUser } from "@/service/auth";
 import { useRouter } from "next/navigation";
+import { Eye, EyeOff } from "lucide-react";
 
 const formSchema = z.object({
   username: z.string().min(1, { message: "Email wajib diisi" }),
@@ -28,6 +29,7 @@ type LoginFormValues = z.infer<typeof formSchema>;
 export default function PageLogin() {
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [rememberMe, setRememberMe] = useState(false);
   const router = useRouter();
 
   const form = useForm<LoginFormValues>({
@@ -41,11 +43,9 @@ export default function PageLogin() {
   const onSubmit = async (values: LoginFormValues) => {
     setIsLoading(true);
     try {
-      // Ganti ini dengan API login kamu
       const data = await loginUser(values);
-        console.log("Login berhasil", data);
-        router.push("/beranda"); // Redirect ke halaman utama setelah login
-      // await loginUser(values)
+      console.log("Login berhasil", data);
+      router.push("/beranda");
     } catch (err) {
       console.error("Login gagal", err);
     } finally {
@@ -89,32 +89,47 @@ export default function PageLogin() {
                 <FormItem>
                   <FormLabel className="text-gray-500">Password</FormLabel>
                   <FormControl>
-                    <Input
-                      type={showPassword ? "text" : "password"}
-                      className="py-6 rounded-lg focus:ring-1 focus:ring-Blue"
-                      placeholder="••••••••"
-                      {...field}
-                    />
+                    <div className="relative">
+                      <Input
+                        type={showPassword ? "text" : "password"}
+                        className="py-6 pr-12 rounded-lg focus:ring-1 focus:ring-Blue"
+                        placeholder="••••••••"
+                        {...field}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword((v) => !v)}
+                        className="absolute inset-y-0 right-3 flex items-center text-gray-500"
+                        tabIndex={-1}
+                      >
+                        {showPassword ? (
+                          <EyeOff className="w-5 h-5" />
+                        ) : (
+                          <Eye className="w-5 h-5" />
+                        )}
+                      </button>
+                    </div>
                   </FormControl>
-                  <div className="flex items-center mt-2">
-                    <input
-                      id="show-password"
-                      type="checkbox"
-                      checked={showPassword}
-                      onChange={() => setShowPassword((v) => !v)}
-                      className="mr-2"
-                    />
-                    <label
-                      htmlFor="show-password"
-                      className="text-sm text-gray-500 select-none"
-                    >
-                      Lihat Password
-                    </label>
-                  </div>
                   <FormMessage />
                 </FormItem>
               )}
             />
+
+            <div className="flex items-center space-x-2">
+              <input
+                id="remember-me"
+                type="checkbox"
+                checked={rememberMe}
+                onChange={(e) => setRememberMe(e.target.checked)}
+                className="accent-blue-600"
+              />
+              <label
+                htmlFor="remember-me"
+                className="text-sm text-gray-500 select-none"
+              >
+                Remember me
+              </label>
+            </div>
 
             <Button
               type="submit"

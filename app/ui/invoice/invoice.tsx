@@ -1,3 +1,5 @@
+"use client";
+
 import {
   Card,
   CardContent,
@@ -10,6 +12,10 @@ import img from "@/public/image/qr.png";
 import asdp from "@/public/image/asdp.png";
 import { poppins } from "../fonts";
 import { cn } from "@/lib/utils";
+import { useParams } from "next/navigation";
+import { useEffect, useState } from "react";
+import { Booking } from "@/types/invoice";
+import { getBookingById } from "@/service/invoice";
 
 const ticketData = {
   orderId: "W9495620E",
@@ -26,7 +32,37 @@ const ticketData = {
   kendaraan: { jenis: "Golongan II", harga: "Rp191.000" },
 };
 
-export default function Invoice() {
+function getTimeFromDateTime(dateTime: string): string {
+  // Mengambil jam dan menit dari format ISO, misal: "2025-05-28T07:30:00Z" -> "07:30"
+  const date = new Date(dateTime);
+  const hours = date.getHours().toString().padStart(2, "0");
+  const minutes = date.getMinutes().toString().padStart(2, "0");
+  return `${hours}:${minutes}`;
+}
+
+export default function Invoice({ bookid: propBookid }: { bookid?: string }) {
+  const params = useParams();
+  const rawBookid = propBookid || params?.bookid;
+  const bookid = Array.isArray(rawBookid) ? rawBookid[0] : rawBookid;
+  const [booking, setBooking] = useState<Booking | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (bookid) {
+      getBookingById(bookid)
+        .then((res) => setBooking(res.data))
+        .finally(() => setLoading(false));
+    }
+  }, [bookid]);
+
+  if (loading) return <div className="text-center py-8">Memuat invoice...</div>;
+  if (!booking)
+    return (
+      <div className="text-center py-8 text-red-500">
+        Data invoice tidak ditemukan.
+      </div>
+    );
+
   return (
     <div
       className={`${poppins.className} flex flex-col justify-center items-center gap-8 mb-8 md:mb-0`}
@@ -51,27 +87,49 @@ export default function Invoice() {
         <CardContent className="p-4 space-y-4">
           <div>
             <p>Hari/Tanggal</p>
-            <p>{ticketData.tanggal}</p>
+            <p>
+              {new Date(booking.schedule.departure_datetime).toLocaleDateString(
+                "id-ID",
+                {
+                  weekday: "long",
+                  year: "numeric",
+                  month: "long",
+                  day: "numeric",
+                }
+              )}
+            </p>
           </div>
           <div className="flex justify-between">
             <div className="">
               <div className="mb-2">
                 <p>Jam Berangkat</p>
-                <p className="font-semibold">{ticketData.jamBerangkat}</p>
+                <p className="font-semibold">
+                  {getTimeFromDateTime(booking.schedule.departure_datetime)}
+                </p>
               </div>
               <div>
                 <p>Jam Tiba</p>
-                <p className="font-semibold">{ticketData.jamSampai}</p>
+                <p className="font-semibold">
+                  {getTimeFromDateTime(booking.schedule.arrival_datetime)}
+                </p>
               </div>
             </div>
             <div className="text-end md:mr-2">
               <div className="mb-2">
                 <p>Asal</p>
-                <p className="font-semibold">{ticketData.asal}</p>
+                <p className="font-semibold">
+                  {
+                    booking.schedule.route.departure_harbor.harbor_name
+                  }
+                </p>
               </div>
               <div>
                 <p>Tujuan</p>
-                <p className="font-semibold">{ticketData.tujuan}</p>
+                <p className="font-semibold">
+                  {
+                    booking.schedule.route.arrival_harbor.harbor_name
+                  }
+                </p>
               </div>
             </div>
           </div>
@@ -91,48 +149,68 @@ export default function Invoice() {
           <div className="p-4 w-full space-y-4 md:border-l-2 border-dashed md:p-4">
             <div className="text-center md:text-start">
               <p>Nama Pemesan</p>
-              <p className="font-semibold">{ticketData.pemesan}</p>
+              <p className="font-semibold">{booking.customer_name}</p>
             </div>
 
             {/* Detail Kelas dan Harga */}
             <div className="grid text-center md:text-start grid-cols-3 gap-4 space-y-4 md:space-y-0">
               <div>
                 <p>Kelas</p>
-                {ticketData.kelas.map((data, index) => (
-                  <p key={index} className="font-semibold">
-                    {data.nama}
-                  </p>
-                ))}
+                {booking.tickets
+                  .filter((item) => item.type === "passenger")
+                  .map((data, index) => (
+                    <p key={index} className="font-semibold">
+                      {data.class.class_name}
+                    </p>
+                  ))}
               </div>
               <div>
                 <p>Tempat</p>
-                {ticketData.kelas.map((data, index) => (
-                  <p key={index} className="font-semibold">
-                    {data.tempat}
-                  </p>
-                ))}
+                {booking.tickets
+                  .filter((item) => item.type === "passenger")
+                  .map((data, index) => (
+                    <p key={index} className="font-semibold">
+                      {data.seat_number || "Tidak ada tempat"}
+                    </p>
+                  ))}
               </div>
               <div>
                 <p>Harga</p>
-                {ticketData.kelas.map((data, index) => (
-                  <p key={index} className="font-semibold">
-                    {data.harga}
-                  </p>
-                ))}
+                {booking.tickets
+                  .filter((item) => item.type === "passenger")
+                  .map((data, index) => (
+                    <p key={index} className="font-semibold">
+                      {data.price}
+                    </p>
+                  ))}
               </div>
             </div>
 
             {/* Kendaraan & Harga */}
-            <div className="text-center md:text-start grid grid-cols-2 md:grid-cols-3 gap-4 items-start">
-              <div>
-                <p>Kendaraan</p>
-                <p className="font-semibold">{ticketData.kendaraan.jenis}</p>
+            {booking.tickets.some((item) => item.type === "vehicle") && (
+              <div className="text-center md:text-start grid grid-cols-2 md:grid-cols-3 gap-4 items-start">
+                <div>
+                  <p>Kendaraan</p>
+                  {booking.tickets
+                    .filter((item) => item.type === "vehicle")
+                    .map((data, index) => (
+                      <p key={index} className="font-semibold">
+                        {data.class.class_name}
+                      </p>
+                    ))}
+                </div>
+                <div>
+                  <p>Harga</p>
+                  {booking.tickets
+                    .filter((item) => item.type === "vehicle")
+                    .map((data, index) => (
+                      <p key={index} className="font-semibold">
+                        {data.price}
+                      </p>
+                    ))}
+                </div>
               </div>
-              <div>
-                <p>Harga</p>
-                <p className="font-semibold">{ticketData.kendaraan.harga}</p>
-              </div>
-            </div>
+            )}
           </div>
 
           {/* QR Code */}

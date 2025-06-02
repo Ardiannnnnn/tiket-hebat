@@ -106,10 +106,10 @@ export default function CreatePageDynamic({ type, endpoint, onSubmit }: Props) {
 
   return (
     <div>
-      <form onSubmit={handleSubmit(handleOpenConfirmation)} className="space-y-4">
+      <form onSubmit={handleSubmit(handleOpenConfirmation)} className="space-y-4 p-4">
         {fields.map((field) => (
           <div key={field.name} className="grid">
-            <Label htmlFor={field.name} className="mb-4">
+            <Label htmlFor={field.name} className="mb-2">
               {field.label}
             </Label>
 

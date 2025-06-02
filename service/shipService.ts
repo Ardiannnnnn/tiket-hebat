@@ -1,6 +1,6 @@
 // api/shipService.ts
 
-import api from "./api";
+import api, {Baseapi} from "./api";
 import { Ship, ShipResponse } from "@/types/ship";
 
 export const getShips = async (): Promise<ShipResponse | null> => {
@@ -16,7 +16,7 @@ export const getShips = async (): Promise<ShipResponse | null> => {
 
 export const createShip = async (data: any): Promise<boolean> => {
   try {
-    await api.post("/ship", data);
+    await Baseapi.post("/v1/ship/create", data);
     return true;
   } catch (error) {
     console.error("Failed to create ship:", error);
@@ -27,7 +27,7 @@ export const createShip = async (data: any): Promise<boolean> => {
 export const deleteShip = async (id: string | number): Promise<boolean> => {
   try {
     // Berdasarkan endpoint yang Anda berikan di prompt awal
-    await api.delete(`/ship/${id}`);
+    await Baseapi.delete(`/v1/ship/${id}`);
     return true;
   } catch (error) {
     console.error("Failed to delete ship:", error);
@@ -40,7 +40,7 @@ export const updateShip = async (
   data: Partial<Ship>
 ): Promise<boolean> => {
   try {
-    await api.put(`/ship/${id}`, data); // Gunakan PUT sesuai endpoint
+    await Baseapi.put(`v1//ship/${id}`, data); // Gunakan PUT sesuai endpoint
     return true;
   } catch (error) {
     console.error("Failed to update ship:", error);
@@ -50,7 +50,7 @@ export const updateShip = async (
 
 export const getShipById = async (id: string | number): Promise<Ship | null> => {
   try {
-    const response = await api.get<{ status: boolean; data: Ship }>(`/ship/${id}`);
+    const response = await api.get<{ status: boolean; data: Ship }>(`/ships/${id}`);
     return response.data.data;
   } catch (error) {
     console.error("Failed to fetch ship by ID:", error);

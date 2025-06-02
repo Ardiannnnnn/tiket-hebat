@@ -1,4 +1,4 @@
-import api from "./api";
+import api, {Baseapi} from "./api";
 import { Harbor, HarborResponse } from "@/types/harbor"; // kalau kamu simpan di /types/ship.ts
 
 export const getHarbors = async (): Promise<HarborResponse | null> => {
@@ -14,7 +14,7 @@ export const getHarbors = async (): Promise<HarborResponse | null> => {
 
 export const createHarbor = async (data: any): Promise<boolean> => {
   try {
-    await api.post("/harbor/create", data);
+    await Baseapi.post("/v1/harbor/create", data);
     return true;
   } catch (error) {
     console.error("Failed to create harbor:", error);
@@ -25,7 +25,7 @@ export const createHarbor = async (data: any): Promise<boolean> => {
 export const deleteharbor = async (id: string | number): Promise<boolean> => {
   try {
     // Berdasarkan endpoint yang Anda berikan di prompt awal
-    await api.delete(`/harbor/${id}`);
+    await Baseapi.delete(`/v1/harbor/${id}`);
     return true;
   } catch (error) {
     console.error("Failed to delete ship:", error);
@@ -39,7 +39,7 @@ export const updateHarbor = async (
   data: Partial<Harbor>
 ): Promise<boolean> => {
   try {
-    await api.put(`/harbor/update/${id}`, data); // Gunakan PUT sesuai endpoint
+    await Baseapi.put(`/v1/harbor/update/${id}`, data); // Gunakan PUT sesuai endpoint
     return true;
   } catch (error) {
     console.error("Failed to update ship:", error);

@@ -23,8 +23,6 @@ function StatusBadge({ value }: { value: string }) {
   const statusClass = clsx("text-white text-xs px-2 py-1 rounded-md w-fit", {
     "bg-green-500": value === "Beroperasi",
     "bg-orange-500": value === "Dock",
-    "bg-red-500": value === "Maintenance",
-    "bg-gray-500": !["Beroperasi", "Dock", "Maintenance"].includes(value),
   });
 
   return <span className={statusClass}>{value}</span>;
@@ -36,66 +34,70 @@ export default function KapalPage() {
   const router = useRouter();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [selectedShip, setSelectedShip] = useState<Ship | null>(null);
+  const [pageSize] = useState(10); // 10 items per page
+  const [isloading, setIsLoading] = useState(true);
 
   const columns: ColumnDef<Ship>[] = [
     { key: "id", label: "ID" },
-    { key: "name", label: "Nama Kapal" },
+    { key: "ship_name", label: "Nama Kapal" },
     {
       key: "status",
       label: "Status",
       render: (value: string) => <StatusBadge value={value} />, // Render StatusBadge hanya di KapalPage
     },
     { key: "ship_type", label: "Jenis" },
-    { key: "year", label: "Tahun" },
+    { key: "year_operation", label: "Tahun" },
+    {
+      key: "image_link",
+      label: "Gambar",
+    },
     { key: "Description", label: "Deskripsi" },
   ];
 
   useEffect(() => {
     const fetchData = async () => {
+      setIsLoading(true);
       const response = await getShips();
       if (response && response.status) {
         setKapalData(response.data || []);
       } else {
         toast.error("Gagal memuat data");
       }
+      setIsLoading(false);
     };
 
     fetchData();
   }, []);
 
-  const handleDelete = (ship: Ship) => {
-    setSelectedShip(ship);
-    setIsDialogOpen(true);
-  };
-
-  const confirmDelete = async () => {
-    if (selectedShip) {
-      const success = await deleteShip(selectedShip.id);
-      if (success) {
-        toast.success("Kapal berhasil dihapus");
-        // Replace 'ships' with 'kapalData' and define the type of 'ship'
-        setKapalData(
-          kapalData.filter((ship: Ship) => ship.id !== selectedShip.id)
-        );
-      } else {
-        toast.error("Gagal menghapus kapal");
-      }
-      setIsDialogOpen(false); // Close dialog after action
+const handleDelete = async (item: Ship) => {
+    // The actual delete function that will be called after confirmation
+    const success = await deleteShip(item.id);
+    if (success) {
+      toast.success("Kapal berhasil dihapus");
+      // Update the local state to remove the deleted item
+      setKapalData(kapalData.filter((ship) => ship.id !== item.id));
+    } else {
+      toast.error("Gagal menghapus kapal");
     }
   };
-  const handleEdit = (item: Ship) => {
-    router.push(`/kapal/edit/${item.id}`);
-  };
+
+    const handleEdit = (item: Ship) => {
+      console.log("Edit action triggered for:", item);
+      // Navigate to the edit page dynamically
+      window.location.href = `/kapal/edit/${item.id}`;
+    };
+  
 
   const filteredData = useMemo(() => {
     const search = searchTerm.toLowerCase();
     return kapalData.filter((item) =>
       [
-        item.name,
-        item.status,
-        item.ship_type,
-        item.year,
-        item.Description,
+        item.ship_name ?? "",
+        item.status ?? "",
+        item.ship_type ?? "",
+        String(item.year_operation ?? ""),
+        item.image_link ?? "", // pastikan year jadi string
+        item.Description ?? "",
       ].some((field) => field.toLowerCase().includes(search))
     );
   }, [searchTerm, kapalData]);
@@ -125,23 +127,10 @@ export default function KapalPage() {
         showActions
         onEdit={handleEdit}
         onDelete={handleDelete}
+        skeletonRows={pageSize}
+        isLoading={isloading}
+        editUrl={(item) => `/kapal/edit/${item.id}`}
       />
-
-      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogTrigger />
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Konfirmasi</DialogTitle>
-          </DialogHeader>
-          <p>Apakah Anda yakin ingin menghapus kapal ini?</p>
-          <DialogFooter>
-            <Button variant="secondary" onClick={() => setIsDialogOpen(false)}>
-              Batal
-            </Button>
-            <Button onClick={confirmDelete}>Ya, Hapus</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }

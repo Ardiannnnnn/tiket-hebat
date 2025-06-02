@@ -38,9 +38,9 @@ const FormSchema = z.object({
 
 const vehicleBonusMap: Record<string, string> = {
   "Golongan I":
-    "Anda mendapatkan satu tiket gratis untuk penumpang kelas ekonomi.",
+    "Anda mendapatkan 1 tiket gratis untuk penumpang kelas ekonomi.",
   "Golongan II":
-    "Anda mendapatkan lima tiket gratis untuk penumpang kelas ekonomi.",
+    "Anda mendapatkan 5 tiket gratis untuk penumpang kelas ekonomi.",
   // Tambah lagi jika ada golongan baru
 };
 
@@ -102,7 +102,12 @@ export default function TiketKendaraan({
     localStorage.setItem("selectedVehicle", value); // simpan di localStorage
 
     if (selected?.class_name && vehicleBonusMap[selected.class_name]) {
-      toast.success(vehicleBonusMap[selected.class_name]);
+      toast.success(vehicleBonusMap[selected.class_name], {
+        style: {
+          backgroundColor: "",
+          color: "#117a65",
+        },
+      });
     }
   };
 
@@ -123,7 +128,7 @@ export default function TiketKendaraan({
     form.setValue("vehicle", ""); // ini akan trigger placeholder muncul lagi
     setSelectedVehicle(null);
     setSelectedVehicleClass(null);
-    toast("Tiket kendaraan dibatalkan.");
+    toast.error("Tiket kendaraan dibatalkan.");
   };
 
   return (

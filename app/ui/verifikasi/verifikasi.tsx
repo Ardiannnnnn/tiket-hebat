@@ -24,7 +24,7 @@ export default function Verifikasi({ scheduleid }: BookingProps) {
       </div>
       <div className=" flex flex-col-reverse md:flex-row gap-8 justify-center mt-8 m-4">
         <Data sessionId={sessionId} />
-        <Info />
+        {/* <Info /> */}
       </div>
     </div>
   );

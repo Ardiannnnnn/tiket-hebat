@@ -1,10 +1,10 @@
 export interface Ship {
   id: string;
-  name: string;
+  ship_name: string;
   status: string;
   ship_type: string;
-  year: string;
-  image: string;
+  year_operation: string;
+  image_link: string;
   Description: string;
   created_at: string;
   updated_at: string;

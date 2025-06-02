@@ -16,9 +16,31 @@ export const createFieldConfigs: Record<string, FieldConfig[]> = {
     },
   ],
   kapal: [
-    { name: "nama", label: "Nama Kapal", type: "text", required: true },
-    { name: "kapasitas", label: "Kapasitas", type: "number" },
-    { name: "tahun_operasional", label: "Tahun Operasional", type: "date" },
+    { name: "ship_name", label: "Nama Kapal", type: "text", required: true },
+    {
+      name: "status",
+      label: "status",
+      type: "select",
+      required: true,
+      options: [
+        { label: "Beroperasi", value: "Beroperasi" },
+        { label: "Dock", value: "Dock" },
+      ],
+    },
+    { name: "year_operation", label: "Tahun Operasional", type: "text", required: true },
+    {
+      name: "ship_type",
+      label: "Jenis Kapal",
+      type: "select",
+      required: true,
+      options: [
+        { label: "RoRO", value: "RoRO" },
+        { label: "Kargo", value: "Kargo" },
+      ],
+    },
+    { name: "image_link", label: "Gambar", type: "text", required: true },
+    { name: "Description", label: "Deskripsi", type: "text", required: true },
+    
   ],
   pelabuhan: [
     { name: "harbor_name", label: "Nama Pelabuhan", type: "text", required: true },
