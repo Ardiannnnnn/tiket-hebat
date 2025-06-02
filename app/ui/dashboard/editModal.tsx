@@ -81,8 +81,8 @@ export default function EditKapalPage() {
       <h1 className="text-xl font-bold mb-4">Edit Kapal</h1>
       <form onSubmit={handleSubmit} className="space-y-4">
         <Input
-          value={kapal.name}
-          onChange={(e) => setKapal({ ...kapal, name: e.target.value })}
+          value={kapal.ship_name}
+          onChange={(e) => setKapal({ ...kapal, ship_name: e.target.value })}
           placeholder="Nama Kapal"
         />
         <Input
@@ -96,13 +96,13 @@ export default function EditKapalPage() {
           placeholder="Jenis Kapal"
         />
         <Input
-          value={kapal.year}
-          onChange={(e) => setKapal({ ...kapal, year: e.target.value })}
+          value={kapal.year_operation}
+          onChange={(e) => setKapal({ ...kapal, year_operation: e.target.value })}
           placeholder="Tahun"
         />
         <Textarea
-          value={kapal.Description}
-          onChange={(e) => setKapal({ ...kapal, Description: e.target.value })}
+          value={kapal.description}
+          onChange={(e) => setKapal({ ...kapal, description: e.target.value })}
           placeholder="Deskripsi"
         />
         <Button type="submit">Simpan Perubahan</Button>

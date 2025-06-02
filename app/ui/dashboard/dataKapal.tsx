@@ -51,7 +51,7 @@ export default function KapalPage() {
       key: "image_link",
       label: "Gambar",
     },
-    { key: "Description", label: "Deskripsi" },
+    { key: "description", label: "Deskripsi" },
   ];
 
   useEffect(() => {
@@ -97,7 +97,7 @@ const handleDelete = async (item: Ship) => {
         item.ship_type ?? "",
         String(item.year_operation ?? ""),
         item.image_link ?? "", // pastikan year jadi string
-        item.Description ?? "",
+        item.description ?? "",
       ].some((field) => field.toLowerCase().includes(search))
     );
   }, [searchTerm, kapalData]);
