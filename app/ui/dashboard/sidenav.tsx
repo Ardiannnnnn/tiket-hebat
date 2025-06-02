@@ -1,49 +1,76 @@
 "use client";
 
 import Link from "next/link";
-import { LuPower } from "react-icons/lu";
-import { RiDashboardFill, RiShipFill } from "react-icons/ri";
-import { FaUser, FaShip, FaRoute, FaCalendarAlt } from "react-icons/fa";
-import { IoTicketOutline } from "react-icons/io5";
-import { MdOutlineUploadFile } from "react-icons/md";
-import { FormEvent, useState } from "react";
+import { LuPower, LuMenu } from "react-icons/lu";
+import { FormEvent, useEffect, useRef, useState } from "react";
 import Image from "next/image";
-import NavLinks from "./navlink";
+import NavLinks, { dashboardLinks, menuLinks } from "./navlink";
 import logo from "@/public/image/asdp_2.png";
 import adminImg from "@/public/image/ardian.png";
-import {dashboardLinks} from "./navlink";
-import {menuLinks} from "./navlink";
 import { logoutUser } from "@/service/auth";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 
 export default function SideNav() {
   const [isOpen, setIsOpen] = useState(false);
+  const navbarRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
+  // Toggle sidebar for mobile view
+  const toggleNavbar = () => {
+    setIsOpen(!isOpen);
+  };
 
-   const handleLogout = async (e: FormEvent) => {
-    e.preventDefault(); // cegah reload
-    try {
-      await logoutUser();
-      router.push("/login"); // redirect setelah logout
-    } catch (err) {
-      console.error("Gagal logout", err);
+  const handleClickOutside = (event: MouseEvent) => {
+    if (
+      navbarRef.current &&
+      !navbarRef.current.contains(event.target as Node)
+    ) {
+      setIsOpen(false);
     }
   };
 
+  useEffect(() => {
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
+
+  const pathname = usePathname();
+
+  console.log(pathname?.includes("/"));
+
+  const handleLogout = async (e: FormEvent) => {
+    e.preventDefault();
+    console.log("handleLogout dipanggil");
+    try {
+      await logoutUser();
+      console.log("logoutUser selesai");
+      router.push("/login");
+    } catch (err) {
+      console.error("Gagal logout", err);
+    }
+  };  
+
   return (
     <>
-      {/* Sidebar Desktop */}
+      {/* DESKTOP: Sidebar */}
       <div className="hidden md:flex h-full w-[270px] flex-col px-4 py-6 text-black">
-        {/* Logo + Nama Perusahaan */}
+        {/* Logo */}
         <div className="flex items-center gap-4 bg-gray-100 p-4 rounded-lg shadow-sm">
-          <Image className="rounded-xl" src={logo} width={50} height={50} alt="ASDP Logo" />
+          <Image
+            className="rounded-xl"
+            src={logo}
+            width={50}
+            height={50}
+            alt="ASDP Logo"
+          />
           <div className="leading-tight">
             <p className="text-xs text-gray-600">PT ASDP Ferry Indonesia</p>
             <p className="text-sm font-semibold">Cabang Singkil</p>
           </div>
         </div>
 
-        {/* Dashboard Section */}
+        {/* Dashboard & Menu */}
         <div className="mt-4 bg-gray-100 p-3 rounded-lg shadow-sm">
           <div className="mt-4 p-3">
             <p className="text-sm font-semibold text-gray-700">Dashboard</p>
@@ -52,7 +79,6 @@ export default function SideNav() {
             </div>
           </div>
 
-          {/* Menu Section */}
           <div className="p-3">
             <p className="text-sm font-semibold text-gray-700">Menu</p>
             <div className="mt-2 space-y-2">
@@ -61,10 +87,9 @@ export default function SideNav() {
           </div>
         </div>
 
-        {/* Spacer untuk mengisi sisa space */}
         <div className="flex-grow"></div>
 
-        {/* Profil Admin */}
+        {/* Profil Admin + Logout */}
         <div className="mt-4 bg-gray-100 p-4 rounded-lg shadow-sm">
           <div className="flex items-center gap-4">
             <Image
@@ -72,7 +97,75 @@ export default function SideNav() {
               width={45}
               height={45}
               alt="Admin Profile"
-              className="h-12 w-12 rounded-full bg-gray-200"
+              className="rounded-full"
+            />
+            <div className="leading-tight">
+              <p className="text-xs text-gray-500">Administrator</p>
+              <p className="text-sm font-semibold">Heriansyah</p>
+            </div>
+          </div>
+          <button
+            type="button" // penting!
+            onClick={handleLogout}
+            className="flex w-full items-center gap-3 text-gray-600 hover:text-red-600 p-2 rounded-lg hover:bg-red-100"
+          >
+            <LuPower className="h-5 w-5" />
+            <span>Keluar</span>
+          </button>
+        </div>
+      </div>
+
+      {/* MOBILE: Top Bar */}
+      <div className="md:hidden flex items-center justify-between px-4 py-3 w-full top-0 z-40">
+        <button
+          onClick={toggleNavbar}
+          data-collapse-toggle="navbar-default"
+          type="button"
+          className="inline-flex items-center p-2 w-10 h-10 justify-center text-sm text-gray-500 rounded-lg md:hidden hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-gray-200 dark:text-gray-400 dark:hover:bg-gray-700 dark:focus:ring-gray-600"
+          aria-controls="navbar-default"
+          aria-expanded="false"
+        >
+          <span className="sr-only">Open main menu</span>
+          <svg
+            className="w-5 h-5"
+            aria-hidden="true"
+            xmlns="http://www.w3.org/2000/svg"
+            fill="none"
+            viewBox="0 0 17 14"
+          >
+            <path
+              stroke="currentColor"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth="2"
+              d="M1 1h15M1 7h15M1 13h15"
+            />
+          </svg>
+        </button>
+        <p className="text-sm font-semibold">ASDP Cabang Singkil</p>
+      </div>
+      <div
+        ref={navbarRef}
+        className={`${
+          isOpen ? "block" : "hidden"
+        } fixed left-0 top-0 z-50 h-full w-[250px] bg-white shadow-md p-4 space-y-3`}
+      >
+        <div className="flex items-center gap-4 mb-6">
+          <Image src={logo} width={40} height={40} alt="ASDP Logo" />
+          <p className="text-sm font-semibold">Cabang Singkil</p>
+        </div>
+        <NavLinks links={dashboardLinks} />
+        <hr className="my-4" />
+        <NavLinks links={menuLinks} />
+
+        <div className="mt-4 bg-gray-100 p-4 rounded-lg shadow-sm">
+          <div className="flex items-center gap-4">
+            <Image
+              src={adminImg}
+              width={45}
+              height={45}
+              alt="Admin Profile"
+              className="rounded-full"
             />
             <div className="leading-tight">
               <p className="text-xs text-gray-500">Administrator</p>
@@ -80,36 +173,13 @@ export default function SideNav() {
             </div>
           </div>
 
-          {/* Logout Button */}
-          <form onSubmit={handleLogout} className="mt-4">
-            <button className="flex w-full items-center gap-3 text-gray-600 hover:text-red-600 p-2 rounded-lg hover:bg-red-100">
-              <LuPower className="h-5 w-5" />
-              <span>Keluar</span>
-            </button>
-          </form>
-        </div>
-      </div>
-
-      {/* Bottom Navbar Mobile */}
-      <div className="fixed bottom-0 left-0 w-full bg-gray-100 shadow-md md:hidden">
-        <div className="flex justify-around py-3">
-          <Link
-            href="/dashboard"
-            className="flex flex-col items-center text-gray-700"
-          >
-            <RiDashboardFill className="text-2xl" />
-          </Link>
-          <Link
-            href="/dashboard/tiket"
-            className="flex flex-col items-center text-gray-700"
-          >
-            <IoTicketOutline className="text-2xl" />
-          </Link>
           <button
-            onClick={() => setIsOpen(!isOpen)}
-            className="flex flex-col items-center text-gray-700"
+            type="button" // penting!
+            onClick={handleLogout}
+            className="flex w-full items-center gap-3 text-gray-600 hover:text-red-600 p-2 rounded-lg hover:bg-red-100"
           >
-            <LuPower className="text-2xl" />
+            <LuPower className="h-5 w-5" />
+            <span>Keluar</span>
           </button>
         </div>
       </div>

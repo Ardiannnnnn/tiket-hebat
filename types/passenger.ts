@@ -17,6 +17,12 @@ export type TicketEntry = PassengerEntry | VehicleEntry;
 
 export interface TicketEntryPayload {
   session_id: string;
+  customer_name: string;
+  phone_number: string;
+  email: string;
+  id_type: string;
+  id_number: string;
   ticket_data: TicketEntry[];
 }
+
 

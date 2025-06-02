@@ -15,7 +15,20 @@ import { useRouter } from "next/navigation";
 import { submitPassengerData } from "@/service/passenger";
 import { useParams } from "next/navigation";
 import { PassengerEntry, TicketEntryPayload } from "@/types/passenger";
-import { lib } from "crypto-js";
+import { useForm, FormProvider } from "react-hook-form";
+import FormPemesan from "./formPemesan"; // Pastikan path ini benar
+import { toast } from "sonner";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+  AlertDialogDescription,
+} from "@/components/ui/alert-dialog";
 
 interface Passenger {
   nama: string;
@@ -110,16 +123,27 @@ interface DataProps {
 export default function Data({ sessionId }: DataProps) {
   const [penumpangList, setPenumpangList] = useState<Passenger[]>([]);
   const [kendaraanList, setKendaraanList] = useState<Vehicle[]>([]);
+  const [openDialog, setOpenDialog] = useState(false);
   const router = useRouter();
   const params = useParams();
   const id = params?.id as string;
+
+  const form = useForm({
+    mode: "onChange", // validasi realtime
+    defaultValues: {
+      nama: "",
+      nohp: "",
+      email: "",
+      jenisID:"", // Default jenis ID
+      noID: "",
+    },
+  });
 
   useEffect(() => {
     const stored = sessionStorage.getItem("dataPenumpang");
     if (stored) {
       try {
         const parsed = JSON.parse(stored);
-
         const kendaraan = parsed.kendaraan || [];
         const penumpang = parsed.penumpang || [];
 
@@ -133,14 +157,12 @@ export default function Data({ sessionId }: DataProps) {
           alamat: p.alamat,
           jenisID: p.jenis_id ?? p.jenisID ?? "",
           ticket_id: p.ticket_id,
-          seat_number: p.seat_number ?? "",
+          seat_number: p.seat_number,
         }));
 
         setPenumpangList(transformedPenumpang);
         setKendaraanList(kendaraan);
-
-        console.log("ini data",parsed.penumpang, parsed.kendaraan);
-
+        console.log("ini data", parsed.penumpang, parsed.kendaraan);
       } catch (err) {
         console.error("Gagal parsing data penumpang:", err);
       }
@@ -149,57 +171,78 @@ export default function Data({ sessionId }: DataProps) {
 
   console.log("DEBUG: kendaraan:", kendaraanList);
 
+  // Cek validitas form
+  const isFormValid = form.formState.isValid;
+
+  const handleClickPesanTiket = async () => {
+    const valid = await form.trigger();
+    if (!valid) {
+      toast.error("Isi data pemesan terlebih dahulu");
+      return;
+    }
+    setOpenDialog(true);
+  };
+
+  const handleConfirmPesanTiket = async () => {
+    setOpenDialog(false);
+    await handleSubmit();
+  };
+
   const handleSubmit = async () => {
   if (!sessionId) {
     console.error("Session ID tidak ditemukan.");
     return;
   }
 
-  const passengerData: PassengerEntry[] = penumpangList.map((p, index) => {
-    return {
-      ticket_id: p.ticket_id,
-      passenger_name: p.nama,
-      passenger_age: p.usia,
-      address: p.alamat,
-      id_type: p.jenisID,
-      id_number: p.noID,
-      seat_number: "E21",
-    };
-  });
+  const pemesan = form.getValues(); // { nama, nohp, email }
+
+  const passengerData: PassengerEntry[] = penumpangList.map((p) => ({
+    ticket_id: p.ticket_id,
+    passenger_name: p.nama,
+    passenger_age: p.usia,
+    address: p.alamat,
+    id_type: p.jenisID,
+    id_number: p.noID,
+    seat_number: p.seat_number,
+  }));
 
   const vehicleData = kendaraanList.map((k) => ({
     ticket_id: k.ticket_id,
     license_plate: k.nomor_polisi,
-  }))
+  }));
 
-  const ticketData = [ ...passengerData, ...vehicleData ];
+  const ticketData = [...passengerData, ...vehicleData];
 
-  const payload = {
+  const payload: TicketEntryPayload = {
     session_id: sessionId,
+    customer_name: pemesan.nama,
+    phone_number: pemesan.nohp,
+    email: pemesan.email,
+    id_type: pemesan.jenisID,
+    id_number: pemesan.noID,
     ticket_data: ticketData,
   };
 
   console.log("Payload yang dikirim:", payload);
 
   try {
-    await submitPassengerData(payload);
-    router.push(`/book/${id}/invoice`);
+    const response = await submitPassengerData(payload);
+    router.push(`/book/${id}/invoice/${response.data.booking_id}`);
   } catch (err) {
     console.error("Gagal mengirim data penumpang:", err);
+    toast.error("Gagal memproses data. Silakan coba lagi.");
   }
 };
 
 
-
   return (
     <div className="space-y-8">
-      {/* kendaraan detail */}
+      {kendaraanList.length > 0 && (
       <Card className={cn("py-0 gap-0")}>
         <CardHeader className="border-b p-4 text-center">
           <CardTitle>Detail Data Kendaraan</CardTitle>
         </CardHeader>
         <CardContent className="p-4 gap-4">
-          {/* kendaraan */}
           <div className="border rounded-lg">
             <Table>
               {kendaraanList.map((kendaraan, index) => (
@@ -209,7 +252,7 @@ export default function Data({ sessionId }: DataProps) {
                       {kendaraan.nomor_polisi}
                     </TableCell>
                     <TableCell className="text-center">
-                      {kendaraan.kelas} 
+                      {kendaraan.kelas}
                     </TableCell>
                   </TableRow>
                 </TableBody>
@@ -218,8 +261,8 @@ export default function Data({ sessionId }: DataProps) {
           </div>
         </CardContent>
       </Card>
+    )}
 
-      {/* penumpang detail */}
       <Card className={cn("py-0 gap-0")}>
         <CardHeader className="border-b p-4 text-center">
           <CardTitle>Detail Data Penumpang</CardTitle>
@@ -252,12 +295,46 @@ export default function Data({ sessionId }: DataProps) {
         </CardContent>
       </Card>
 
-      <div
-        className="bg-Blue p-2 rounded-xl text-center text-white hover:bg-teal-600 font-semibold cursor-pointer"
-        onClick={handleSubmit}
-      >
-        Pesan Tiket
-      </div>
+      {/* Tambahkan form pemesan di sini */}
+      <FormProvider {...form}>
+        <FormPemesan />
+      </FormProvider>
+
+      {/* Alert Dialog Konfirmasi */}
+      <AlertDialog open={openDialog} onOpenChange={setOpenDialog}>
+        <div
+          className={cn(
+            "bg-Blue p-2 rounded-xl text-center text-white font-semibold cursor-pointer",
+            "hover:bg-teal-600"
+          )}
+          onClick={async () => {
+            const valid = await form.trigger();
+            if (!valid) {
+              toast.error("Isi data pemesan terlebih dahulu");
+              return;
+            }
+            setOpenDialog(true);
+          }}
+          tabIndex={0}
+          role="button"
+        >
+          Pesan Tiket
+        </div>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Konfirmasi Pemesanan</AlertDialogTitle>
+            <AlertDialogDescription>
+              Anda hanya memiliki waktu <span className="font-bold">2 jam</span> untuk menyelesaikan pembayaran. Lanjutkan pesan tiket?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Batal</AlertDialogCancel>
+            <AlertDialogAction onClick={handleConfirmPesanTiket} className="bg-Blue text-white hover:bg-teal-600">
+              Ya, Pesan Tiket
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

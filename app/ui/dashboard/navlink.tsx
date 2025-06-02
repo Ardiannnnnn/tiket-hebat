@@ -42,13 +42,14 @@ export default function NavLinks({ links }: { links: typeof dashboardLinks }) {
             href={link.href}
             className={clsx(
               "flex items-center gap-2 rounded-md p-2 text-sm font-medium hover:bg-gray-200",
-              {
-                "bg-gray-200 text-black": pathname === link.href,
-              }
+              pathname?.startsWith(link.href) ||
+                (pathname?.includes("/dashboard") && link.href === "/dashboard")
+                ? "bg-gray-200 text-black"
+                : "text-gray-600"
             )}
           >
-            <LinkIcon className="w-5 text-gray-600" />
-            <p className="">{link.name}</p>
+            <LinkIcon className="w-5" />
+            <p>{link.name}</p>
           </Link>
         );
       })}

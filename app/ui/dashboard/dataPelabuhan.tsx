@@ -173,8 +173,8 @@ export default function DataPelabuhanPage() {
 
   return (
     <div className="p-4">
-      <div className="flex justify-between items-center mb-4">
-        <h1 className="text-xl font-bold">Data Pelabuhan</h1>
+      <div className="md:flex justify-between items-center mb-4 space-y-4">
+        <h1 className="text-xl font-bold text-center md:text-start">Data Pelabuhan</h1>
         <div className="flex gap-4 items-center">
           <Link href="/pelabuhan/create">
             <Button className="bg-Blue hover:bg-teal-600">Tambah</Button>

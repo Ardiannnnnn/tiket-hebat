@@ -179,7 +179,7 @@ export default function TiketPenumpang({
       return;
     }
 
-    setDialogMessage("Anda akan memasuki satu sesi pemesanan");
+    setDialogMessage("Anda memiliki waktu 15 menit untuk mengisi data-data!!!");
     setDialogAction(() => async () => {
       setOpenDialog(false);
       const payload = {
@@ -272,9 +272,9 @@ export default function TiketPenumpang({
       <AlertDialog open={openDialog} onOpenChange={setOpenDialog}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle className="font-medium text-gray-600">{dialogMessage}</AlertDialogTitle>
+            <AlertDialogTitle className="font-medium text-gray-600 text-center">{dialogMessage}</AlertDialogTitle>
           </AlertDialogHeader>
-          <AlertDialogFooter>
+          <AlertDialogFooter className="md:mx-auto">
             <AlertDialogCancel>Batal</AlertDialogCancel>
             <AlertDialogAction onClick={dialogAction} className="bg-Blue">Lanjutkan</AlertDialogAction>
           </AlertDialogFooter>

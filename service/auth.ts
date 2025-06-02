@@ -1,38 +1,31 @@
-import { headers } from "next/headers";
-import api from "./api";
+import api, {Baseapi} from "./api";
 import { LoginPayload, LoginResponse } from "@/types/login";
 
-/**
- * Kirim data login ke endpoint /auth/login
- */
- // lib/api.ts
-export const loginUser = async (payload: LoginPayload): Promise<LoginResponse> => {
-  const response = await fetch('/api/auth/login', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    credentials: 'include', // WAJIB agar browser simpan cookie
-    body: JSON.stringify(payload),
-  });
 
-  if (!response.ok) {
-    const errorData = await response.json();
-    throw new Error(errorData.message || 'Login failed');
+export const loginUser = async (
+  payload: LoginPayload
+): Promise<LoginResponse> => {
+  try {
+    const response = await Baseapi.post("/v1/auth/login", payload); // diproxy ke backend
+    const data = response.data;
+    return data;
+  } catch (error: any) {
+    console.error("❌ Gagal login:", error?.response?.data || error.message);
+    throw new Error(
+      error?.response?.data?.message || "Login gagal, silakan coba lagi."
+    );
   }
-
-  return response.json();
 };
-
-
 
 export const logoutUser = async (): Promise<void> => {
   try {
-    await api.post("/auth/logout", null, {
-       // ⬅️ Tambahkan juga di sini
-    });
-  } catch (error) {
-    console.error("Logout gagal:", error);
-    throw error;
+    await Baseapi.post("/v1/auth/logout");// Hapus token dari cookie
+    console.log("✅ Berhasil logout dan token dihapus");
+  } catch (error: any) {
+    console.error("❌ Gagal logout:", error?.response?.data || error.message);
+    throw new Error(
+      error?.response?.data?.message || "Logout gagal, silakan coba lagi."
+    );
   }
 };
+
