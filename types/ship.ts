@@ -5,7 +5,7 @@ export interface Ship {
   ship_type: string;
   year_operation: string;
   image_link: string;
-  Description: string;
+  description: string;
   created_at: string;
   updated_at: string;
 }
