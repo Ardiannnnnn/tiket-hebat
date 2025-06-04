@@ -21,18 +21,19 @@ import { clearSessionCookie, getCookie, setSessionCookie } from "@/utils/cookies
 import { toast } from "sonner";
 
 export default function Form() {
-   const searchParams = useSearchParams();
+  const searchParams = useSearchParams();
   const sessionId = searchParams?.get("session_id");
   const [session, setSession] = useState<SessionData | null>(null);
   const [loading, setLoading] = useState(true);
   const [showDialog, setShowDialog] = useState(false);
+  const [sessionExpired, setSessionExpired] = useState(false);
   const triggeredRef = useRef(false);
   const router = useRouter();
   const hasShownDialogRef = useRef(false);
   const params = useParams();
   const bookId = params?.id;
 
-   // Validasi cookie dan ambil session
+  // Validasi cookie dan ambil session
   useEffect(() => {
     if (!sessionId) {
       alert("Session ID tidak ditemukan.");
@@ -67,11 +68,10 @@ export default function Form() {
     };
     fetchSession();
 
-    // Timer 5 menit
+    // Timer 15 menit
     const timer = setTimeout(() => {
-      toast("Sesi habis, silakan booking ulang.");
+      setSessionExpired(true); // Tampilkan dialog, jangan toast
       clearSessionCookie();
-      router.push(`/book/${bookId}`);
     }, 15 * 60 * 1000);
 
     return () => clearTimeout(timer);
@@ -159,6 +159,27 @@ export default function Form() {
               Batal
             </AlertDialogCancel>
             <Button onClick={handleLeave}>Kembali ke halaman sebelumnya</Button>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={sessionExpired}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Maaf, sesi anda telah berakhir</AlertDialogTitle>
+            <AlertDialogDescription>
+              Silakan booking ulang untuk melanjutkan pemesanan tiket.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <Button
+              onClick={() => {
+                setSessionExpired(false);
+                router.push(`/book/${bookId}`);
+              }}
+            >
+              Kembali ke Halaman Booking
+            </Button>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
