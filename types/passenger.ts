@@ -11,6 +11,9 @@ export interface PassengerEntry {
 export interface VehicleEntry {
   ticket_id: number;
   license_plate: string;
+  passenger_name: string;
+  passenger_age: number;
+  address: string;
 }
 
 export type TicketEntry = PassengerEntry | VehicleEntry;

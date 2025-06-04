@@ -23,6 +23,7 @@ import {
 import { ClassAvailability } from "@/types/classAvailability";
 import { toast } from "sonner";
 import { Trash2 } from "lucide-react";
+import { getQuotaByScheduleId } from "@/service/quota";
 
 interface TiketKendaraanProps {
   setTabValue: React.Dispatch<React.SetStateAction<string>>;
@@ -58,27 +59,23 @@ export default function TiketKendaraan({
   const [selectedVehicle, setSelectedVehicle] =
     useState<ClassAvailability | null>(null);
 
-  useEffect(() => {
-    const fetchVehicleData = async () => {
-      try {
-        const res = await fetch(
-          `https://tikethebat.ambitiousflower-0b7495d3.southeastasia.azurecontainerapps.io/api/v1/schedule/${scheduleid}/quota`
-        );
-        const json = await res.json();
-        const allClasses = json?.data?.classes_availability || [];
-        const vehiclesOnly = allClasses.filter(
-          (item: any) => item.type === "vehicle"
-        );
-        setVehicleOptions(vehiclesOnly);
-      } catch (error) {
-        console.error("Gagal mengambil data kendaraan:", error);
-      }
-    };
-
-    if (scheduleid) {
-      fetchVehicleData();
+ useEffect(() => {
+  const fetchVehicleData = async () => {
+    try {
+      const allClasses = await getQuotaByScheduleId(scheduleid);
+      const vehiclesOnly = allClasses.filter(
+        (item) => item.type === "vehicle"
+      );
+      setVehicleOptions(vehiclesOnly);
+    } catch (error) {
+      console.error("Gagal mengambil data kendaraan:", error);
     }
-  }, [scheduleid]);
+  };
+
+  if (scheduleid) {
+    fetchVehicleData();
+  }
+}, [scheduleid]);
 
   console.log("Vehicle Options:", vehicleOptions);
 
@@ -99,7 +96,6 @@ export default function TiketKendaraan({
     );
     setSelectedVehicle(selected || null);
     setSelectedVehicleClass(selected || null);
-    localStorage.setItem("selectedVehicle", value); // simpan di localStorage
 
     if (selected?.class_name && vehicleBonusMap[selected.class_name]) {
       toast.success(vehicleBonusMap[selected.class_name], {
@@ -110,19 +106,6 @@ export default function TiketKendaraan({
       });
     }
   };
-
-  // Saat halaman mount, load dari localStorage
-  useEffect(() => {
-    const savedVehicle = localStorage.getItem("selectedVehicle");
-    if (savedVehicle) {
-      form.setValue("vehicle", savedVehicle);
-      const selected = vehicleOptions.find(
-        (v) => v.class_id.toString() === savedVehicle
-      );
-      setSelectedVehicle(selected || null);
-      setSelectedVehicleClass(selected || null);
-    }
-  }, [vehicleOptions]);
 
   const handleCancelSelection = () => {
     form.setValue("vehicle", ""); // ini akan trigger placeholder muncul lagi

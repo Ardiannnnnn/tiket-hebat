@@ -1,5 +1,3 @@
-import TiketPenumpang from "./tiketPenumpang";
-import TiketKendaraan from "./tiketKendaraan";
 import TiketTabs from "./tabs";
 import {ClassAvailability} from "@/types/classAvailability";
 

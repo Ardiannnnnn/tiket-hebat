@@ -49,9 +49,7 @@ export function Form() {
         if (foundSchedule) {
           newSelected.tujuan = foundSchedule.route.arrival_harbor.harbor_name;
           newSelected.kapal = foundSchedule.ship.ship_name;
-          newSelected.jadwal = new Date(foundSchedule.arrival_datetime)
-            .toISOString()
-            .split("T")[0];
+          newSelected.jadwal = getDateTimeString(foundSchedule.arrival_datetime);
           newSelected.scheduleid = String(foundSchedule.id);
         } else {
           newSelected.tujuan = "";
@@ -61,9 +59,34 @@ export function Form() {
         }
       }
 
+      // Tambahan: jika field jadwal diubah, update kapal otomatis
+      if (field === "jadwal") {
+        const foundSchedule = schedules.find(
+          (sch) =>
+            getDateTimeString(sch.departure_datetime) === value &&
+            sch.route.departure_harbor.harbor_name === prev.asal &&
+            sch.route.arrival_harbor.harbor_name === prev.tujuan
+        );
+        if (foundSchedule) {
+          newSelected.kapal = foundSchedule.ship.ship_name;
+          newSelected.scheduleid = String(foundSchedule.id);
+        } else {
+          newSelected.kapal = "";
+          newSelected.scheduleid = "";
+        }
+      }
+
       return newSelected;
     });
   };
+
+  // Helper untuk mengambil tanggal dan jam dari ISO string
+  function getDateTimeString(dateTime: string) {
+    const date = new Date(dateTime);
+    const tanggal = date.toISOString().split("T")[0];
+    const jam = date.toTimeString().slice(0, 5); // "HH:MM"
+    return `${tanggal} ${jam}`;
+  }
 
   const asalOptions = Array.from(
     new Set(schedules.map((sch) => sch.route.departure_harbor.harbor_name))
@@ -80,7 +103,7 @@ export function Form() {
   const jadwalOptions = Array.from(
     new Set(
       schedules.map(
-        (sch) => new Date(sch.departure_datetime).toISOString().split("T")[0]
+        (sch) => getDateTimeString(sch.departure_datetime)
       )
     )
   );
@@ -142,7 +165,7 @@ export function Form() {
       (sch) =>
         sch.route.departure_harbor.harbor_name === selected.asal &&
         sch.route.arrival_harbor.harbor_name === selected.tujuan &&
-        sch.departure_datetime.split("T")[0] === selected.jadwal &&
+        getDateTimeString(sch.departure_datetime) === selected.jadwal &&
         sch.ship.ship_name === selected.kapal
     );
 

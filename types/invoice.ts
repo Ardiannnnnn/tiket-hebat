@@ -45,6 +45,7 @@ export type Ticket = {
 
 export type Booking = {
   id: number;
+  order_id: string;
   schedule: Schedule;
   customer_name: string;
   id_type: string;

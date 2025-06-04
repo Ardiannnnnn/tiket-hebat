@@ -17,21 +17,6 @@ import { useEffect, useState } from "react";
 import { Booking } from "@/types/invoice";
 import { getBookingById } from "@/service/invoice";
 
-const ticketData = {
-  orderId: "W9495620E",
-  pemesan: "Ardian",
-  asal: "Simeulue",
-  tujuan: "Calang",
-  tanggal: "Senin, 27-Oktober-2024",
-  jamBerangkat: "17.00 WIB",
-  jamSampai: "08.00 WIB",
-  kelas: [
-    { nama: "Ekonomi x1", harga: "Rp78.000", tempat: "E.01" },
-    { nama: "Bisnis x1", harga: "Rp91.000", tempat: "B.01" },
-  ],
-  kendaraan: { jenis: "Golongan II", harga: "Rp191.000" },
-};
-
 function getTimeFromDateTime(dateTime: string): string {
   // Mengambil jam dan menit dari format ISO, misal: "2025-05-28T07:30:00Z" -> "07:30"
   const date = new Date(dateTime);
@@ -140,9 +125,9 @@ export default function Invoice({ bookid: propBookid }: { bookid?: string }) {
           )}
         >
           {/* No. Order */}
-          <div className="w-full md:w-fit border-b-2 md:border-none border-dashed items-end p-4 md:items-start md:justify-center flex flex-col">
+          <div className="w-full md:w-fit border-b-2 md:border-none border-dashed p-4 md:items-start items-center justify-center flex flex-col">
             <p>No. Order</p>
-            <p>c937465758</p>
+            <p className="font-semibold">{booking.order_id}</p>
           </div>
 
           {/* Informasi Tiket */}
