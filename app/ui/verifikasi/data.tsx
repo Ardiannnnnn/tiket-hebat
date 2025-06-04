@@ -29,6 +29,8 @@ import {
   AlertDialogTrigger,
   AlertDialogDescription,
 } from "@/components/ui/alert-dialog";
+import { ClaimSessionResponse } from "@/types/responBook";
+import { AxiosResponse } from "axios";
 
 interface Passenger {
   nama: string;
@@ -47,6 +49,9 @@ interface Vehicle {
   nomor_polisi: string;
   kelas: string;
   ticket_id: number;
+  nama : string; // Nama pemilik kendaraan
+  usia: number; // Usia kendaraan tidak relevan
+  alamat: string; // Alamat pemilik kendaraan
 }
 
 const Detail = ({ penumpang }: { penumpang: Passenger }) => {
@@ -134,7 +139,7 @@ export default function Data({ sessionId }: DataProps) {
       nama: "",
       nohp: "",
       email: "",
-      jenisID:"", // Default jenis ID
+      jenisID: "", // Default jenis ID
       noID: "",
     },
   });
@@ -189,111 +194,126 @@ export default function Data({ sessionId }: DataProps) {
   };
 
   const handleSubmit = async () => {
-  if (!sessionId) {
-    console.error("Session ID tidak ditemukan.");
-    return;
-  }
+    if (!sessionId) {
+      console.error("Session ID tidak ditemukan.");
+      return;
+    }
 
-  const pemesan = form.getValues(); // { nama, nohp, email }
+    const pemesan = form.getValues(); // { nama, nohp, email }
 
-  const passengerData: PassengerEntry[] = penumpangList.map((p) => ({
-    ticket_id: p.ticket_id,
-    passenger_name: p.nama,
-    passenger_age: p.usia,
-    address: p.alamat,
-    id_type: p.jenisID,
-    id_number: p.noID,
-    seat_number: p.seat_number,
-  }));
+    const passengerData: PassengerEntry[] = penumpangList.map((p) => ({
+      ticket_id: p.ticket_id,
+      passenger_name: p.nama,
+      passenger_age: p.usia,
+      address: p.alamat,
+      id_type: p.jenisID,
+      id_number: p.noID,
+      seat_number: p.seat_number,
+    }));
 
-  const vehicleData = kendaraanList.map((k) => ({
-    ticket_id: k.ticket_id,
-    license_plate: k.nomor_polisi,
-  }));
+    const vehicleData = kendaraanList.map((k) => ({
+      ticket_id: k.ticket_id,
+      license_plate: k.nomor_polisi,
+      passenger_name: k.nama,
+      passenger_age: k.usia, // Usia kendaraan tidak relevan
+      address: k.alamat 
+    }));
 
-  const ticketData = [...passengerData, ...vehicleData];
+    const ticketData = [...passengerData, ...vehicleData];
 
-  const payload: TicketEntryPayload = {
-    session_id: sessionId,
-    customer_name: pemesan.nama,
-    phone_number: pemesan.nohp,
-    email: pemesan.email,
-    id_type: pemesan.jenisID,
-    id_number: pemesan.noID,
-    ticket_data: ticketData,
+    const payload: TicketEntryPayload = {
+      session_id: sessionId,
+      customer_name: pemesan.nama,
+      phone_number: pemesan.nohp,
+      email: pemesan.email,
+      id_type: pemesan.jenisID,
+      id_number: pemesan.noID,
+      ticket_data: ticketData,
+    };
+
+    console.log("Payload yang dikirim:", payload);
+
+    try {
+      // atau beri type
+      const response: AxiosResponse<ClaimSessionResponse> =
+        await submitPassengerData(payload);
+      console.log("RESPONSE:", response.data);
+
+      // Perbaikan akses
+      const invoiceUrl = response.data.xendit.invoice_url;
+      if (invoiceUrl) {
+        window.location.href = invoiceUrl;
+      } else {
+        toast.error("Gagal mendapatkan link pembayaran.");
+        console.error("Isi response:", response.data);
+      }
+    } catch (err) {
+      console.error("Gagal mengirim data penumpang:", err);
+      toast.error("Gagal memproses data. Silakan coba lagi.");
+    }
   };
-
-  console.log("Payload yang dikirim:", payload);
-
-  try {
-    const response = await submitPassengerData(payload);
-    router.push(`/book/${id}/invoice/${response.data.booking_id}`);
-  } catch (err) {
-    console.error("Gagal mengirim data penumpang:", err);
-    toast.error("Gagal memproses data. Silakan coba lagi.");
-  }
-};
-
 
   return (
     <div className="space-y-8">
       {kendaraanList.length > 0 && (
-      <Card className={cn("py-0 gap-0")}>
-        <CardHeader className="border-b p-4 text-center">
-          <CardTitle>Detail Data Kendaraan</CardTitle>
-        </CardHeader>
-        <CardContent className="p-4 gap-4">
-          <div className="border rounded-lg">
-            <Table>
-              {kendaraanList.map((kendaraan, index) => (
-                <TableBody key={index} className="border-b">
-                  <TableRow>
-                    <TableCell className="font-medium py-2 text-center">
-                      {kendaraan.nomor_polisi}
-                    </TableCell>
-                    <TableCell className="text-center">
-                      {kendaraan.kelas}
-                    </TableCell>
-                  </TableRow>
-                </TableBody>
-              ))}
-            </Table>
-          </div>
-        </CardContent>
-      </Card>
-    )}
-
-      <Card className={cn("py-0 gap-0")}>
-        <CardHeader className="border-b p-4 text-center">
-          <CardTitle>Detail Data Penumpang</CardTitle>
-        </CardHeader>
-        <CardContent className="p-4 gap-4">
-          <div className="border rounded-lg">
-            <Table className="w-full border">
-              <TableBody>
-                {penumpangList.map((penumpang, index) => (
-                  <TableRow key={index} className="border-b">
-                    <TableCell className="px-8">
-                      <div className="flex flex-col">
-                        <span className="font-medium">{penumpang.nama}</span>
-                        <span className="text-sm text-gray-500">
-                          {penumpang.noID}
-                        </span>
-                      </div>
-                    </TableCell>
-                    <TableCell className="px-12">
-                      <Detail penumpang={penumpang} />
-                    </TableCell>
-                    <TableCell className="px-8 text-right">
-                      <KelasBadge kelas={penumpang.kelas} />
-                    </TableCell>
-                  </TableRow>
+        <Card className={cn("py-0 gap-0")}>
+          <CardHeader className="border-b p-4 text-center">
+            <CardTitle>Detail Data Kendaraan</CardTitle>
+          </CardHeader>
+          <CardContent className="p-4 gap-4">
+            <div className="border rounded-lg">
+              <Table>
+                {kendaraanList.map((kendaraan, index) => (
+                  <TableBody key={index} className="border-b">
+                    <TableRow>
+                      <TableCell className="font-medium py-2 text-center">
+                        {kendaraan.nomor_polisi}
+                      </TableCell>
+                      <TableCell className="text-center">
+                        {kendaraan.kelas}
+                      </TableCell>
+                    </TableRow>
+                  </TableBody>
                 ))}
-              </TableBody>
-            </Table>
-          </div>
-        </CardContent>
-      </Card>
+              </Table>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {penumpangList.length > 0 && (
+        <Card className={cn("py-0 gap-0")}>
+          <CardHeader className="border-b p-4 text-center">
+            <CardTitle>Detail Data Penumpang</CardTitle>
+          </CardHeader>
+          <CardContent className="p-4 gap-4">
+            <div className="border rounded-lg">
+              <Table className="w-full border">
+                <TableBody>
+                  {penumpangList.map((penumpang, index) => (
+                    <TableRow key={index} className="border-b">
+                      <TableCell className="px-8">
+                        <div className="flex flex-col">
+                          <span className="font-medium">{penumpang.nama}</span>
+                          <span className="text-sm text-gray-500">
+                            {penumpang.noID}
+                          </span>
+                        </div>
+                      </TableCell>
+                      <TableCell className="px-12">
+                        <Detail penumpang={penumpang} />
+                      </TableCell>
+                      <TableCell className="px-8 text-right">
+                        <KelasBadge kelas={penumpang.kelas} />
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Tambahkan form pemesan di sini */}
       <FormProvider {...form}>
@@ -324,12 +344,16 @@ export default function Data({ sessionId }: DataProps) {
           <AlertDialogHeader>
             <AlertDialogTitle>Konfirmasi Pemesanan</AlertDialogTitle>
             <AlertDialogDescription>
-              Anda hanya memiliki waktu <span className="font-bold">2 jam</span> untuk menyelesaikan pembayaran. Lanjutkan pesan tiket?
+              Anda hanya memiliki waktu <span className="font-bold">2 jam</span>{" "}
+              untuk menyelesaikan pembayaran. Lanjutkan pesan tiket?
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Batal</AlertDialogCancel>
-            <AlertDialogAction onClick={handleConfirmPesanTiket} className="bg-Blue text-white hover:bg-teal-600">
+            <AlertDialogAction
+              onClick={handleConfirmPesanTiket}
+              className="bg-Blue text-white hover:bg-teal-600"
+            >
               Ya, Pesan Tiket
             </AlertDialogAction>
           </AlertDialogFooter>

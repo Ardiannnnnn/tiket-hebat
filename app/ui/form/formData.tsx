@@ -15,14 +15,18 @@ import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useForm, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { penumpangSchema, PenumpangFormSchema } from "@/lib/penumpangSchema";
+import { penumpangSchema} from "@/lib/penumpangSchema";
 import type { SessionData } from "@/types/session";
+import { toast } from "sonner";
+import type { z } from "zod";
 
 interface FormPenumpangProps {
   session: SessionData;
 }
 
 const STORAGE_KEY = "dataPenumpang";
+
+type PenumpangFormSchema = z.infer<typeof penumpangSchema>;
 
 export default function FormPenumpang({ session }: FormPenumpangProps) {
   const router = useRouter();
@@ -93,12 +97,15 @@ export default function FormPenumpang({ session }: FormPenumpangProps) {
         jenis_kelamin: "pria" as const,
         jenis_id: "nik" as const,
         nomor_identitas: "",
-        usia: "",
+        usia: 0,
         alamat: "",
       }));
 
       const defaultKendaraan = vehicleTickets.map(() => ({
         nomor_polisi: "",
+        nama: "",
+        alamat: "",
+        umur: 0,
       }));
 
       replacePassenger(defaultPenumpang);
@@ -132,32 +139,38 @@ export default function FormPenumpang({ session }: FormPenumpangProps) {
   }, [watch("penumpang"), watch("kendaraan"), initialized]);
 
   const onSubmit = (data: PenumpangFormSchema) => {
-    const penumpangDenganKelas = data.penumpang.map((item, index) => ({
-      ...item,
-      usia: Number(item.usia),
-      kelas: passengerTickets[index]?.class.class_name || "Tidak diketahui",
-      ticket_id: passengerTickets[index]?.ticket_id,
-    }));
+  if (passengerTickets.length === 0 && vehicleTickets.length === 0) {
+    toast.error("Pilih tiket terlebih dahulu");
+    return;
+  }
 
-    const kendaraanDenganKelas = data.kendaraan.map((item, index) => ({
-      ...item,
-      kelas: vehicleTickets[index]?.class.class_name || "Tidak diketahui",
-      ticket_id: vehicleTickets[index]?.ticket_id,
-    }));
+  const penumpangDenganKelas = data.penumpang.map((item, index) => ({
+    ...item,
+    usia: Number(item.usia),
+    kelas: passengerTickets[index]?.class.class_name || "Tidak diketahui",
+    ticket_id: passengerTickets[index]?.ticket_id,
+  }));
 
-    sessionStorage.setItem(
-      STORAGE_KEY,
-      JSON.stringify({
-        penumpang: penumpangDenganKelas,
-        kendaraan: kendaraanDenganKelas,
-      })
-    );
+  const kendaraanDenganKelas = data.kendaraan.map((item, index) => ({
+    ...item,
+    kelas: vehicleTickets[index]?.class.class_name || "Tidak diketahui",
+    ticket_id: vehicleTickets[index]?.ticket_id,
+  }));
 
-    console.log("Penumpang yang disimpan:", penumpangDenganKelas);
-    console.log("Kendaraan yang disimpan:", kendaraanDenganKelas);
+  sessionStorage.setItem(
+    STORAGE_KEY,
+    JSON.stringify({
+      penumpang: penumpangDenganKelas,
+      kendaraan: kendaraanDenganKelas,
+    })
+  );
 
-    router.push(`/book/${id}/form/verifikasi?session_id=${sessionId}`);
-  };
+  console.log("Penumpang yang disimpan:", penumpangDenganKelas);
+  console.log("Kendaraan yang disimpan:", kendaraanDenganKelas);
+
+  router.push(`/book/${id}/form/verifikasi?session_id=${sessionId}`);
+};
+
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="md:space-y-6 space-y-8">
@@ -201,144 +214,172 @@ export default function FormPenumpang({ session }: FormPenumpangProps) {
                   readOnly
                 />
               </div>
+              <div className="w-full">
+                <Label className="text-gray-600">Nama</Label>
+                <Input
+                  className="h-10 placeholder:text-sm"
+                  placeholder="Nama"
+                  {...register(`kendaraan.${index}.nama`)}
+                />
+              </div>
+              <div className="w-full">
+                <Label className="text-gray-600">Alamat</Label>
+                <Input
+                  className="h-10 placeholder:text-sm"
+                  placeholder="Alamat"
+                  {...register(`kendaraan.${index}.alamat`)}
+                />
+              </div>
+              <div className="w-full">
+                <Label className="text-gray-600">Umur</Label>
+                <Input
+                  className="h-10 placeholder:text-sm"
+                  type="number"
+                  placeholder="0"
+                  {...register(`kendaraan.${index}.umur`, {
+                    valueAsNumber: true,
+                  })}
+                />
+              </div>
             </div>
           </CardContent>
         </Card>
       ))}
 
-      {passengerFields.map((field, index) => (
-        <Card key={field.id} className={cn("py-0 gap-0")}>
-          <CardHeader className="p-4 border-b flex flex-row justify-between">
-            <p className="flex flex-col md:flex-row md:gap-2">
-              Isi Data Penumpang{" "}
-              <span className="font-bold">
-                ({passengerTickets[index]?.class.class_name})
-              </span>
-            </p>
-          </CardHeader>
-          <CardContent className="p-4 md:px-8">
-            <div className="grid grid-cols-3 gap-6 md:text-sm">
-              <div className="col-span-1">
-                <Label className="text-gray-600 md:block hidden">
-                  Jenis Kelamin
-                </Label>
-                <Label className="md:hidden">JK</Label>
-                <Select
-                  value={watch(`penumpang.${index}.jenis_kelamin`) || ""}
-                  onValueChange={(val) =>
-                    setValue(
-                      `penumpang.${index}.jenis_kelamin`,
-                      val as "pria" | "wanita"
-                    )
-                  }
-                >
-                  <SelectTrigger className="w-full h-10 placeholder:text-sm">
-                    <SelectValue placeholder="Pria" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="pria">Pria</SelectItem>
-                    <SelectItem value="wanita">Wanita</SelectItem>
-                  </SelectContent>
-                </Select>
-                {errors.penumpang?.[index]?.jenis_kelamin && (
-                  <p className="text-xs text-red-500 mt-1">
-                    {errors.penumpang[index].jenis_kelamin?.message}
+      {passengerFields.length > 0 &&
+        passengerFields.map((field, index) => (
+          <Card key={field.id} className={cn("py-0 gap-0")}>
+            <CardHeader className="p-4 border-b flex flex-row justify-between">
+              <p className="flex flex-col md:flex-row md:gap-2">
+                Isi Data Penumpang{" "}
+                <span className="font-bold">
+                  ({passengerTickets[index]?.class.class_name})
+                </span>
+              </p>
+            </CardHeader>
+            <CardContent className="p-4 md:px-8">
+              <div className="grid grid-cols-3 gap-6 md:text-sm">
+                <div className="col-span-1">
+                  <Label className="text-gray-600 md:block hidden">
+                    Jenis Kelamin
+                  </Label>
+                  <Label className="md:hidden">JK</Label>
+                  <Select
+                    value={watch(`penumpang.${index}.jenis_kelamin`) || ""}
+                    onValueChange={(val) =>
+                      setValue(
+                        `penumpang.${index}.jenis_kelamin`,
+                        val as "pria" | "wanita"
+                      )
+                    }
+                  >
+                    <SelectTrigger className="w-full h-10 placeholder:text-sm">
+                      <SelectValue placeholder="Pria" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="pria">Pria</SelectItem>
+                      <SelectItem value="wanita">Wanita</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  {errors.penumpang?.[index]?.jenis_kelamin && (
+                    <p className="text-xs text-red-500 mt-1">
+                      {errors.penumpang[index].jenis_kelamin?.message}
+                    </p>
+                  )}
+                </div>
+                <div className="col-span-2">
+                  <Label className="text-gray-600">Nama Lengkap</Label>
+                  <Input
+                    className="h-10 text-sm placeholder:text-sm"
+                    placeholder="Masukkan Nama"
+                    {...register(`penumpang.${index}.nama`)}
+                  />
+                  <p className="text-xs text-gray-500 mt-1">
+                    Isi sesuai dengan KTP/SIM/Paspor (tanpa gelar khusus)
                   </p>
-                )}
-              </div>
-              <div className="col-span-2">
-                <Label className="text-gray-600">Nama Lengkap</Label>
-                <Input
-                  className="h-10 text-sm placeholder:text-sm"
-                  placeholder="Masukkan Nama"
-                  {...register(`penumpang.${index}.nama`)}
-                />
-                <p className="text-xs text-gray-500 mt-1">
-                  Isi sesuai dengan KTP/SIM/Paspor (tanpa gelar khusus)
-                </p>
-                {errors.penumpang?.[index]?.nama && (
-                  <p className="text-xs text-red-500 mt-1">
-                    {errors.penumpang[index].nama?.message}
+                  {errors.penumpang?.[index]?.nama && (
+                    <p className="text-xs text-red-500 mt-1">
+                      {errors.penumpang[index].nama?.message}
+                    </p>
+                  )}
+                </div>
+                <div className="col-span-1">
+                  <Label className="text-gray-600">Jenis ID</Label>
+                  <Select
+                    value={watch(`penumpang.${index}.jenis_id`) || ""}
+                    onValueChange={(val) =>
+                      setValue(
+                        `penumpang.${index}.jenis_id`,
+                        val as "nik" | "sim" | "paspor"
+                      )
+                    }
+                  >
+                    <SelectTrigger className="w-full h-10 placeholder:text-sm">
+                      <SelectValue placeholder="NIK" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="nik">NIK</SelectItem>
+                      <SelectItem value="sim">SIM</SelectItem>
+                      <SelectItem value="paspor">Paspor</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  {errors.penumpang?.[index]?.jenis_id && (
+                    <p className="text-xs text-red-500 mt-1">
+                      {errors.penumpang[index].jenis_id?.message}
+                    </p>
+                  )}
+                </div>
+                <div className="col-span-2">
+                  <Label className="text-gray-600">Nomor Identitas</Label>
+                  <Input
+                    className="h-10 placeholder:text-sm"
+                    placeholder="Masukkan Nomor"
+                    {...register(`penumpang.${index}.nomor_identitas`)}
+                  />
+                  <p className="text-xs text-gray-500 mt-1">
+                    Penumpang di bawah 18 tahun, isi dengan tanggal lahir
+                    (hhbbtttt)
                   </p>
-                )}
+                  {errors.penumpang?.[index]?.nomor_identitas && (
+                    <p className="text-xs text-red-500 mt-1">
+                      {errors.penumpang[index].nomor_identitas?.message}
+                    </p>
+                  )}
+                </div>
+                <div className="col-span-1">
+                  <Label className="text-gray-600">Usia</Label>
+                  <Input
+                    className="h-10 placeholder:text-sm"
+                    type="number"
+                    placeholder="0"
+                    {...register(`penumpang.${index}.usia`, {
+                      valueAsNumber: true,
+                    })}
+                  />
+                  {errors.penumpang?.[index]?.usia && (
+                    <p className="text-xs text-red-500 mt-1">
+                      {errors.penumpang[index].usia?.message}
+                    </p>
+                  )}
+                </div>
+                <div className="col-span-2">
+                  <Label className="text-gray-600">Alamat</Label>
+                  <Input
+                    className="h-10 placeholder:text-sm"
+                    placeholder="Masukkan alamat"
+                    {...register(`penumpang.${index}.alamat`)}
+                  />
+                  <p className="text-xs text-gray-500 mt-1">Contoh: Air Dingin</p>
+                  {errors.penumpang?.[index]?.alamat && (
+                    <p className="text-xs text-red-500 mt-1">
+                      {errors.penumpang[index].alamat?.message}
+                    </p>
+                  )}
+                </div>
               </div>
-              <div className="col-span-1">
-                <Label className="text-gray-600">Jenis ID</Label>
-                <Select
-                  value={watch(`penumpang.${index}.jenis_id`) || ""}
-                  onValueChange={(val) =>
-                    setValue(
-                      `penumpang.${index}.jenis_id`,
-                      val as "nik" | "sim" | "paspor"
-                    )
-                  }
-                >
-                  <SelectTrigger className="w-full h-10 placeholder:text-sm">
-                    <SelectValue placeholder="NIK" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="nik">NIK</SelectItem>
-                    <SelectItem value="sim">SIM</SelectItem>
-                    <SelectItem value="paspor">Paspor</SelectItem>
-                  </SelectContent>
-                </Select>
-                {errors.penumpang?.[index]?.jenis_id && (
-                  <p className="text-xs text-red-500 mt-1">
-                    {errors.penumpang[index].jenis_id?.message}
-                  </p>
-                )}
-              </div>
-              <div className="col-span-2">
-                <Label className="text-gray-600">Nomor Identitas</Label>
-                <Input
-                  className="h-10 placeholder:text-sm"
-                  placeholder="Masukkan Nomor"
-                  {...register(`penumpang.${index}.nomor_identitas`)}
-                />
-                <p className="text-xs text-gray-500 mt-1">
-                  Penumpang di bawah 18 tahun, isi dengan tanggal lahir
-                  (hhbbtttt)
-                </p>
-                {errors.penumpang?.[index]?.nomor_identitas && (
-                  <p className="text-xs text-red-500 mt-1">
-                    {errors.penumpang[index].nomor_identitas?.message}
-                  </p>
-                )}
-              </div>
-              <div className="col-span-1">
-                <Label className="text-gray-600">Usia</Label>
-                <Input
-                  className="h-10 placeholder:text-sm"
-                  type="number"
-                  placeholder="0"
-                  {...register(`penumpang.${index}.usia`, {
-                    valueAsNumber: true,
-                  })}
-                />
-                {errors.penumpang?.[index]?.usia && (
-                  <p className="text-xs text-red-500 mt-1">
-                    {errors.penumpang[index].usia?.message}
-                  </p>
-                )}
-              </div>
-              <div className="col-span-2">
-                <Label className="text-gray-600">Alamat</Label>
-                <Input
-                  className="h-10 placeholder:text-sm"
-                  placeholder="Masukkan alamat"
-                  {...register(`penumpang.${index}.alamat`)}
-                />
-                <p className="text-xs text-gray-500 mt-1">Contoh: Air Dingin</p>
-                {errors.penumpang?.[index]?.alamat && (
-                  <p className="text-xs text-red-500 mt-1">
-                    {errors.penumpang[index].alamat?.message}
-                  </p>
-                )}
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      ))}
+            </CardContent>
+          </Card>
+        ))}
       <Button
         type="submit"
         className="w-full bg-Blue text-white hover:bg-teal-600"
