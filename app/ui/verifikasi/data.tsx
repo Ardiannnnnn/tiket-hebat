@@ -240,7 +240,7 @@ export default function Data({ sessionId }: DataProps) {
       console.log("RESPONSE:", response.data);
 
       // Perbaikan akses
-      const invoiceUrl = response.data.xendit.invoice_url;
+      const invoiceUrl = response.data.data.xendit.invoice_url;
       if (invoiceUrl) {
         window.location.href = invoiceUrl;
       } else {
