@@ -3,14 +3,14 @@
 import api, {Baseapi} from "./api";
 import { Ship, ShipResponse } from "@/types/ship";
 
-export const getShips = async (): Promise<ShipResponse | null> => {
+export const getShips = async (page = 1, limit = 20): Promise<ShipResponse | null> => {
   try {
-    const response = await api.get<ShipResponse>("/ships");
+    const response = await api.get<ShipResponse>(`/ships?page=${page}&limit=${limit}`);
     console.log("response", response.data);
     return response.data;
   } catch (error) {
     console.error("Failed to fetch ships:", error);
-    return null; // Return null or handle the error appropriately
+    return null;
   }
 };
 

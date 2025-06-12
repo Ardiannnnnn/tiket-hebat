@@ -72,69 +72,59 @@ export default function FormPenumpang({ session }: FormPenumpangProps) {
 
   const penumpangValues = watch("penumpang");
 
-  // Initialize only once
+  // Initialize form data
   useEffect(() => {
-    if (!initialized) {
-      const saved = sessionStorage.getItem(STORAGE_KEY);
-      if (saved) {
-        try {
-          const parsed = JSON.parse(saved);
-          if (
-            parsed.penumpang?.length === passengerTickets.length &&
-            parsed.kendaraan?.length === vehicleTickets.length
-          ) {
-            replacePassenger(parsed.penumpang);
-            replaceKendaraan(parsed.kendaraan);
-            reset(parsed);
-            setInitialized(true);
-            return;
-          }
-        } catch {}
-      }
-
-      const defaultPenumpang = passengerTickets.map(() => ({
-        nama: "",
-        jenis_kelamin: "pria" as const,
-        jenis_id: "nik" as const,
-        nomor_identitas: "",
-        usia: 0,
-        alamat: "",
-      }));
-
-      const defaultKendaraan = vehicleTickets.map(() => ({
-        nomor_polisi: "",
-        nama: "",
-        alamat: "",
-        umur: 0,
-      }));
-
-      replacePassenger(defaultPenumpang);
-      replaceKendaraan(defaultKendaraan);
-      reset({
-        penumpang: defaultPenumpang,
-        kendaraan: defaultKendaraan,
-      });
-
-      setInitialized(true);
+    const saved = sessionStorage.getItem(STORAGE_KEY);
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        if (
+          parsed.penumpang?.length === passengerTickets.length &&
+          parsed.kendaraan?.length === vehicleTickets.length
+        ) {
+          replacePassenger(parsed.penumpang);
+          replaceKendaraan(parsed.kendaraan);
+          reset(parsed);
+          setInitialized(true);
+          return;
+        }
+      } catch {}
     }
-  }, [
-    initialized,
-    replacePassenger,
-    replaceKendaraan,
-    reset,
-    passengerTickets,
-    vehicleTickets,
-  ]);
 
+    const defaultPenumpang = passengerTickets.map(() => ({
+      nama: "",
+      jenis_kelamin: "pria" as const,
+      jenis_id: "nik" as const,
+      nomor_identitas: "",
+      usia: 0,
+      alamat: "",
+    }));
+
+    const defaultKendaraan = vehicleTickets.map(() => ({
+      nomor_polisi: "",
+      nama: "",
+      alamat: "",
+      umur: 0,
+    }));
+
+    replacePassenger(defaultPenumpang);
+    replaceKendaraan(defaultKendaraan);
+    reset({
+      penumpang: defaultPenumpang,
+      kendaraan: defaultKendaraan,
+    });
+
+    setInitialized(true);
+  }, [passengerTickets.length, vehicleTickets.length]);
+
+  // Save form data to session storage
   useEffect(() => {
     if (initialized) {
-      sessionStorage.setItem(
-        STORAGE_KEY,
-        JSON.stringify({
-          penumpang: watch("penumpang"),
-          kendaraan: watch("kendaraan"),
-        })
-      );
+      const formData = {
+        penumpang: watch("penumpang"),
+        kendaraan: watch("kendaraan"),
+      };
+      sessionStorage.setItem(STORAGE_KEY, JSON.stringify(formData));
     }
   }, [watch("penumpang"), watch("kendaraan"), initialized]);
 

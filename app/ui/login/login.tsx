@@ -18,6 +18,8 @@ import { useState } from "react";
 import { loginUser } from "@/service/auth";
 import { useRouter } from "next/navigation";
 import { Eye, EyeOff } from "lucide-react";
+import type { LoginResponse } from "@/types/login";
+import { setCookie } from "nookies";
 
 const formSchema = z.object({
   username: z.string().min(1, { message: "Email wajib diisi" }),
@@ -39,13 +41,25 @@ export default function PageLogin() {
       password: "",
     },
   });
+ // npm install nookies
 
   const onSubmit = async (values: LoginFormValues) => {
     setIsLoading(true);
     try {
-      const data = await loginUser(values);
-      console.log("Login berhasil", data);
-      router.push("/beranda");
+      const response = await loginUser(values);
+      const userRole = response.data.role.role_name;
+
+      // Simpan role ke cookie agar bisa diakses middleware
+      setCookie(null, "role", userRole, {
+        path: "/",
+        maxAge: 60 * 60, // 1 jam
+      });
+
+      if (userRole === "admin") {
+        router.push("/beranda");
+      } else if (userRole === "operator") {
+        router.push("/petugas");
+      }
     } catch (err) {
       console.error("Login gagal", err);
     } finally {

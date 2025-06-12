@@ -1,14 +1,25 @@
 import api, {Baseapi} from "./api";
 import { Harbor, HarborResponse } from "@/types/harbor"; // kalau kamu simpan di /types/ship.ts
 
-export const getHarbors = async (): Promise<HarborResponse | null> => {
+
+export const getHarbors = async (
+  page: number = 1,
+  limit: number = 10,
+  search: string = ""
+): Promise<HarborResponse | null> => {
   try {
-    const response = await api.get<HarborResponse>("/harbors");
-    console.log("response", response.data);
+    const params = new URLSearchParams();
+    params.append("page", String(page));
+    params.append("limit", String(limit));
+    if (search.trim() !== "") {
+      params.append("search", search.trim());
+    }
+
+    const response = await api.get<HarborResponse>(`/harbors?${params.toString()}`);
     return response.data;
   } catch (error) {
-    console.error("Failed to fetch ships:", error);
-    return null; // Return null or handle the error appropriately
+    console.error("Failed to fetch harbors:", error);
+    return null;
   }
 };
 

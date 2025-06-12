@@ -11,7 +11,14 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { Pencil, Trash, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from "lucide-react";
+import {
+  Pencil,
+  Trash,
+  ChevronLeft,
+  ChevronRight,
+  ChevronsLeft,
+  ChevronsRight,
+} from "lucide-react";
 import Link from "next/link";
 import {
   AlertDialog,
@@ -31,6 +38,15 @@ export interface ColumnDef<T> {
   render?: (value: T[keyof T], item: T) => React.ReactNode;
 }
 
+interface MetaData {
+  total: number;
+  per_page: number;
+  current_page: number;
+  total_pages: number;
+}
+
+
+
 interface ReusableTableProps<T> {
   columns: ColumnDef<T>[];
   data: T[];
@@ -38,16 +54,15 @@ interface ReusableTableProps<T> {
   showActions?: boolean;
   onEdit?: (item: T) => void;
   onDelete?: (item: T) => void;
-  editUrl?: (item: T) => string; // Dynamic edit URL
-  deleteUrl?: (item: T) => string; // Dynamic delete URL
-  displayNameField?: keyof T; // Field to use for display name in alerts
-  isLoading?: boolean; // Loading state prop
-  skeletonRows?: number; // Number of skeleton rows to show when loading
-  // Pagination props
-  pageSize?: number;
-  currentPage?: number;
-  totalItems?: number;
+  editUrl?: (item: T) => string;
+  deleteUrl?: (item: T) => string;
+  displayNameField?: keyof T;
+  isLoading?: boolean;
+  skeletonRows?: number;
+  meta?: MetaData;
   onPageChange?: (page: number) => void;
+  onSearchChange?: (value: string) => void;
+  searchPlaceholder?: string;
 }
 
 export default function ReusableTable<T extends { id: string | number }>({
@@ -57,35 +72,34 @@ export default function ReusableTable<T extends { id: string | number }>({
   showActions = false,
   onEdit,
   onDelete,
-  editUrl = (item) => `/edit/${item.id}`, // Default edit URL
-  deleteUrl = (item) => `/delete/${item.id}`, // Default delete URL
+  editUrl = (item) => `/edit/${item.id}`,
+  deleteUrl = (item) => `/delete/${item.id}`,
   displayNameField,
-  isLoading = false, // Default not loading
-  skeletonRows = 5, // Default 5 skeleton rows
-  // Pagination props with defaults
-  pageSize = 10,
-  currentPage = 1,
-  totalItems = 0,
+  isLoading = false,
+  skeletonRows = 5,
+  meta,
   onPageChange,
+  onSearchChange,
+  searchPlaceholder,
 }: ReusableTableProps<T>) {
-  // State for the alert dialog
   const [isAlertOpen, setIsAlertOpen] = useState(false);
   const [itemToDelete, setItemToDelete] = useState<T | null>(null);
 
-  // Helper function to get item name
+  const pageSize = meta?.per_page ?? 10;
+  const currentPage = meta?.current_page ?? 1;
+  const totalItems = meta?.total ?? 0;
+  const totalPages = meta?.total_pages ?? Math.ceil(totalItems / pageSize);
+
   const getItemDisplayName = (item: T): string => {
-    // If a specific display name field is provided, use it
     if (displayNameField && displayNameField in item) {
       return String(item[displayNameField]);
     }
 
-    // Otherwise, try to find the first non-ID column from the provided columns
     const firstNonIdColumn = columns.find((col) => col.key !== "id");
     if (firstNonIdColumn && firstNonIdColumn.key in item) {
       return String(item[firstNonIdColumn.key]);
     }
 
-    // If that fails, try common name properties
     const nameKeys = ["name", "harbor_name", "title", "label", "description"];
     for (const key of nameKeys) {
       if (key in item && typeof item[key as keyof T] === "string") {
@@ -93,17 +107,14 @@ export default function ReusableTable<T extends { id: string | number }>({
       }
     }
 
-    // Final fallback to ID
     return `ID: ${String(item.id)}`;
   };
 
-  // Handle delete click
   const handleDeleteClick = (item: T) => {
     setItemToDelete(item);
     setIsAlertOpen(true);
   };
 
-  // Handle confirmed deletion
   const handleConfirmDelete = () => {
     if (itemToDelete && onDelete) {
       onDelete(itemToDelete);
@@ -111,22 +122,15 @@ export default function ReusableTable<T extends { id: string | number }>({
     setIsAlertOpen(false);
     setItemToDelete(null);
   };
-  
-  // Calculate the number of visible columns (excluding ID)
-  const visibleColumns = columns.filter(col => col.key !== "id").length;
-  // Total columns (including the number column and actions if enabled)
+
+  const visibleColumns = columns.filter((col) => col.key !== "id").length;
   const totalColumns = visibleColumns + 1 + (showActions ? 1 : 0);
 
-  // Pagination calculations
-  const totalPages = Math.ceil(totalItems / pageSize);
-  
-  // Navigation functions
   const goToFirstPage = () => onPageChange && onPageChange(1);
   const goToPreviousPage = () => onPageChange && onPageChange(Math.max(1, currentPage - 1));
   const goToNextPage = () => onPageChange && onPageChange(Math.min(totalPages, currentPage + 1));
   const goToLastPage = () => onPageChange && onPageChange(totalPages);
 
-  // Render skeleton rows when loading
   const renderSkeletonRows = () => {
     return Array(skeletonRows)
       .fill(0)
@@ -156,13 +160,24 @@ export default function ReusableTable<T extends { id: string | number }>({
 
   return (
     <>
+      {onSearchChange && (
+        <div className="mb-4 flex justify-end">
+          <input
+            type="text"
+            placeholder={searchPlaceholder || "Cari..."}
+            className="border px-3 py-2 rounded-md text-sm"
+            onChange={(e) => onSearchChange(e.target.value)}
+          />
+        </div>
+      )}
+
       <Table>
         {caption && <TableCaption>{caption}</TableCaption>}
         <TableHeader>
           <TableRow>
             <TableHead>No</TableHead>
             {columns
-              .filter((col) => col.key !== "id") // Sembunyikan kolom ID
+              .filter((col) => col.key !== "id")
               .map((col) => (
                 <TableHead key={String(col.key)}>{col.label}</TableHead>
               ))}
@@ -175,27 +190,22 @@ export default function ReusableTable<T extends { id: string | number }>({
           ) : (
             data.map((item, index) => (
               <TableRow key={item.id}>
-                <TableCell>{((currentPage - 1) * pageSize) + index + 1}</TableCell>
+                <TableCell>{(currentPage - 1) * pageSize + index + 1}</TableCell>
                 {columns
-                  .filter((col) => col.key !== "id") // Sembunyikan kolom ID
+                  .filter((col) => col.key !== "id")
                   .map((col) => (
                     <TableCell key={String(col.key)}>
-                      {col.render
-                        ? col.render(item[col.key], item)
-                        : String(item[col.key])}
+                      {col.render ? col.render(item[col.key], item) : String(item[col.key])}
                     </TableCell>
                   ))}
                 {showActions && (
                   <TableCell>
                     <div className="flex gap-2">
-                      {/* Edit Button */}
                       <Link href={editUrl(item)}>
                         <Button size="sm" variant="outline" onClick={() => onEdit?.(item)}>
                           <Pencil className="w-4 h-4" />
                         </Button>
                       </Link>
-
-                      {/* Delete Button */}
                       <Button
                         size="sm"
                         variant="destructive"
@@ -210,7 +220,6 @@ export default function ReusableTable<T extends { id: string | number }>({
             ))
           )}
 
-          {/* Show a message when no data and not loading */}
           {!isLoading && data.length === 0 && (
             <TableRow>
               <TableCell colSpan={totalColumns} className="text-center py-8 text-gray-500">
@@ -221,27 +230,17 @@ export default function ReusableTable<T extends { id: string | number }>({
         </TableBody>
       </Table>
 
-      {/* Pagination Controls */}
       {totalPages > 0 && (
         <div className="flex items-center justify-end space-x-2 py-4">
           <div className="flex-1 text-sm text-muted-foreground">
-            Menampilkan {((currentPage - 1) * pageSize) + 1}-{Math.min(currentPage * pageSize, totalItems)} dari {totalItems} item
+            Menampilkan {(currentPage - 1) * pageSize + 1}-
+            {Math.min(currentPage * pageSize, totalItems)} dari {totalItems} item
           </div>
           <div className="flex items-center space-x-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={goToFirstPage}
-              disabled={currentPage === 1}
-            >
+            <Button variant="outline" size="sm" onClick={goToFirstPage} disabled={currentPage === 1}>
               <ChevronsLeft className="h-4 w-4" />
             </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={goToPreviousPage}
-              disabled={currentPage === 1}
-            >
+            <Button variant="outline" size="sm" onClick={goToPreviousPage} disabled={currentPage === 1}>
               <ChevronLeft className="h-4 w-4" />
             </Button>
             <div className="text-sm font-medium">
@@ -267,7 +266,6 @@ export default function ReusableTable<T extends { id: string | number }>({
         </div>
       )}
 
-      {/* Alert Dialog for delete confirmation */}
       <AlertDialog open={isAlertOpen} onOpenChange={setIsAlertOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
@@ -279,9 +277,7 @@ export default function ReusableTable<T extends { id: string | number }>({
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Batal</AlertDialogCancel>
-            <AlertDialogAction onClick={handleConfirmDelete}>
-              Ya, Hapus
-            </AlertDialogAction>
+            <AlertDialogAction onClick={handleConfirmDelete}>Ya, Hapus</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

@@ -24,15 +24,25 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { FieldConfig } from "@/types/field";
 
 interface Props {
   type: string;
   endpoint?: string;
   initialData: any;
   onSubmit?: (data: any) => Promise<boolean> | boolean;
+  options?: {
+    [key: string]: { value: number; label: string }[];
+  };
 }
 
-export default function UpdatePageDynamic({ type, endpoint, initialData, onSubmit }: Props) {
+export default function UpdatePageDynamic({
+  type,
+  endpoint,
+  initialData,
+  onSubmit,
+  options,
+}: Props) {
   const fields = createFieldConfigs[type];
   const schema = schemas[type];
   const [isLoading, setIsLoading] = useState(false);
@@ -106,6 +116,13 @@ export default function UpdatePageDynamic({ type, endpoint, initialData, onSubmi
     }
   };
 
+  const getFieldOptions = (field: FieldConfig) => {
+    if (options && options[field.name]) {
+      return options[field.name];
+    }
+    return field.options || [];
+  };
+
   if (!fields || !schema) {
     return (
       <div className="text-red-500">
@@ -123,17 +140,22 @@ export default function UpdatePageDynamic({ type, endpoint, initialData, onSubmi
               {field.label}
             </Label>
 
-            {field.type === "select" && field.options ? (
+            {field.type === "select" ? (
               <Select
-                value={watch(field.name)}
-                onValueChange={(value) => setValue(field.name, value)}
+                value={String(watch(field.name))}
+                onValueChange={(value) => {
+                  // Convert to number if field name is role_id
+                  const finalValue =
+                    field.name === "role_id" ? Number(value) : value;
+                  setValue(field.name, finalValue);
+                }}
               >
                 <SelectTrigger className="w-full">
                   <SelectValue placeholder={field.placeholder || "Pilih"} />
                 </SelectTrigger>
                 <SelectContent>
-                  {field.options.map((opt) => (
-                    <SelectItem key={opt.value} value={opt.value}>
+                  {getFieldOptions(field).map((opt) => (
+                    <SelectItem key={opt.value} value={String(opt.value)}>
                       {opt.label}
                     </SelectItem>
                   ))}

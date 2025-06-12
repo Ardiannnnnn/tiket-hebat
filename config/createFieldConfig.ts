@@ -39,7 +39,7 @@ export const createFieldConfigs: Record<string, FieldConfig[]> = {
       ],
     },
     { name: "image_link", label: "Gambar", type: "text", required: true },
-    { name: "Description", label: "Deskripsi", type: "text", required: true },
+    { name: "description", label: "Deskripsi", type: "text", required: true },
     
   ],
   pelabuhan: [
@@ -54,6 +54,21 @@ export const createFieldConfigs: Record<string, FieldConfig[]> = {
         { label: "Beroperasi", value: "Beroperasi" },
         { label: "Tidak Beroperasi", value: "Tidak Beroperasi" },
       ],
+    },
+  ],
+  // ...existing code...
+
+    pengguna: [
+    { name: "username", label: "Username", type: "text", required: true },
+    { name: "email", label: "Email", type: "email", required: true },
+    { name: "password", label: "Password", type: "text", required: true },
+    { name: "full_name", label: "Nama Lengkap", type: "text", required: true },
+    { 
+      name: "role_id", 
+      label: "Role", 
+      type: "select", 
+      required: true,
+      options: [] // Will be populated dynamically
     },
   ],
 };
