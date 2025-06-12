@@ -5,9 +5,9 @@ const nextConfig: NextConfig = {
   async rewrites() {
     return [
       {
-        source: "/api/:path*", // ini adalah path yang dipanggil dari frontend
+        source: "/api/:path*", // tetap
         destination:
-          "https://tikethebat.ambitiousflower-0b7495d3.southeastasia.azurecontainerapps.io/api/:path*", // path lengkap ke backend
+          "https://tikethebat.gentlemeadow-35df1a19.southeastasia.azurecontainerapps.io/api/:path*", // TANPA /api/v1
       },
     ];
   },

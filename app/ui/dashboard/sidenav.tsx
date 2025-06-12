@@ -9,6 +9,7 @@ import logo from "@/public/image/asdp_2.png";
 import adminImg from "@/public/image/ardian.png";
 import { logoutUser } from "@/service/auth";
 import { usePathname, useRouter } from "next/navigation";
+import { destroyCookie } from "nookies";
 
 export default function SideNav() {
   const [isOpen, setIsOpen] = useState(false);
@@ -44,12 +45,14 @@ export default function SideNav() {
     console.log("handleLogout dipanggil");
     try {
       await logoutUser();
+      destroyCookie(null, "role");
+      destroyCookie(null, "refresh_token");
       console.log("logoutUser selesai");
       router.push("/login");
     } catch (err) {
       console.error("Gagal logout", err);
     }
-  };  
+  };
 
   return (
     <>

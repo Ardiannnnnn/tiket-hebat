@@ -367,7 +367,7 @@ export default function TiketPenumpang({
           </AlertDialogHeader>
           <AlertDialogFooter className="md:mx-auto">
             <AlertDialogCancel>Batal</AlertDialogCancel>
-            <AlertDialogAction onClick={dialogAction} className="bg-Blue">
+            <AlertDialogAction onClick={dialogAction} className="bg-Blue :hover:bg-teal-600 text-white">
               Lanjutkan
             </AlertDialogAction>
           </AlertDialogFooter>

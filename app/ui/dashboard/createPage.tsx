@@ -18,14 +18,18 @@ import { schemas } from "@/lib/zodSchemas";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { FieldConfig } from "@/types/field";
 
 interface Props {
-  type: string; // tipe fitur seperti 'kapal', 'tiket', dll
-  endpoint?: string; // endpoint API untuk posting data
-  onSubmit?: (data: any) => Promise<boolean> | boolean; // opsional agar bisa override aksi submit
+  type: string;
+  endpoint?: string;
+  onSubmit?: (data: any) => Promise<boolean> | boolean;
+  options?: {
+    [key: string]: { value: number; label: string; }[];
+  };
 }
 
-export default function CreatePageDynamic({ type, endpoint, onSubmit }: Props) {
+export default function CreatePageDynamic({ type, endpoint, onSubmit, options }: Props) {
   const fields = createFieldConfigs[type];
   const schema = schemas[type];
   const [isLoading, setIsLoading] = useState(false);
@@ -104,6 +108,13 @@ export default function CreatePageDynamic({ type, endpoint, onSubmit }: Props) {
     }
   };
 
+  const getFieldOptions = (field: FieldConfig) => {
+    if (options && options[field.name]) {
+      return options[field.name];
+    }
+    return field.options || [];
+  };
+
   return (
     <div>
       <form onSubmit={handleSubmit(handleOpenConfirmation)} className="space-y-4 p-4">
@@ -113,14 +124,23 @@ export default function CreatePageDynamic({ type, endpoint, onSubmit }: Props) {
               {field.label}
             </Label>
 
-            {field.type === "select" && field.options ? (
-              <Select onValueChange={(value) => setValue(field.name, value)}>
+            {field.type === "select" ? (
+              <Select 
+                onValueChange={(value) => {
+                  // Convert to number if field name is role_id
+                  const finalValue = field.name === "role_id" ? Number(value) : value;
+                  setValue(field.name, finalValue);
+                }}
+              >
                 <SelectTrigger className="w-full">
                   <SelectValue placeholder={field.placeholder || "Pilih"} />
                 </SelectTrigger>
                 <SelectContent>
-                  {field.options.map((opt) => (
-                    <SelectItem key={opt.value} value={opt.value}>
+                  {getFieldOptions(field).map((opt) => (
+                    <SelectItem 
+                      key={opt.value} 
+                      value={String(opt.value)} // Convert to string for the select component
+                    >
                       {opt.label}
                     </SelectItem>
                   ))}

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import { getShips, deleteShip } from "@/service/shipService";
 import { Ship } from "@/types/ship";
 import ReusableTable, { ColumnDef } from "./table";
@@ -9,16 +9,7 @@ import { Input } from "@/components/ui/input";
 import clsx from "clsx";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { useRouter } from "next/navigation";
-import {
-  Dialog,
-  DialogTrigger,
-  DialogContent,
-  DialogHeader,
-  DialogFooter,
-} from "@/components/ui/dialog";
-import { DialogTitle } from "@radix-ui/react-dialog";
-// Komponen StatusBadge untuk KapalPage
+
 function StatusBadge({ value }: { value: string }) {
   const statusClass = clsx("text-white text-xs px-2 py-1 rounded-md w-fit", {
     "bg-green-500": value === "Beroperasi",
@@ -29,12 +20,12 @@ function StatusBadge({ value }: { value: string }) {
 }
 
 export default function KapalPage() {
-  const [kapalData, setKapalData] = useState<Ship[]>([]);
+  const [allData, setAllData] = useState<Ship[]>([]); // data asli API
+  const [filteredData, setFilteredData] = useState<Ship[]>([]); // data hasil filter pencarian
+  const [meta, setMeta] = useState<{ total: number; per_page: number; current_page: number; total_pages:number } | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
-  const router = useRouter();
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [selectedShip, setSelectedShip] = useState<Ship | null>(null);
-  const [pageSize] = useState(10); // 10 items per page
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize] = useState(10);
   const [isloading, setIsLoading] = useState(true);
 
   const columns: ColumnDef<Ship>[] = [
@@ -43,64 +34,76 @@ export default function KapalPage() {
     {
       key: "status",
       label: "Status",
-      render: (value: string) => <StatusBadge value={value} />, // Render StatusBadge hanya di KapalPage
+      render: (value, item) => <StatusBadge value={String(value ?? "")}  />,
     },
     { key: "ship_type", label: "Jenis" },
     { key: "year_operation", label: "Tahun" },
-    {
-      key: "image_link",
-      label: "Gambar",
-    },
+    { key: "image_link", label: "Gambar" },
     { key: "description", label: "Deskripsi" },
   ];
 
+  const fetchData = useCallback(async (page: number) => {
+  setIsLoading(true);
+  const response = await getShips(page, pageSize);
+  if (response && response.status) {
+    setAllData(response.data || []);
+    setMeta(response.meta ?? null);
+    setFilteredData(response.data || []);
+  } else {
+    toast.error("Gagal memuat data");
+  }
+  setIsLoading(false);
+}, [pageSize]);
+
+
   useEffect(() => {
-    const fetchData = async () => {
-      setIsLoading(true);
-      const response = await getShips();
-      if (response && response.status) {
-        setKapalData(response.data || []);
-      } else {
-        toast.error("Gagal memuat data");
-      }
-      setIsLoading(false);
-    };
+    fetchData(currentPage);
+  }, [fetchData, currentPage]);
 
-    fetchData();
-  }, []);
+  // Reset page jika search berubah
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm]);
 
-const handleDelete = async (item: Ship) => {
-    // The actual delete function that will be called after confirmation
+  // Filter data lokal saat search berubah
+  useEffect(() => {
+    if (searchTerm.trim() === "") {
+      setFilteredData(allData);
+    } else {
+      const search = searchTerm.toLowerCase();
+      setFilteredData(
+        allData.filter((item) =>
+          [
+            item.ship_name ?? "",
+            item.status ?? "",
+            item.ship_type ?? "",
+            String(item.year_operation ?? ""),
+            item.image_link ?? "",
+            item.description ?? "",
+          ].some((field) => field.toLowerCase().includes(search))
+        )
+      );
+    }
+  }, [searchTerm, allData]);
+
+  const handleDelete = async (item: Ship) => {
     const success = await deleteShip(item.id);
     if (success) {
       toast.success("Kapal berhasil dihapus");
-      // Update the local state to remove the deleted item
-      setKapalData(kapalData.filter((ship) => ship.id !== item.id));
+      // refetch data supaya data terbaru sesuai API
+      fetchData(currentPage);
     } else {
       toast.error("Gagal menghapus kapal");
     }
   };
 
-    const handleEdit = (item: Ship) => {
-      console.log("Edit action triggered for:", item);
-      // Navigate to the edit page dynamically
-      window.location.href = `/kapal/edit/${item.id}`;
-    };
-  
+  const handleEdit = (item: Ship) => {
+    window.location.href = `/kapal/edit/${item.id}`;
+  };
 
-  const filteredData = useMemo(() => {
-    const search = searchTerm.toLowerCase();
-    return kapalData.filter((item) =>
-      [
-        item.ship_name ?? "",
-        item.status ?? "",
-        item.ship_type ?? "",
-        String(item.year_operation ?? ""),
-        item.image_link ?? "", // pastikan year jadi string
-        item.description ?? "",
-      ].some((field) => field.toLowerCase().includes(search))
-    );
-  }, [searchTerm, kapalData]);
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+  };
 
   return (
     <div className="p-4">
@@ -121,7 +124,7 @@ const handleDelete = async (item: Ship) => {
       </div>
 
       <ReusableTable
-        caption="Daftar Kapal"
+        caption="Daftar Kap"
         columns={columns}
         data={filteredData}
         showActions
@@ -130,6 +133,8 @@ const handleDelete = async (item: Ship) => {
         skeletonRows={pageSize}
         isLoading={isloading}
         editUrl={(item) => `/kapal/edit/${item.id}`}
+        meta={meta ?? undefined}
+        onPageChange={handlePageChange}
       />
     </div>
   );
