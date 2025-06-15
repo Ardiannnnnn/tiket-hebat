@@ -50,7 +50,7 @@ interface Vehicle {
   nomor_polisi: string;
   kelas: string;
   ticket_id: number;
-  nama : string; // Nama pemilik kendaraan
+  nama: string; // Nama pemilik kendaraan
   usia: number; // Usia kendaraan tidak relevan
   alamat: string; // Alamat pemilik kendaraan
 }
@@ -103,6 +103,46 @@ const Detail = ({ penumpang }: { penumpang: Passenger }) => {
   );
 };
 
+const DetailKendaraan = ({ kendaraan }: { kendaraan: Vehicle }) => {
+  return (
+    <Popover>
+      <PopoverTrigger asChild>
+        <Button variant="outline">Detail</Button>
+      </PopoverTrigger>
+      <PopoverContent
+        className={`${poppins.className} w-64 p-4 shadow-lg rounded-lg bg-[#F7FAFF]`}
+      >
+        <div className="space-y-2 text-sm">
+          <table>
+            <tbody>
+              <tr>
+                <td className="pr-4 font-semibold">Nama</td>
+                <td>: {kendaraan.nama}</td>
+              </tr>
+              <tr>
+                <td className="font-semibold">Alamat</td>
+                <td>: {kendaraan.alamat}</td>
+              </tr>
+              <tr>
+                <td className="font-semibold">Nomor Polisi</td>
+                <td>: {kendaraan.nomor_polisi}</td>
+              </tr>
+              <tr>
+                <td className="font-semibold">Kelas</td>
+                <td>: {kendaraan.kelas}</td>
+              </tr>
+              <tr>
+                <td className="font-semibold">Usia</td>
+                <td>: {kendaraan.usia}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </PopoverContent>
+    </Popover>
+  );
+}
+
 const KelasBadge = ({ kelas }: { kelas: string }) => {
   const kelasStyles: Record<string, string> = {
     ECONOMY: "bg-teal-400 text-white",
@@ -130,10 +170,8 @@ export default function Data({ sessionId }: DataProps) {
   const [penumpangList, setPenumpangList] = useState<Passenger[]>([]);
   const [kendaraanList, setKendaraanList] = useState<Vehicle[]>([]);
   const [openDialog, setOpenDialog] = useState(false);
-  const [orderId, setOrderId] = useState<string| number | null>(null);
-  const [openPembayaran, setOpenPembayaran] = useState(false);
+  const [orderId, setOrderId] = useState<string | number | null>(null);
   const [openConfirm, setOpenConfirm] = useState(false);
-  const [paymentResult, setPaymentResult] = useState<any>(null);
   const router = useRouter();
   const params = useParams();
   const id = params?.id as string;
@@ -170,16 +208,27 @@ export default function Data({ sessionId }: DataProps) {
           seat_number: p.seat_number,
         }));
 
+        const transformedKendaraan = kendaraan.map((p: any) => ({
+          nomor_polisi: p.nomor_polisi,
+          kelas: p.kelas,
+          ticket_id: p.ticket_id,
+          nama: p.nama_kendaraan || p.nama, // Nama kendaraan atau pemilik
+          usia: p.umur || 21, // Usia kendaraan tidak relevan
+          alamat: p.alamat_kendaraan || p.alamat, // Alamat pemilik kendaraan
+        }));
+
         setPenumpangList(transformedPenumpang);
-        setKendaraanList(kendaraan);
-        console.log("ini data", parsed.penumpang, parsed.kendaraan);
+        setKendaraanList(transformedKendaraan);
+        console.log(
+          "ini data semuanya",
+          transformedPenumpang,
+          transformedKendaraan
+        );
       } catch (err) {
         console.error("Gagal parsing data penumpang:", err);
       }
     }
   }, []);
-
-  console.log("DEBUG: kendaraan:", kendaraanList);
 
   // Cek validitas form
   const isFormValid = form.formState.isValid;
@@ -190,16 +239,11 @@ export default function Data({ sessionId }: DataProps) {
       toast.error("Isi data pemesan terlebih dahulu");
       return;
     }
-    setOpenDialog(true);
-  };
-
-  const handleConfirmPesanTiket = async () => {
-    setOpenDialog(false);
-    await handleSubmit();
+    setOpenConfirm(true);
   };
 
   // Ubah handleSubmit: hanya POST, dapatkan order_id, tampilkan dialog pembayaran
-  const handleSubmit = async () => {
+  const handleSubmitAndRedirect = async () => {
     if (!sessionId) {
       console.error("Session ID tidak ditemukan.");
       return;
@@ -221,9 +265,11 @@ export default function Data({ sessionId }: DataProps) {
       ticket_id: k.ticket_id,
       license_plate: k.nomor_polisi,
       passenger_name: k.nama,
-      passenger_age: k.usia, // Usia kendaraan tidak relevan
-      address: k.alamat 
+      passenger_age: k.usia, // Pastikan usia disertakan
+      address: k.alamat,
     }));
+
+    console.log("DEBUG: datadatakendaraan:", vehicleData);
 
     const ticketData = [...passengerData, ...vehicleData];
 
@@ -237,38 +283,22 @@ export default function Data({ sessionId }: DataProps) {
       ticket_data: ticketData,
     };
 
-    console.log("Payload yang dikirim:", payload);
+    console.log("DEBUG: payload:", payload);
 
     try {
       const response: AxiosResponse<ClaimSessionResponse> =
         await submitPassengerData(payload);
-      const order_id = response.data.order_id; // Pastikan backend mengirim order_id
+      const order_id = response.data.order_id;
+
       if (order_id) {
         setOrderId(order_id);
-        setOpenPembayaran(true); // Tampilkan dialog pembayaran
+        router.push(`/book/${id}/bayar?order_id=${order_id}`);
       } else {
         toast.error("Gagal mendapatkan order id.");
       }
     } catch (err) {
       console.error("Gagal mengirim data penumpang:", err);
       toast.error("Gagal memproses data. Silakan coba lagi.");
-    }
-  };
-
-  // Handler setelah pembayaran sukses (dari DialogPembayaran)
-  const handlePembayaranSuccess = (result: any) => {
-    setPaymentResult(result);
-    setOpenConfirm(true); // Tampilkan dialog konfirmasi 2 jam
-  };
-
-  // Handler konfirmasi terakhir
-  const handleConfirmBayar = () => {
-    // Misal invoiceUrl dari paymentResult
-    const invoiceUrl = paymentResult?.data?.invoice_url;
-    if (invoiceUrl) {
-      window.location.href = invoiceUrl;
-    } else {
-      toast.error("Gagal mendapatkan link pembayaran.");
     }
   };
 
@@ -290,6 +320,9 @@ export default function Data({ sessionId }: DataProps) {
                       </TableCell>
                       <TableCell className="text-center">
                         {kendaraan.kelas}
+                      </TableCell>
+                      <TableCell className="text-center">
+                        <DetailKendaraan kendaraan={kendaraan} />
                       </TableCell>
                     </TableRow>
                   </TableBody>
@@ -345,29 +378,12 @@ export default function Data({ sessionId }: DataProps) {
           "bg-Blue p-2 rounded-xl text-center text-white font-semibold cursor-pointer",
           "hover:bg-teal-600"
         )}
-        onClick={async () => {
-          const valid = await form.trigger();
-          if (!valid) {
-            toast.error("Isi data pemesan terlebih dahulu");
-            return;
-          }
-          await handleSubmit();
-        }}
+        onClick={handleClickPesanTiket}
         tabIndex={0}
         role="button"
       >
         Pesan Tiket
       </div>
-
-      {/* Dialog Pilih Pembayaran */}
-      {orderId && (
-        <DialogPembayaran
-          orderId={orderId}
-          open={openPembayaran}
-          onClose={() => setOpenPembayaran(false)}
-          onSuccess={handlePembayaranSuccess}
-        />
-      )}
 
       {/* Dialog Konfirmasi 2 Jam */}
       <AlertDialog open={openConfirm} onOpenChange={setOpenConfirm}>
@@ -375,13 +391,14 @@ export default function Data({ sessionId }: DataProps) {
           <AlertDialogHeader>
             <AlertDialogTitle>Konfirmasi Pembayaran</AlertDialogTitle>
             <AlertDialogDescription>
-              Anda hanya memiliki waktu <span className="font-bold">2 jam</span> untuk menyelesaikan pembayaran. Lanjutkan ke pembayaran?
+              Anda hanya memiliki waktu <span className="font-bold">2 jam</span>{" "}
+              untuk menyelesaikan pembayaran. Lanjutkan ke pembayaran?
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Batal</AlertDialogCancel>
             <AlertDialogAction
-              onClick={handleConfirmBayar}
+              onClick={handleSubmitAndRedirect}
               className="bg-Blue text-white hover:bg-teal-600"
             >
               Ya, Lanjutkan Bayar

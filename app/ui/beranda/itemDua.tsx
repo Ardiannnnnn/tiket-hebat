@@ -18,7 +18,7 @@ export default function Info() {
           <p>Keberangkatan Minggu Ini</p>
         </div>
         <Link href="/jadwal">
-          <div className="md:w-3xs p-2 md:p-4 bg-Orange hover:bg-amber-600 rounded-full flex items-center justify-center space-x-6">
+          <div className="md:w-3xs p-2 md:p-4 bg-Orange  rounded-full flex items-center justify-center space-x-6 hover:scale-110 transition-all duration-300 ease-in-out">
             <FaArrowLeft className="md:w-6 md:h-6 text-white" />
             <p className="text-center md:text-xl text-white font-semibold">
               Lihat Lengkap

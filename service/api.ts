@@ -2,7 +2,7 @@ import axios from "axios";
 
 // Instance utama untuk akses langsung ke backend
 export const api = axios.create({
-  baseURL: "https://tikethebat.gentlemeadow-35df1a19.southeastasia.azurecontainerapps.io/api/v1",
+  baseURL: "https://tikethebat.gentleglacier-f20ff377.southeastasia.azurecontainerapps.io/api/v1",
   timeout: 100000,
   withCredentials: true, // penting agar cookie otomatis disertakan
 });

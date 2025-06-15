@@ -1,50 +1,85 @@
 "use client";
+
 import { useEffect, useState } from "react";
-import { getPaymentChannels, createPaymentTransaction } from "@/service/payment";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import {
+  getPaymentChannels,
+  createPaymentTransaction,
+} from "@/service/payment";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
-interface DialogPembayaranProps {
-  orderId: string | number;
-  open: boolean;
-  onClose: () => void;
-  onSuccess: (paymentResult: any) => void;
-}
-
-export default function DialogPembayaran({ orderId, open, onClose, onSuccess }: DialogPembayaranProps) {
+export default function TiketSesi({ orderId, scheduleId }: { orderId: string; scheduleId?: string }) {
   const [channels, setChannels] = useState<any[]>([]);
-  const [selected, setSelected] = useState<string|null>(null);
+  const [selected, setSelected] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [openDialog, setOpenDialog] = useState(false); // State untuk dialog konfirmasi
+  const router = useRouter();
 
   useEffect(() => {
-    if (open) {
-      getPaymentChannels().then(res => setChannels(res.data));
+    if (orderId) {
+      getPaymentChannels()
+        .then((res) => setChannels(res.data))
+        .catch(() => setChannels([]));
     }
-  }, [open]);
+  }, [orderId]);
 
-  const handleBayar = async () => {
-    if (!selected) return;
+  const handleConfirmBayar = async () => {
+    setOpenDialog(false); // Tutup dialog
     setLoading(true);
     try {
-      const result = await createPaymentTransaction(orderId.toString(), selected);
-      onSuccess(result); // lanjut ke dialog konfirmasi
-      onClose();
+      const result = await createPaymentTransaction(orderId, selected? selected : "manual");
+      const invoiceUrl = `/book/${scheduleId}/invoice/${orderId}`;
+      if (invoiceUrl) {
+        router.push(invoiceUrl); // Redirect ke halaman pembayaran
+      } else {
+        alert("Gagal mendapatkan link pembayaran.");
+      }
     } catch {
-      alert("Gagal membuat transaksi pembayaran");
+      alert("Gagal membuat transaksi pembayaran.");
     } finally {
       setLoading(false);
     }
   };
 
+  const handleBayar = () => {
+    if (!selected || !orderId) return;
+    setOpenDialog(true); // Tampilkan dialog konfirmasi
+  };
+
   return (
-    <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>Pilih Metode Pembayaran</DialogTitle>
-        </DialogHeader>
-        <div className="space-y-2">
+    <>
+      <Card className="py-4">
+        <CardHeader className="">
+          <CardTitle>Pilih Metode Pembayaran Anda</CardTitle>
+          <CardDescription>
+            Silakan pilih metode pembayaran yang tersedia untuk menyelesaikan
+            transaksi Anda.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-2">
           {channels.map((ch: any) => (
-            <label key={ch.code} className="flex items-center gap-2 cursor-pointer">
+            <label
+              key={ch.code}
+              className="flex items-center gap-2 cursor-pointer"
+            >
               <input
                 type="radio"
                 name="payment"
@@ -53,16 +88,38 @@ export default function DialogPembayaran({ orderId, open, onClose, onSuccess }: 
                 onChange={() => setSelected(ch.code)}
               />
               <img src={ch.icon_url} alt={ch.name} width={32} height={32} />
-              <span>{ch.name} ({ch.group})</span>
+              <span>
+                {ch.name} ({ch.group})
+              </span>
             </label>
           ))}
-        </div>
-        <DialogFooter>
-          <Button onClick={handleBayar} disabled={!selected || loading}>
+        </CardContent>
+        <CardFooter>
+          <Button className="w-full bg-Blue" onClick={handleBayar} disabled={!selected || loading}>
             Bayar
           </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+        </CardFooter>
+      </Card>
+
+      {/* Dialog Konfirmasi */}
+      <AlertDialog open={openDialog} onOpenChange={setOpenDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Konfirmasi Pembayaran</AlertDialogTitle>
+            <AlertDialogDescription>
+              Anda hanya memiliki waktu 2 jam untuk melakukan pembayaran. Apakah Anda yakin ingin melanjutkan?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setOpenDialog(false)}>
+              Batal
+            </AlertDialogCancel>
+            <AlertDialogAction onClick={handleConfirmBayar}>
+              Lanjutkan
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
   );
 }

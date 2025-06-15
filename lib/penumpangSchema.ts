@@ -12,7 +12,7 @@ export const penumpangSchema = z.object({
         nomor_polisi: z.string().min(1, { message: "Nomor polisi tidak boleh kosong" }),
         nama: z.string().min(1, { message: "Nama kendaraan tidak boleh kosong" }),
         alamat: z.string().min(1, { message: "Alamat tidak boleh kosong" }),
-        umur: usiaSchema,
+        usia: usiaSchema,
       })
     )
     .default([]),

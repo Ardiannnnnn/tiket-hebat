@@ -1,37 +1,67 @@
-import { RiAnchorFill, RiShipFill, RiRouteFill, RiUserFill } from "react-icons/ri";
+// "use client";
 
-const data = [
-  { title: "Pelabuhan", jumlah: 6, icon: RiAnchorFill, color: "bg-blue-100", textColor: "text-blue-700" },
-  { title: "Kapal", jumlah: 4, icon: RiShipFill, color: "bg-purple-100", textColor: "text-purple-700" },
-  { title: "Rute Perjalanan", jumlah: 6, icon: RiRouteFill, color: "bg-green-100", textColor: "text-green-700" },
-  { title: "Petugas Loket", jumlah: 6, icon: RiUserFill, color: "bg-red-100", textColor: "text-red-700" },
-];
+// import { useEffect, useState } from "react";
+// import { getPaymentChannels, createPaymentTransaction } from "@/service/payment";
+// import { useRouter, useSearchParams } from "next/navigation";
+// import { Button } from "@/components/ui/button";
 
-export default function Beranda() {
-  return (
-    <div className="p-6 space-y-8">
-      <h1 className="text-2xl font-semibold mb-4">Beranda</h1>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        {data.map((item, index) => {
-          const IconComponent = item.icon;
-          return (
-            <div key={index} className={`p-4 rounded-lg shadow-md ${item.color}`}>
-              <div className="flex items-center justify-between">
-                <div className={`flex flex-col items-start ${item.textColor}`}>
-                  <IconComponent className="text-3xl mb-2" />
-                  <p className="text-lg font-semibold uppercase">{item.title}</p>
-                </div>
-                <div className="border bg-white p-5 rounded-lg">
-                  <p className={`text-xl font-bold ${item.textColor}`}>{item.jumlah}</p>
-                </div>
-              </div>
-            </div>
-          );
-        })}
-      </div>
-      <div>
-        <hr />
-      </div>
-    </div>
-  );
-}
+// export default function PilihPembayaranPage() {
+//   const [channels, setChannels] = useState<any[]>([]);
+//   const [selected, setSelected] = useState<string | null>(null);
+//   const [loading, setLoading] = useState(false);
+//   const searchParams = useSearchParams();
+//   const router = useRouter();
+
+//   // Ambil order_id dari query parameter
+//   const orderId = searchParams.get("order_id");
+
+//   useEffect(() => {
+//     if (orderId) {
+//       getPaymentChannels()
+//         .then((res) => setChannels(res.data))
+//         .catch(() => setChannels([]));
+//     }
+//   }, [orderId]);
+
+//   const handleBayar = async () => {
+//     if (!selected || !orderId) return;
+//     setLoading(true);
+//     try {
+//       const result = await createPaymentTransaction(orderId, selected);
+//       const invoiceUrl = result?.data?.invoice_url;
+//       if (invoiceUrl) {
+//         router.push(invoiceUrl); // Redirect ke halaman pembayaran
+//       } else {
+//         alert("Gagal mendapatkan link pembayaran.");
+//       }
+//     } catch {
+//       alert("Gagal membuat transaksi pembayaran.");
+//     } finally {
+//       setLoading(false);
+//     }
+//   };
+
+//   return (
+//     <div className="space-y-6 p-6">
+//       <h1 className="text-2xl font-bold">Pilih Metode Pembayaran</h1>
+//       <div className="space-y-2">
+//         {channels.map((ch: any) => (
+//           <label key={ch.code} className="flex items-center gap-2 cursor-pointer">
+//             <input
+//               type="radio"
+//               name="payment"
+//               value={ch.code}
+//               checked={selected === ch.code}
+//               onChange={() => setSelected(ch.code)}
+//             />
+//             <img src={ch.icon_url} alt={ch.name} width={32} height={32} />
+//             <span>{ch.name} ({ch.group})</span>
+//           </label>
+//         ))}
+//       </div>
+//       <Button onClick={handleBayar} disabled={!selected || loading}>
+//         Bayar
+//       </Button>
+//     </div>
+//   );
+// }
