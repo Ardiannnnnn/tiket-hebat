@@ -104,7 +104,7 @@ export default function FormPenumpang({ session }: FormPenumpangProps) {
       nomor_polisi: "",
       nama: "",
       alamat: "",
-      umur: 0,
+      usia: 0,
     }));
 
     replacePassenger(defaultPenumpang);
@@ -226,7 +226,7 @@ export default function FormPenumpang({ session }: FormPenumpangProps) {
                   className="h-10 placeholder:text-sm"
                   type="number"
                   placeholder="0"
-                  {...register(`kendaraan.${index}.umur`, {
+                  {...register(`kendaraan.${index}.usia`, {
                     valueAsNumber: true,
                   })}
                 />

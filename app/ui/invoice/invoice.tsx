@@ -14,31 +14,55 @@ import { poppins } from "../fonts";
 import { cn } from "@/lib/utils";
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
-import { Booking } from "@/types/invoice";
+import { BookingData } from "@/types/invoice";
 import { getBookingById } from "@/service/invoice";
+import { getPaymentTransactionDetail } from "@/service/payment";
 
 function getTimeFromDateTime(dateTime: string): string {
-  // Mengambil jam dan menit dari format ISO, misal: "2025-05-28T07:30:00Z" -> "07:30"
   const date = new Date(dateTime);
   const hours = date.getHours().toString().padStart(2, "0");
   const minutes = date.getMinutes().toString().padStart(2, "0");
   return `${hours}:${minutes}`;
 }
 
-export default function Invoice({ bookid: propBookid }: { bookid?: string }) {
+export default function Invoice({
+  orderId: propOrderId,
+}: {
+  orderId?: string;
+}) {
   const params = useParams();
-  const rawBookid = propBookid || params?.bookid;
-  const bookid = Array.isArray(rawBookid) ? rawBookid[0] : rawBookid;
-  const [booking, setBooking] = useState<Booking | null>(null);
+  const rawOrderId = propOrderId || params?.orderId; // Ambil orderId dari URL atau prop
+  const orderId = Array.isArray(rawOrderId) ? rawOrderId[0] : rawOrderId;
+
+  const [booking, setBooking] = useState<BookingData | null>(null);
+  const [qrUrl, setQrUrl] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (bookid) {
-      getBookingById(bookid)
-        .then((res) => setBooking(res.data))
-        .finally(() => setLoading(false));
-    }
-  }, [bookid]);
+    const fetchData = async () => {
+      if (orderId) {
+        try {
+          const bookingResponse = await getBookingById(orderId);
+          setBooking(bookingResponse.data);
+
+          // Ambil reference_number dari booking data
+          const referenceNumber = bookingResponse.data.reference_number;
+          if (referenceNumber) {
+            const paymentResponse = await getPaymentTransactionDetail(
+              referenceNumber
+            );
+            setQrUrl(paymentResponse.data.qr_url); // Simpan QR URL
+          }
+        } catch (error) {
+          console.error("Error fetching data:", error);
+        } finally {
+          setLoading(false);
+        }
+      }
+    };
+
+    fetchData();
+  }, [orderId]);
 
   if (loading) return <div className="text-center py-8">Memuat invoice...</div>;
   if (!booking)
@@ -103,17 +127,13 @@ export default function Invoice({ bookid: propBookid }: { bookid?: string }) {
               <div className="mb-2">
                 <p>Asal</p>
                 <p className="font-semibold">
-                  {
-                    booking.schedule.route.departure_harbor.harbor_name
-                  }
+                  {booking.schedule.route.departure_harbor.harbor_name}
                 </p>
               </div>
               <div>
                 <p>Tujuan</p>
                 <p className="font-semibold">
-                  {
-                    booking.schedule.route.arrival_harbor.harbor_name
-                  }
+                  {booking.schedule.route.arrival_harbor.harbor_name}
                 </p>
               </div>
             </div>
@@ -121,7 +141,7 @@ export default function Invoice({ bookid: propBookid }: { bookid?: string }) {
         </CardContent>
         <CardFooter
           className={cn(
-            "md:flex-row items-start flex-col border-t-2 border-dashed px-0"
+           "md:flex-row items-start flex-col border-t-2 border-dashed px-0 h-full"
           )}
         >
           {/* No. Order */}
@@ -131,7 +151,7 @@ export default function Invoice({ bookid: propBookid }: { bookid?: string }) {
           </div>
 
           {/* Informasi Tiket */}
-          <div className="p-4 w-full space-y-4 md:border-l-2 border-dashed md:p-4">
+          <div className="p-4 w-full space-y-4 md:border-l-2 border-dashed flex-grow">
             <div className="text-center md:text-start">
               <p>Nama Pemesan</p>
               <p className="font-semibold">{booking.customer_name}</p>
@@ -199,8 +219,18 @@ export default function Invoice({ bookid: propBookid }: { bookid?: string }) {
           </div>
 
           {/* QR Code */}
-          <div className="md:ml-12 w-full flex justify-center md:w-fit">
-            <Image src={img} className="w-40 md:w-60" alt="QR Code" />
+          <div className="md:ml-12 w-full flex justify-center p-8 md:w-100">
+            {qrUrl ? (
+              <Image
+                width={70}
+                height={10}
+                src={qrUrl}
+                className="w-40 md:w-60"
+                alt="QR Code"
+              />
+            ) : (
+              <p>QR Code tidak tersedia.</p>
+            )}
           </div>
         </CardFooter>
       </Card>
