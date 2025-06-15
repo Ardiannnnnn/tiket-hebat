@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import Image from "next/image";
 import { poppins } from "@/app/ui/fonts";
 import { FaArrowRight } from "react-icons/fa6";
+import Link from "next/link";
 
 const items = [
   { id: 1, title: "Aceh Hebat 1", image: "/image/aceh-hebat-1.jpeg" },
@@ -28,14 +29,14 @@ export default function InfoShips() {
         {items.map((item) => (
           <Card
             key={item.id}
-            className="relative border-none overflow-hidden shadow-lg rounded-2xl transition-all duration-300 ease-in-out transform hover:scale-105 hover:shadow-2xl h-[550px]"
+            className="relative border-none overflow-hidden shadow-lg transition-all duration-300 ease-in-out hover:scale-105 hover:shadow-2xl h-[550px]"
           >
             {/* Gambar sebagai Background */}
             <div className="inset-0">
               <Image
                 src={item.image}
                 alt={item.title}
-                layout="fill"
+                fill
                 sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 25vw"
                 className="rounded-2xl"
                 style={{ objectFit: "cover" }}
@@ -50,13 +51,13 @@ export default function InfoShips() {
 
             {/* Konten Card */}
             <CardContent className="absolute bottom-4 w-full flex">
-              <Button
-                variant="outline"
-                className="w-full font-semibold flex gap-22 items-center border text-gray-700 border-gray-300 p-6 rounded-full bg-white shadow-md text-lg"
+              <Link
+                href={`/infokapal/${item.id}`}
+                className="w-full font-semibold flex gap-22 items-center border text-gray-700 border-gray-300 p-2 rounded-full bg-white shadow-md text-lg justify-center hover:bg-gray-200"
               >
                 Info Kapal
                 <FaArrowRight className="ml-10 text-Orange" />
-              </Button>
+              </Link>
             </CardContent>
           </Card>
         ))}
@@ -67,7 +68,7 @@ export default function InfoShips() {
           {items.map((item, index) => (
             <Card
               key={item.id}
-              className="relative border-none overflow-hidden shadow-lg rounded-2xl ease-in-out transition-transform duration-300 hover:scale-105 w-[80vw] max-w-[350px] h-[450px] flex-shrink-0 space-x-6"
+              className="relative border-none overflow-hidden shadow-lg w-full h-[450px] flex-shrink-0 space-x-4 rounded-none"
             >
               {/* Gambar sebagai Background */}
               <div className="absolute inset-0">
@@ -89,13 +90,13 @@ export default function InfoShips() {
 
               {/* Konten Card */}
               <CardContent className="absolute right-3 w-full bottom-4 flex justify-center">
-                <Button
-                  variant="outline"
-                  className="w-full max-w-[200px] font-semibold flex justify-between items-center border border-gray-300 rounded-full bg-white shadow-md px-4"
+                <Link
+                  href={`/infokapal/${item.id}`}
+                  className="w-full md:max-w-[200px] font-semibold flex justify-between items-center border border-gray-300 rounded-full bg-white shadow-md px-4 p-2 text-gray-700"
                 >
                   Info Kapal
-                  <FaArrowRight />
-                </Button>
+                  <FaArrowRight className="ml-10 text-Orange" />
+                </Link>
               </CardContent>
             </Card>
           ))}

@@ -32,7 +32,7 @@ export const getUsers = async (
 export const getUserById = async (id: number): Promise<UserResponse> => {
   try {
     const response = await api.get<UserResponse>(`/user/${id}`);
-    return response.data;
+    return response.data;   
   } catch (error: any) {
     console.error(
       "Failed to fetch user:",

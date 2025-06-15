@@ -12,12 +12,11 @@ export interface MidtransData {
 export interface ClaimSessionResponse {
   status: boolean;
   message: string;
-  data: {
-    booking_id: number;
-    xendit: XenditData;
-    midtrans: MidtransData;
-    midtrans_snap: string;
-    updated_ticket_ids: number[];
-    failed_tickets: null | any;
-  };
+  order_id: string;
+  booking_id: number;
+  xendit: XenditData;
+  midtrans: MidtransData;
+  midtrans_snap: string;
+  updated_ticket_ids: number[];
+  failed_tickets: null | any;
 }
