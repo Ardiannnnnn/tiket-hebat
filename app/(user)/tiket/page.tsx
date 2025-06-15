@@ -1,7 +1,7 @@
+import CekTiket from "@/app/ui/beranda/tiketCek";
+
 export default function Tiket(){
     return(
-        <p>
-            ini Tiket
-        </p>
+      <CekTiket/>
     )
 }

@@ -31,6 +31,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { ClaimSessionResponse } from "@/types/responBook";
 import { AxiosResponse } from "axios";
+import DialogPembayaran from "./tiketSection";
 
 interface Passenger {
   nama: string;
@@ -129,6 +130,10 @@ export default function Data({ sessionId }: DataProps) {
   const [penumpangList, setPenumpangList] = useState<Passenger[]>([]);
   const [kendaraanList, setKendaraanList] = useState<Vehicle[]>([]);
   const [openDialog, setOpenDialog] = useState(false);
+  const [orderId, setOrderId] = useState<string| number | null>(null);
+  const [openPembayaran, setOpenPembayaran] = useState(false);
+  const [openConfirm, setOpenConfirm] = useState(false);
+  const [paymentResult, setPaymentResult] = useState<any>(null);
   const router = useRouter();
   const params = useParams();
   const id = params?.id as string;
@@ -193,6 +198,7 @@ export default function Data({ sessionId }: DataProps) {
     await handleSubmit();
   };
 
+  // Ubah handleSubmit: hanya POST, dapatkan order_id, tampilkan dialog pembayaran
   const handleSubmit = async () => {
     if (!sessionId) {
       console.error("Session ID tidak ditemukan.");
@@ -234,22 +240,35 @@ export default function Data({ sessionId }: DataProps) {
     console.log("Payload yang dikirim:", payload);
 
     try {
-      // atau beri type
       const response: AxiosResponse<ClaimSessionResponse> =
         await submitPassengerData(payload);
-      console.log("RESPONSE:", response.data);
-
-      // Perbaikan akses
-      const invoiceUrl = response.data.data.xendit.invoice_url;
-      if (invoiceUrl) {
-        window.location.href = invoiceUrl;
+      const order_id = response.data.order_id; // Pastikan backend mengirim order_id
+      if (order_id) {
+        setOrderId(order_id);
+        setOpenPembayaran(true); // Tampilkan dialog pembayaran
       } else {
-        toast.error("Gagal mendapatkan link pembayaran.");
-        console.error("Isi response:", response.data);
+        toast.error("Gagal mendapatkan order id.");
       }
     } catch (err) {
       console.error("Gagal mengirim data penumpang:", err);
       toast.error("Gagal memproses data. Silakan coba lagi.");
+    }
+  };
+
+  // Handler setelah pembayaran sukses (dari DialogPembayaran)
+  const handlePembayaranSuccess = (result: any) => {
+    setPaymentResult(result);
+    setOpenConfirm(true); // Tampilkan dialog konfirmasi 2 jam
+  };
+
+  // Handler konfirmasi terakhir
+  const handleConfirmBayar = () => {
+    // Misal invoiceUrl dari paymentResult
+    const invoiceUrl = paymentResult?.data?.invoice_url;
+    if (invoiceUrl) {
+      window.location.href = invoiceUrl;
+    } else {
+      toast.error("Gagal mendapatkan link pembayaran.");
     }
   };
 
@@ -320,41 +339,52 @@ export default function Data({ sessionId }: DataProps) {
         <FormPemesan />
       </FormProvider>
 
-      {/* Alert Dialog Konfirmasi */}
-      <AlertDialog open={openDialog} onOpenChange={setOpenDialog}>
-        <div
-          className={cn(
-            "bg-Blue p-2 rounded-xl text-center text-white font-semibold cursor-pointer",
-            "hover:bg-teal-600"
-          )}
-          onClick={async () => {
-            const valid = await form.trigger();
-            if (!valid) {
-              toast.error("Isi data pemesan terlebih dahulu");
-              return;
-            }
-            setOpenDialog(true);
-          }}
-          tabIndex={0}
-          role="button"
-        >
-          Pesan Tiket
-        </div>
+      {/* Tombol Pesan Tiket */}
+      <div
+        className={cn(
+          "bg-Blue p-2 rounded-xl text-center text-white font-semibold cursor-pointer",
+          "hover:bg-teal-600"
+        )}
+        onClick={async () => {
+          const valid = await form.trigger();
+          if (!valid) {
+            toast.error("Isi data pemesan terlebih dahulu");
+            return;
+          }
+          await handleSubmit();
+        }}
+        tabIndex={0}
+        role="button"
+      >
+        Pesan Tiket
+      </div>
+
+      {/* Dialog Pilih Pembayaran */}
+      {orderId && (
+        <DialogPembayaran
+          orderId={orderId}
+          open={openPembayaran}
+          onClose={() => setOpenPembayaran(false)}
+          onSuccess={handlePembayaranSuccess}
+        />
+      )}
+
+      {/* Dialog Konfirmasi 2 Jam */}
+      <AlertDialog open={openConfirm} onOpenChange={setOpenConfirm}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Konfirmasi Pemesanan</AlertDialogTitle>
+            <AlertDialogTitle>Konfirmasi Pembayaran</AlertDialogTitle>
             <AlertDialogDescription>
-              Anda hanya memiliki waktu <span className="font-bold">2 jam</span>{" "}
-              untuk menyelesaikan pembayaran. Lanjutkan pesan tiket?
+              Anda hanya memiliki waktu <span className="font-bold">2 jam</span> untuk menyelesaikan pembayaran. Lanjutkan ke pembayaran?
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Batal</AlertDialogCancel>
             <AlertDialogAction
-              onClick={handleConfirmPesanTiket}
+              onClick={handleConfirmBayar}
               className="bg-Blue text-white hover:bg-teal-600"
             >
-              Ya, Pesan Tiket
+              Ya, Lanjutkan Bayar
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

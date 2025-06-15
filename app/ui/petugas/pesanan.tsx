@@ -30,7 +30,6 @@ import {
 } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { Toaster } from "@/components/ui/sonner";
-
 export default function OrderTable({ tickets }: { tickets: any[] }) {
   const [ordersTiket, setOrdersTiket] = useState<any[]>([]); // Start empty
   const uniqueSchedules = Array.from(
