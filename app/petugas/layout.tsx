@@ -1,10 +1,11 @@
+// app/petugas/layout.tsx
+"use client";
+
 import SideNav from '@/app/ui/petugas/sidenav';
 import { poppins } from '../ui/fonts';
+import { withRoleGuard } from "@/lib/withRoleGuard";
 
-
-// export const experimental_prr = true;
- 
-export default function Layout({ children }: { children: React.ReactNode }) {
+function PetugasLayout({ children }: { children: React.ReactNode }) {
   return (
     <div className={`${poppins.className} flex h-screen flex-col md:flex-row md:overflow-hidden`}>
       <div className="w-full flex-none md:w-64">
@@ -14,3 +15,6 @@ export default function Layout({ children }: { children: React.ReactNode }) {
     </div>
   );
 }
+
+export default withRoleGuard(PetugasLayout, ["operator"]);
+//  

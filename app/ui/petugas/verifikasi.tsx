@@ -1,6 +1,6 @@
 "use client";
-import { useState } from "react";
-import { Button } from "@/components/ui/button";
+
+import { useEffect, useState } from "react";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -10,52 +10,48 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { RiShipFill } from "react-icons/ri";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { Toaster } from "@/components/ui/sonner";
+import { getSchedules } from "@/service/schedule";
+import TicketTable from "./ticketTable";
 
-export default function OrderTable({ tickets }: { tickets: any[] }) {
-  const [ordersTiket, setOrdersTiket] = useState<any[]>([]);
-  const uniqueSchedules = Array.from(
-    new Map(tickets.map((t) => [t.schedule.id, t.schedule])).values()
-  );
-  const [selectedSchedule, setSelectedSchedule] = useState<string | null>(null);
+export default function VerifikasiPage() {
+  const [selectedSchedule, setSelectedSchedule] = useState<number | null>(null);
   const [selectedType, setSelectedType] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
+  const [schedules, setSchedules] = useState<any[]>([]);
   const [selectedScheduleData, setSelectedScheduleData] = useState<any>(null);
-  const [selectedOrder, setSelectedOrder] = useState<any>(null);
+  const [loadingSchedules, setLoadingSchedules] = useState(false);
 
-  // Handler untuk select jadwal
-  const handleScheduleChange = (scheduleId: string) => {
+  // Fetch schedules saat halaman diload
+  useEffect(() => {
+    const fetchSchedules = async () => {
+      setLoadingSchedules(true);
+      try {
+        const response = await getSchedules();
+        setSchedules(response.data);
+      } catch (error) {
+        console.error("Error fetching schedules:", error);
+        toast.error("Gagal memuat data jadwal.");
+      } finally {
+        setLoadingSchedules(false);
+      }
+    };
+
+    fetchSchedules();
+  }, []);
+
+  const handleScheduleChange = (scheduleId: number | null) => {
+    if (!scheduleId) {
+      toast.error("Jadwal tidak valid. Harap pilih jadwal terlebih dahulu.");
+      return;
+    }
+
     setSelectedSchedule(scheduleId);
-    const schedule = uniqueSchedules.find((s) => String(s.id) === scheduleId);
+    const schedule = schedules.find((s) => s.id === scheduleId);
     setSelectedScheduleData(schedule);
-
-    // Filter tickets berdasarkan jadwal yang dipilih
-    const filteredTickets = tickets.filter(
-      (ticket) => String(ticket.schedule.id) === scheduleId
-    );
-    setOrdersTiket(filteredTickets);
   };
 
-  // Format tanggal
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
     return date.toLocaleDateString("id-ID", {
@@ -64,12 +60,6 @@ export default function OrderTable({ tickets }: { tickets: any[] }) {
       month: "long",
       day: "numeric",
     });
-  };
-
-  const handleVerification = () => {
-    if (!selectedOrder) return;
-    toast.success(`Tiket ${selectedOrder.passenger_name} berhasil diverifikasi!`);
-    setSelectedOrder(null);
   };
 
   return (
@@ -81,30 +71,24 @@ export default function OrderTable({ tickets }: { tickets: any[] }) {
         <div>
           <h2 className="text-lg font-semibold">Verifikasi</h2>
           <p>
-            {selectedScheduleData ? (
-              `${selectedScheduleData.route.departure_harbor.harbor_name} - ${selectedScheduleData.route.arrival_harbor.harbor_name}`
-            ) : (
-              "Pilih Jadwal"
-            )}
+            {selectedScheduleData
+              ? `${selectedScheduleData.route.departure_harbor.harbor_name} - ${selectedScheduleData.route.arrival_harbor.harbor_name}`
+              : "Pilih Jadwal"}
           </p>
         </div>
-        <div className="">
+        <div className="flex flex-col items-end">
           <div className="flex items-center gap-2">
             <RiShipFill />
             <h2 className="text-lg font-semibold">
-              {selectedScheduleData ? (
-                `Pelabuhan ${selectedScheduleData.route.departure_harbor.harbor_name}`
-              ) : (
-                "Pilih Jadwal"
-              )}
+              {selectedScheduleData
+                ? `Pelabuhan ${selectedScheduleData.route.departure_harbor.harbor_name}`
+                : "Pilih Jadwal"}
             </h2>
           </div>
           <p className="text-end">
-            {selectedScheduleData ? (
-              formatDate(selectedScheduleData.departure_datetime)
-            ) : (
-              "Pilih Jadwal"
-            )}
+            {selectedScheduleData
+              ? formatDate(selectedScheduleData.departure_datetime)
+              : "Pilih Jadwal"}
           </p>
         </div>
       </div>
@@ -112,12 +96,16 @@ export default function OrderTable({ tickets }: { tickets: any[] }) {
       {/* Filter dan Search */}
       <div className="mt-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex gap-2">
-          <Select onValueChange={handleScheduleChange}>
+          <Select
+            onValueChange={(value) =>
+              handleScheduleChange(value ? Number(value) : null)
+            }
+          >
             <SelectTrigger className="min-w-[200px]">
               <SelectValue placeholder="Pilih Jadwal Terlebih Dahulu" />
             </SelectTrigger>
             <SelectContent>
-              {uniqueSchedules.map((sch) => (
+              {schedules.map((sch) => (
                 <SelectItem key={sch.id} value={String(sch.id)}>
                   {sch.ship.ship_name} - {formatDate(sch.departure_datetime)}
                 </SelectItem>
@@ -151,106 +139,12 @@ export default function OrderTable({ tickets }: { tickets: any[] }) {
       </div>
 
       {/* Tabel */}
-      {selectedSchedule ? (
-        <div className="mt-4 overflow-x-auto">
-          <table className="border-collapse border border-gray-200">
-            <thead>
-              <tr className="bg-gray-100 text-left text-sm font-semibold">
-                <th className="border border-gray-200 px-4 py-2">Order ID</th>
-                <th className="border border-gray-200 px-4 py-2">Aksi</th>
-                <th className="border border-gray-200 px-4 py-2">Nama</th>
-                <th className="border border-gray-200 px-4 py-2">Alamat</th>
-                <th className="border border-gray-200 px-4 py-2">Umur</th>
-                <th className="border border-gray-200 px-4 py-2">
-                  Jenis Kelamin
-                </th>
-                <th className="border border-gray-200 px-4 py-2">Jenis ID</th>
-                <th className="border border-gray-200 px-4 py-2">NO ID</th>
-                <th className="border border-gray-200 px-4 py-2">Kelas</th>
-              </tr>
-            </thead>
-            <tbody>
-              {ordersTiket
-                .filter((order) => {
-                  const matchSchedule = selectedSchedule
-                    ? String(order.schedule.id) === selectedSchedule
-                    : true;
-                  const matchType =
-                    !selectedType || selectedType === "all"
-                      ? true
-                      : order.type === selectedType;
-                  const matchSearch =
-                    searchTerm.trim() === "" ||
-                    (order.passenger_name &&
-                      order.passenger_name
-                        .toLowerCase()
-                        .includes(searchTerm.toLowerCase())) ||
-                    (order.address &&
-                      order.address.toLowerCase().includes(searchTerm.toLowerCase())) ||
-                    (order.class?.class_name &&
-                      order.class.class_name
-                        .toLowerCase()
-                        .includes(searchTerm.toLowerCase()));
-                  return matchSchedule && matchType && matchSearch;
-                })
-                .map((order) => (
-                  <tr key={order.id} className="text-sm">
-                    <td className="border border-gray-200 px-4 py-2">{order.id}</td>
-                    <td className="border border-gray-200 px-4 py-2">
-                      <AlertDialog>
-                        <AlertDialogTrigger asChild>
-                          <Button
-                            className="bg-yellow-300 text-black hover:text-white"
-                            onClick={() => setSelectedOrder(order)}
-                          >
-                            Verifikasi
-                          </Button>
-                        </AlertDialogTrigger>
-                        <AlertDialogContent>
-                          <AlertDialogHeader>
-                            <AlertDialogTitle>
-                              Konfirmasi Verifikasi
-                            </AlertDialogTitle>
-                            <AlertDialogDescription>
-                              Apakah Anda yakin ingin memverifikasi order{" "}
-                              <strong>{selectedOrder?.id}</strong>?
-                            </AlertDialogDescription>
-                          </AlertDialogHeader>
-                          <AlertDialogFooter>
-                            <AlertDialogCancel>Batal</AlertDialogCancel>
-                            <AlertDialogAction onClick={handleVerification}>
-                              Ya, Verifikasi
-                            </AlertDialogAction>
-                          </AlertDialogFooter>
-                        </AlertDialogContent>
-                      </AlertDialog>
-                    </td>
-                    <td className="border border-gray-200 px-4 py-2">
-                      {order.passenger_name}
-                    </td>
-                    <td className="border border-gray-200 px-4 py-2">
-                      {order.address}
-                    </td>
-                    <td className="border border-gray-200 px-4 py-2">
-                      {order.passenger_age}
-                    </td>
-                    <td className="border border-gray-200 px-4 py-2">
-                      {order.gender}
-                    </td>
-                    <td className="border border-gray-200 px-4 py-2">
-                      {order.id_type}
-                    </td>
-                    <td className="border border-gray-200 px-4 py-2">
-                      {order.id_number}
-                    </td>
-                    <td className="border border-gray-200 px-4 py-2">
-                      {order.class.class_name}
-                    </td>
-                  </tr>
-                ))}
-            </tbody>
-          </table>
-        </div>
+      {selectedSchedule !== null && typeof selectedSchedule === "number" ? (
+        <TicketTable
+          scheduleId={selectedSchedule}
+          selectedType={selectedType}
+          searchTerm={searchTerm}
+        />
       ) : (
         <div className="mt-4 text-center text-gray-500">
           Pilih jadwal untuk melihat data tiket

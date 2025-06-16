@@ -56,4 +56,9 @@ export interface TicketMeta {
   current_page: number;
   total_pages: number;
   next_page: number;
+  from: number;
+  to: number;
+  path: string;
+  has_next_page: boolean;
+  has_prev_page: boolean;
 }

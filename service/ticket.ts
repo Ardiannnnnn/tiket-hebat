@@ -1,21 +1,9 @@
-import api from "./api"
+import api from "./api";
 import { TicketResponse } from "../types/ticket";
 
-export const getTickets = async (
-  page: number = 1,
-  limit: number = 10,
-  search: string = ""
-) => {
+export const getTickets = async (scheduleId: number): Promise<TicketResponse> => {
   try {
-    const params = new URLSearchParams({
-      page: String(page),
-      limit: String(limit),
-      search: search.trim()
-    });
-
-    const response = await api.get<TicketResponse>(
-      `/tickets?${params.toString()}`
-    );
+    const response = await api.get<TicketResponse>(`/ticket/schedule/${scheduleId}`);
     return response.data;
   } catch (error) {
     console.error("Failed to fetch tickets:", error);

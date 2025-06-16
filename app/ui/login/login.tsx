@@ -15,11 +15,9 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useState } from "react";
-import { loginUser } from "@/service/auth";
+import { getCurrentUser, loginUser } from "@/service/auth";
 import { useRouter } from "next/navigation";
 import { Eye, EyeOff } from "lucide-react";
-import type { LoginResponse } from "@/types/login";
-import { setCookie } from "nookies";
 
 const formSchema = z.object({
   username: z.string().min(1, { message: "Email wajib diisi" }),
@@ -41,31 +39,32 @@ export default function PageLogin() {
       password: "",
     },
   });
- // npm install nookies
 
   const onSubmit = async (values: LoginFormValues) => {
-    setIsLoading(true);
-    try {
-      const response = await loginUser(values);
-      const userRole = response.data.role.role_name;
+  setIsLoading(true);
+  try {
+    // 1. Login dan simpan cookie
+    await loginUser(values);
 
-      // Simpan role ke cookie agar bisa diakses middleware
-      setCookie(null, "role", userRole, {
-        path: "/",
-        maxAge: 60 * 60, // 1 jam
-      });
+    // 2. Ambil data user dari endpoint /me
+    const me = await getCurrentUser();
+    const userRole = me.data.role.role_name;
 
-      if (userRole === "admin") {
-        router.push("/beranda");
-      } else if (userRole === "operator") {
-        router.push("/petugas");
-      }
-    } catch (err) {
-      console.error("Login gagal", err);
-    } finally {
-      setIsLoading(false);
+    // 3. Navigasi berdasarkan role
+    if (userRole === "admin") {
+      router.push("/beranda");
+    } else if (userRole === "operator") {
+      router.push("/petugas");
+    } else {
+      console.warn("Peran tidak dikenali:", userRole);
     }
-  };
+  } catch (err) {
+    console.error("Login gagal:", err);
+    // Kamu bisa tampilkan toast atau error di UI di sini
+  } finally {
+    setIsLoading(false);
+  }
+};
 
   return (
     <Card className="w-full max-w-md mx-4 sm:mx-auto shadow-xl">
