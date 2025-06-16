@@ -52,7 +52,7 @@ export default function CardPrice({ session }: CardPriceProps) {
           <CardTitle>{kapal}</CardTitle>
         </CardHeader>
 
-        <CardContent className="flex gap-4 md:gap-24 px-3 md:px-6">
+        <CardContent className="flex gap-4 md:gap-24 px-3 md:px-6 justify-between">
           <div>
             {/* Keberangkatan */}
             <div className="w-full mt-4">

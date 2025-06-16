@@ -1,16 +1,14 @@
 "use client";
 
-import TiketSesi from "@/app/ui/verifikasi/tiketSection";
-import Total from "@/app/ui/verifikasi/totalBayar";
-import { useSearchParams, useParams, useRouter } from "next/navigation";
+import Invoices from "@/app/ui/invoice/invoice";
+import { useParams, useRouter } from "next/navigation";
 import { useEffect } from "react";
 
-export default function BayarPage() {
-  const searchParams = useSearchParams();
+export default function InvoicePage() {
   const params = useParams();
   const router = useRouter();
-
-  const orderId = searchParams?.get("order_id");
+  const rawOrderId = params?.orderid; // Ambil orderId dari URL
+  const orderId = Array.isArray(rawOrderId) ? rawOrderId[0] : rawOrderId;
 
   useEffect(() => {
     const handleBeforeUnload = (event: BeforeUnloadEvent) => {
@@ -25,7 +23,7 @@ export default function BayarPage() {
       if (confirmLeave) {
         router.push("/"); // Redirect ke halaman utama
       } else {
-        window.history.pushState(null, "", window.location.href); // Tetap di halaman ini
+        router.push(`/invoice/${orderId}`); // Tetap di halaman ini
       }
     };
 
@@ -38,20 +36,7 @@ export default function BayarPage() {
       window.removeEventListener("beforeunload", handleBeforeUnload);
       window.removeEventListener("popstate", handlePopState);
     };
-  }, [router, params?.id, orderId]);
+  }, [router, orderId]);
 
-  return (
-    <div>
-      <div className="m-6 flex items-center justify-center gap-4">
-        <div className="bg-Blue rounded-full p-2 w-12 text-white font-bold flex justify-center items-center text-2xl">
-          4
-        </div>
-        <div className="text-2xl font-semibold">Pembayaran</div>
-      </div>
-      <div className="flex justify-center flex-col-reverse md:flex-row items-start m-4 md:m-8 gap-4 reverse">
-        <TiketSesi orderId={orderId || ""} />
-        <Total orderId={orderId || ""} />
-      </div>
-    </div>
-  );
+  return <Invoices orderId={orderId} />;
 }

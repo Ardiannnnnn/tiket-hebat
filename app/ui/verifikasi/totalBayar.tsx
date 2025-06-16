@@ -1,7 +1,13 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Card, CardHeader, CardTitle, CardContent, CardFooter } from "@/components/ui/card";
+import {
+  Card,
+  CardHeader,
+  CardTitle,
+  CardContent,
+  CardFooter,
+} from "@/components/ui/card";
 import { FaLongArrowAltRight } from "react-icons/fa";
 import { getBookingById } from "@/service/invoice";
 import { BookingResponse } from "@/types/invoice";
@@ -65,6 +71,21 @@ export default function TotalBayar({ orderId }: TotalBayarProps) {
   if (loading) return <p>Loading...</p>;
   if (!data) return <p>Data tidak ditemukan.</p>;
 
+  const formatTime = (dateTime: string): { date: string; time: string } => {
+    const date = new Date(dateTime);
+    const formattedDate = date.toLocaleDateString("id-ID", {
+    
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    });
+    const formattedTime = date.toLocaleTimeString("id-ID", {
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+    return { date: formattedDate, time: formattedTime };
+  };
+
   const penumpang = groupedTickets.filter((t) => t.type === "passenger");
   const kendaraan = groupedTickets.filter((t) => t.type === "vehicle");
 
@@ -95,7 +116,9 @@ export default function TotalBayar({ orderId }: TotalBayarProps) {
             <label className="text-gray-500">Kelas tiket</label>
             {penumpang.map((t, i) => (
               <div key={i} className="flex flex-col">
-                <p>{t.class_name} x {t.quantity}</p>
+                <p>
+                  {t.class_name} x {t.quantity}
+                </p>
               </div>
             ))}
           </div>
@@ -105,7 +128,9 @@ export default function TotalBayar({ orderId }: TotalBayarProps) {
             <label className="text-gray-500">Kendaraan</label>
             {kendaraan.map((t, i) => (
               <div key={i} className="flex flex-col">
-                <p>{t.class_name} x {t.quantity}</p>
+                <p>
+                  {t.class_name} x {t.quantity}
+                </p>
               </div>
             ))}
           </div>
@@ -116,8 +141,8 @@ export default function TotalBayar({ orderId }: TotalBayarProps) {
           <div className="w-full mt-4">
             <label className="text-gray-500 flex justify-end">Jadwal</label>
             <div className="text-end flex flex-col">
-              <span>{data.schedule.departure_datetime}</span>
-              <span>00</span>
+              <span>{formatTime(data.schedule.departure_datetime).date}</span>
+              <span>{formatTime(data.schedule.departure_datetime).time}</span>
             </div>
           </div>
 
@@ -125,7 +150,9 @@ export default function TotalBayar({ orderId }: TotalBayarProps) {
           <div className="w-full mt-4 flex flex-col text-end">
             <label className="text-gray-500">Harga Penumpang</label>
             {penumpang.map((t, i) => (
-              <div key={i}><p>Rp{t.subtotal.toLocaleString()}</p></div>
+              <div key={i}>
+                <p>Rp{t.subtotal.toLocaleString()}</p>
+              </div>
             ))}
           </div>
 
@@ -133,7 +160,9 @@ export default function TotalBayar({ orderId }: TotalBayarProps) {
           <div className="w-full mt-4 flex flex-col text-end">
             <label className="text-gray-500">Harga Kendaraan</label>
             {kendaraan.map((t, i) => (
-              <div key={i}><p>Rp{t.subtotal.toLocaleString()}</p></div>
+              <div key={i}>
+                <p>Rp{t.subtotal.toLocaleString()}</p>
+              </div>
             ))}
           </div>
         </div>
@@ -148,7 +177,9 @@ export default function TotalBayar({ orderId }: TotalBayarProps) {
         <div>
           <p>Rp{totalHargaPenumpang.toLocaleString()}</p>
           <p>Rp{totalHargaKendaraan.toLocaleString()}</p>
-          <p className="mt-4 font-bold">Rp{(totalHargaPenumpang + totalHargaKendaraan).toLocaleString()}</p>
+          <p className="mt-4 font-bold">
+            Rp{(totalHargaPenumpang + totalHargaKendaraan).toLocaleString()}
+          </p>
         </div>
       </CardFooter>
     </Card>

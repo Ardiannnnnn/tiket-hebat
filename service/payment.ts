@@ -1,8 +1,9 @@
 import api from "./api";
+import { PaymentTransactionDetail, PaymentChannel } from "@/types/paymentDetail";
 
-export const getPaymentChannels = async () => {
+export const getPaymentChannels = async (): Promise<PaymentChannel[]> => {
   const response = await api.get("/payment-channels");
-  return response.data;
+  return response.data.data;
 };
 
 export const createPaymentTransaction = async (orderId: string, paymentMethod: string) => {
@@ -13,7 +14,9 @@ export const createPaymentTransaction = async (orderId: string, paymentMethod: s
   return response.data;
 };
 
-export const getPaymentTransactionDetail = async (referenceNumber: string) => {
+export const getPaymentTransactionDetail = async (
+  referenceNumber: string
+): Promise<{ data: PaymentTransactionDetail }> => {
   const response = await api.get(`/payment/transaction/detail/${referenceNumber}`);
   return response.data;
 };

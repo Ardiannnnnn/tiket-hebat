@@ -391,8 +391,8 @@ export default function Data({ sessionId }: DataProps) {
           <AlertDialogHeader>
             <AlertDialogTitle>Konfirmasi Pembayaran</AlertDialogTitle>
             <AlertDialogDescription>
-              Anda hanya memiliki waktu <span className="font-bold">2 jam</span>{" "}
-              untuk menyelesaikan pembayaran. Lanjutkan ke pembayaran?
+              Pastikan data yang Anda masukkan sudah benar. Setelah
+              konfirmasi, Anda akan diarahkan ke halaman pembayaran dan tidak bisa kembali kehalaman verifikasi lagi .
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
