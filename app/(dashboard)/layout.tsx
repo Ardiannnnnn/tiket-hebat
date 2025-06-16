@@ -1,8 +1,12 @@
+// app/admin/layout.tsx
+"use client";
+
 import SideNav from '@/app/ui/dashboard/sidenav';
 import { poppins } from '../ui/fonts';
 import { Toaster } from "@/components/ui/sonner";
+import { withRoleGuard } from "@/lib/withRoleGuard";
 
-export default function Layout({ children }: { children: React.ReactNode }) {
+function AdminLayout({ children }: { children: React.ReactNode }) {
   return (
     <div className={`${poppins.className} relative flex min-h-screen flex-col md:flex-row bg-gray-50`}>
       <SideNav />
@@ -13,3 +17,5 @@ export default function Layout({ children }: { children: React.ReactNode }) {
     </div>
   );
 }
+
+export default withRoleGuard(AdminLayout, ["admin"]);

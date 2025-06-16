@@ -15,6 +15,21 @@ export const getSchedule = async (): Promise<ScheduleResponse | null> => {
   } 
 };
 
+export const getSchedules = async (
+  page: number = 1,
+  limit: number = 20
+): Promise<ScheduleResponse> => {
+  try {
+    const response = await api.get<ScheduleResponse>(
+      `/schedules?page=${page}&limit=${limit}`
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Failed to fetch schedules:", error);
+    throw error;
+  }
+};
+
 export const getScheduleById = async (
   id: string | number
 ): Promise<Schedule | null> => {

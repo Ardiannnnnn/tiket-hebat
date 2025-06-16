@@ -4,41 +4,21 @@ import { NextRequest, NextResponse } from "next/server";
 export function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
 
-  const role = request.cookies.get("role")?.value;
+  // Cek apakah token ada (login check)
+  const token = request.cookies.get("access_token")?.value;
 
-  // Kalau tidak ada role, redirect ke login
-  if (!role) {
+  // Jika tidak ada token, redirect ke login
+  if (!token) {
     return NextResponse.redirect(new URL("/login", request.url));
   }
 
-  // Role-based access
-  const adminRoutes = [
-    "/beranda",
-    "/dataTiket",
-    "/kapal",
-    "/pelabuhan",
-    "/dataRute",
-    "/uploadJadwal",
-    "/tiket-dashboard",
-    "/pengguna",
-  ];
+  // Middleware hanya mengecek autentikasi, bukan role.
+  // Role check dilakukan di komponen dengan fetch ke /me
 
-  const petugasRoutes = ["/petugas"];
-
-  // Cek akses admin
-  if (adminRoutes.some((route) => pathname.startsWith(route)) && role !== "admin") {
-    return NextResponse.redirect(new URL("/unauthorized", request.url));
-  }
-
-  // Cek akses petugas
-  if (petugasRoutes.some((route) => pathname.startsWith(route)) && role !== "operator") {
-    return NextResponse.redirect(new URL("/unauthorized", request.url));
-  }
-
-  return NextResponse.next(); // izinkan akses
+  return NextResponse.next();
 }
 
-// Tentukan rute yang perlu dicek
+// Konfigurasi rute yang perlu login
 export const config = {
   matcher: [
     "/beranda/:path*",

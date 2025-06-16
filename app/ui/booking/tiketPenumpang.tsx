@@ -188,8 +188,7 @@ export default function TiketPenumpang({
       ? [
           {
             class_id: selectedVehicleClass.class_id,
-            quantity: 1,
-            type: "vehicle",
+            quantity: 1
           },
         ]
       : [];
