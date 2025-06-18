@@ -4,17 +4,20 @@ import Link from "next/link";
 import { LuPower, LuMenu } from "react-icons/lu";
 import { FormEvent, useEffect, useRef, useState } from "react";
 import Image from "next/image";
-import NavLinks, { dashboardLinks, menuLinks } from "./navlink";
+import NavLinks, { dashboardLinks, jadwalLinks, menuLinks } from "./navlink";
 import logo from "@/public/image/asdp_2.png";
 import adminImg from "@/public/image/ardian.png";
-import { logoutUser } from "@/service/auth";
+import { getCurrentUser, logoutUser } from "@/service/auth";
 import { usePathname, useRouter } from "next/navigation";
 import { destroyCookie } from "nookies";
+import { User } from "@/types/user";
 
 export default function SideNav() {
   const [isOpen, setIsOpen] = useState(false);
   const navbarRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
+  const [user, setUser] = useState<User | null>(null);
+  const [loading, setLoading] = useState(true);
   // Toggle sidebar for mobile view
   const toggleNavbar = () => {
     setIsOpen(!isOpen);
@@ -28,6 +31,21 @@ export default function SideNav() {
       setIsOpen(false);
     }
   };
+
+   useEffect(() => {
+      const fetchProfile = async () => {
+        try {
+          const data = getCurrentUser();
+          setUser((await data).data)
+        } catch (error) {
+          setUser(null)
+        } finally {
+          setLoading(false)
+        }
+      }
+  
+      fetchProfile()  
+    }, [])
 
   useEffect(() => {
     document.addEventListener("mousedown", handleClickOutside);
@@ -77,17 +95,26 @@ export default function SideNav() {
         <div className="mt-4 bg-gray-100 p-3 rounded-lg shadow-sm">
           <div className="mt-4 p-3">
             <p className="text-sm font-semibold text-gray-700">Dashboard</p>
-            <div className="mt-2 space-y-2">
+            <div className="mt-2 space-y-1">
               <NavLinks links={dashboardLinks} />
             </div>
           </div>
 
           <div className="p-3">
             <p className="text-sm font-semibold text-gray-700">Menu</p>
-            <div className="mt-2 space-y-2">
+            <div className="mt-2 space-y-1">
               <NavLinks links={menuLinks} />
             </div>
           </div>
+
+          <div className="p-3">
+            <p className="text-sm font-semibold text-gray-700">Jadwal</p>
+            <div className="mt-2">
+              <NavLinks links={jadwalLinks} />
+            </div>
+          </div>
+
+          
         </div>
 
         <div className="flex-grow"></div>
@@ -103,8 +130,8 @@ export default function SideNav() {
               className="rounded-full"
             />
             <div className="leading-tight">
-              <p className="text-xs text-gray-500">Administrator</p>
-              <p className="text-sm font-semibold">Heriansyah</p>
+              <p className="text-xs text-gray-500">{user?.role.role_name}</p>
+              <p className="text-sm font-semibold">{user?.username}</p>
             </div>
           </div>
           <button
@@ -171,8 +198,8 @@ export default function SideNav() {
               className="rounded-full"
             />
             <div className="leading-tight">
-              <p className="text-xs text-gray-500">Administrator</p>
-              <p className="text-sm font-semibold">Heriansyah</p>
+              <p className="text-xs text-gray-500">{user?.role.role_name}</p>
+              <p className="text-sm font-semibold">{user?.username}</p>
             </div>
           </div>
 

@@ -3,63 +3,63 @@
 import { useCallback, useEffect, useState } from "react";
 import ReusableTable, { ColumnDef } from "./table";
 import { toast } from "sonner";
-import { Route } from "@/types/rute";
-import { deleteRute, getRute } from "@/service/rute";
+import { getManifest, deleteManifest } from "@/service/kapasitas";
+import { Manifest, Meta } from "@/types/kapasitas";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useDebouncedCallback } from "use-debounce";
 
-interface FlattenedRoute {
+interface FlattenedManifest {
   id: number;
-  route_asal: string;
-  route_tujuan: string;
+  class_name: string;
+  type: "passenger" | "vehicle";
+  ship_name: string;
+  capacity: number;
 }
 
-const flattenData = (data: Route[]): FlattenedRoute[] => {
+const flattenData = (data: Manifest[]): FlattenedManifest[] => {
   return data.map((item) => ({
     id: item.id,
-    route_asal: `${item.departure_harbor.harbor_name}`,
-    route_tujuan: `${item.arrival_harbor.harbor_name}`,
+    class_name: item.class.class_name,
+    type: item.class.type,
+    ship_name: item.ship.ship_name,
+    capacity: item.capacity,
   }));
 };
 
-export default function RutePage() {
-  const [allData, setAllData] = useState<FlattenedRoute[]>([]);
+export default function ManifestPage() {
+  const [allData, setAllData] = useState<FlattenedManifest[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [filteredData, setFilteredData] = useState<FlattenedRoute[]>([]);
-  const [debouncedSearch, setDebouncedSearch] = useState("");
+  const [filteredData, setFilteredData] = useState<FlattenedManifest[]>([]);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [meta, setMeta] = useState<Meta | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize] = useState(10);
+   const [debouncedSearch, setDebouncedSearch] = useState("");
   useEffect(() => {
     setFilteredData(allData);
   }, [allData]);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [meta, setMeta] = useState<{
-    total: number;
-    per_page: number;
-    current_page: number;
-    total_pages: number;
-  } | null>(null);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [pageSize] = useState(10);
-
-  const columns: ColumnDef<FlattenedRoute>[] = [
+  const columns: ColumnDef<FlattenedManifest>[] = [
     { key: "id", label: "ID" },
-    { key: "route_asal", label: "Asal" },
-    { key: "route_tujuan", label: "Tujuan" },
+    { key: "class_name", label: "Kelas" },
+    { key: "type", label: "Tipe" },
+    { key: "ship_name", label: "Kapal" },
+    { key: "capacity", label: "Kapasitas" },
   ];
 
   const fetchData = useCallback(
     async (page: number) => {
       setIsLoading(true);
       try {
-        const response = await getRute(page, pageSize);
+        const response = await getManifest(page, pageSize);
         if (response && response.status) {
           const flattened = flattenData(response.data);
           setAllData(flattened);
-          setMeta(response.meta ?? null);
+          setMeta(response.meta);
           setFilteredData(flattened);
         } else {
-          toast.error("Gagal memuat data rute");
+          toast.error("Gagal memuat data");
         }
       } catch (error) {
         toast.error("Terjadi kesalahan saat memuat data");
@@ -83,18 +83,18 @@ export default function RutePage() {
     } else {
       const search = searchTerm.toLowerCase();
       setFilteredData(
-        allData.filter(
-          (item) =>
-            item.route_asal.toLowerCase().includes(search) ||
-            item.route_tujuan.toLowerCase().includes(search)
+        allData.filter((item) =>
+          [item.class_name, item.type, item.ship_name].some((field) =>
+            field.toLowerCase().includes(search)
+          )
         )
       );
     }
   }, [searchTerm, allData]);
 
-  const handleSearch = useDebouncedCallback((term: string) => {
+   const handleSearch = useDebouncedCallback((term: string) => {
     setDebouncedSearch(term);
-  }, 300);
+  }, 300);  
 
   const handleSearchChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -104,18 +104,18 @@ export default function RutePage() {
     [handleSearch]
   );
 
-  const handleDelete = async (item: FlattenedRoute) => {
-    const success = await deleteRute(item.id);
+  const handleDelete = async (item: FlattenedManifest) => {
+    const success = await deleteManifest(item.id);
     if (success) {
-      toast.success("Rute berhasil dihapus");
+      toast.success("Kelas berhasil dihapus");
       fetchData(currentPage);
     } else {
-      toast.error("Gagal menghapus rute");
+      toast.error("Gagal menghapus kelas");
     }
   };
 
-  const handleEdit = (item: FlattenedRoute) => {
-    window.location.href = `/rute/edit/${item.id}`;
+  const handleEdit = (item: FlattenedManifest) => {
+    window.location.href = `/kapasitas/edit/${item.id}`;
   };
 
   const handlePageChange = (page: number) => {
@@ -126,10 +126,10 @@ export default function RutePage() {
     <div className="p-4">
       <div className="md:flex justify-between items-center mb-4 space-y-4">
         <h1 className="text-xl font-bold text-center md:text-start">
-          Data Rute
+          Kapasitas Tiket
         </h1>
         <div className="flex gap-4 items-center">
-          <Link href="/dataRute/create">
+          <Link href="/kapasitasTiket/create">
             <Button className="bg-Blue hover:bg-teal-600">Tambah</Button>
           </Link>
 
@@ -141,9 +141,8 @@ export default function RutePage() {
           />
         </div>
       </div>
-
-      <ReusableTable<FlattenedRoute>
-        caption="Data Rute"
+      <ReusableTable<FlattenedManifest>
+        caption="Data Kapasitas"
         columns={columns}
         data={filteredData}
         isLoading={isLoading}
@@ -152,7 +151,7 @@ export default function RutePage() {
         onEdit={handleEdit}
         onDelete={handleDelete}
         skeletonRows={pageSize}
-        editUrl={(item) => `/rute/edit/${item.id}`}
+        editUrl={(item) => `/kapasitas/edit/${item.id}`}
         onPageChange={handlePageChange}
       />
     </div>

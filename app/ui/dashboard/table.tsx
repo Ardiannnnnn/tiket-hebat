@@ -45,8 +45,6 @@ interface MetaData {
   total_pages: number;
 }
 
-
-
 interface ReusableTableProps<T> {
   columns: ColumnDef<T>[];
   data: T[];
@@ -96,15 +94,8 @@ export default function ReusableTable<T extends { id: string | number }>({
     }
 
     const firstNonIdColumn = columns.find((col) => col.key !== "id");
-    if (firstNonIdColumn && firstNonIdColumn.key in item) {
+    if (firstNonIdColumn) {
       return String(item[firstNonIdColumn.key]);
-    }
-
-    const nameKeys = ["name", "harbor_name", "title", "label", "description"];
-    for (const key of nameKeys) {
-      if (key in item && typeof item[key as keyof T] === "string") {
-        return String(item[key as keyof T]);
-      }
     }
 
     return `ID: ${String(item.id)}`;
@@ -195,7 +186,11 @@ export default function ReusableTable<T extends { id: string | number }>({
                   .filter((col) => col.key !== "id")
                   .map((col) => (
                     <TableCell key={String(col.key)}>
-                      {col.render ? col.render(item[col.key], item) : String(item[col.key])}
+                      {col.render ? (
+                        col.render(item[col.key], item)
+                      ) : (
+                        String(item[col.key])
+                      )}
                     </TableCell>
                   ))}
                 {showActions && (

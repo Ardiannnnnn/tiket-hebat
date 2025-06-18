@@ -71,4 +71,36 @@ export const createFieldConfigs: Record<string, FieldConfig[]> = {
       options: [] // Will be populated dynamically
     },
   ],
+  hargaTiket: [
+    { name: "route_id", label: "Rute", type: "select", required: true, options: [] },
+    { name: "manifest_id", label: "Manifest", type: "select", required: true, options: [] },
+    { name: "ticket_price", label: "Harga Tiket", type: "number", required: true },
+  ],
+  kelas: [
+    { name: "class_name", label: "Nama Kelas", type: "text", required: true },
+    { name: "class_alias", label: "Alias", type: "text", required: true },
+    { name: "type", label: "Tipe", type: "select", required: true, options: [
+      { label: "Kendaraan", value: "vihicle" },
+      { label: "Penumpang", value: "passenger" },
+    ] },
+  ],
+  dataRute: [
+    {
+      name:"departure_harbor_id", label: "Pelabuhan Asal", type: "select", required: true, options:[]
+    },
+    {
+      name:"arrival_harbor_id", label: "Pelabuhan Tujuan", type: "select", required: true, options:[]
+    }
+  ],
+  kapasitasTiket: [
+    {
+      name:"ship_id", label: "Kapal", type: "select", required: true, options:[]
+    },
+    {
+      name:"class_id", label: "Kelas", type: "select", required: true, options:[]
+    },
+    {
+      name:"capacity", label:"Kapasitas", type:"text", required:true
+    }
+  ]
 };
