@@ -16,7 +16,7 @@ export const getShips = async (page = 1, limit = 20): Promise<ShipResponse | nul
 
 export const createShip = async (data: any): Promise<boolean> => {
   try {
-    await Baseapi.post("/v1/ship/create", data);
+    await Baseapi.post("/ship/create", data);
     return true;
   } catch (error) {
     console.error("Failed to create ship:", error);
@@ -27,7 +27,7 @@ export const createShip = async (data: any): Promise<boolean> => {
 export const deleteShip = async (id: string | number): Promise<boolean> => {
   try {
     // Berdasarkan endpoint yang Anda berikan di prompt awal
-    await Baseapi.delete(`/v1/ship/${id}`);
+    await Baseapi.delete(`/ship/${id}`);
     return true;
   } catch (error) {
     console.error("Failed to delete ship:", error);
@@ -40,7 +40,7 @@ export const updateShip = async (
   data: Partial<Ship>
 ): Promise<boolean> => {
   try {
-    await Baseapi.put(`v1//ship/${id}`, data); // Gunakan PUT sesuai endpoint
+    await Baseapi.put(`/ship/${id}`, data); // Gunakan PUT sesuai endpoint
     return true;
   } catch (error) {
     console.error("Failed to update ship:", error);

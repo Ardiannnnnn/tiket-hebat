@@ -4,17 +4,37 @@ import Link from "next/link";
 import NavLinks from "@/app/ui/petugas/navlink";
 import { LuPower } from "react-icons/lu";
 import { RiDashboardFill, RiHistoryFill } from "react-icons/ri";
-import { useState, FormEvent } from "react";
+import { useState, FormEvent, useEffect } from "react";
 import Image from "next/image";
 import img from "@/public/image/ardian.png";
 import { RiShipFill } from "react-icons/ri";
-import { logoutUser } from "@/service/auth";
+import { getCurrentUser, logoutUser } from "@/service/auth";
 import { useRouter } from "next/navigation";
 import { destroyCookie } from "nookies";
+import { User } from "@/types/user";
 
 export default function SideNav() {
   const [isOpen, setIsOpen] = useState(false);
   const Router = useRouter();
+  const [user, setUser] = useState<User | null>(null);
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    const fetchProfile = async () => {
+      try {
+        const data = getCurrentUser();
+        setUser((await data).data)
+      } catch (error) {
+        setUser(null)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchProfile()  
+  }, [])
+
+  if (loading) return <div className="p-4">Loading...</div>
 
   const handleLogout = async (e: FormEvent) => {
     e.preventDefault();
@@ -52,8 +72,8 @@ export default function SideNav() {
             className="h-12 w-12 rounded-full bg-white"
           />
           <div className="text-start">
-            <p className="text-sm text-gray-400">Petugas Loket</p>
-            <p className="text-lg font-semibold">Ardian</p>
+            <p className="text-sm text-gray-400">{user?.role.role_name}</p>
+            <p className="text-lg font-semibold">{user?.full_name}</p>
           </div>
         </div>
 

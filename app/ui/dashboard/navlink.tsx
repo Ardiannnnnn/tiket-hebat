@@ -9,7 +9,9 @@ import {
   RiCalendarFill,
   RiFileListFill,
 } from "react-icons/ri";
-
+import { IoIosPricetag } from "react-icons/io";
+import { MdFlightClass } from "react-icons/md";
+import { MdOutlineReduceCapacity } from "react-icons/md";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import clsx from "clsx";
@@ -18,16 +20,23 @@ import clsx from "clsx";
 export const dashboardLinks = [
   { name: "Beranda", href: "/beranda", icon: RiDashboardHorizontalFill },
   { name: "Tiket", href: "/tiket-dashboard", icon: RiTicketFill },
+   { name: "Pengguna", href: "/pengguna", icon: RiUserFill },
 ];
 
 // 🔹 Link untuk bagian Menu
 export const menuLinks = [
-  { name: "Pengguna", href: "/pengguna", icon: RiUserFill },
   { name: "Kapal", href: "/kapal", icon: RiShipFill },
   { name: "Pelabuhan", href: "/pelabuhan", icon: RiAnchorFill },
   { name: "Rute Perjalanan", href: "/dataRute", icon: RiRoadMapFill },
-  { name: "Upload Jadwal", href: "/uploadJadwal", icon: RiCalendarFill },
   { name: "Tiket Kapal", href: "/dataTiket", icon: RiFileListFill },
+  { name: "Kelas Tiket", href: "/kelasTiket", icon: MdFlightClass },
+  { name: "Harga Tiket", href: "/hargaTiket", icon: IoIosPricetag  },
+  { name: "KapasitasTiket", href: "/kapasitasTiket", icon: MdOutlineReduceCapacity },
+  
+];
+
+export const jadwalLinks = [
+   { name: "Upload Jadwal", href: "/uploadJadwal", icon: RiCalendarFill },
 ];
 
 export default function NavLinks({ links }: { links: typeof dashboardLinks }) {
