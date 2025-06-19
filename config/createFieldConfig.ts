@@ -102,5 +102,21 @@ export const createFieldConfigs: Record<string, FieldConfig[]> = {
     {
       name:"capacity", label:"Kapasitas", type:"text", required:true
     }
-  ]
+  ],
+  uploadJadwal: [
+    { name: "route_id", label: "Rute", type: "select", required: true, options: [] },
+    { name: "ship_id", label: "Kapal", type: "select", required: true, options: [] },
+    { name: "departure_datetime", label: "Waktu Keberangkatan", type: "datetime-local", required: true },
+    { name: "arrival_datetime", label: "Waktu Tiba", type: "datetime-local", required: true },
+    {
+      name: "status",
+      label: "Status",
+      type: "select",
+      required: true,
+      options: [
+        { label: "Sudah Berangkat", value: "Scheduled" },
+        { label: "Belum Berangkat", value: "Unscheduled" },
+      ],
+    },
+  ],
 };

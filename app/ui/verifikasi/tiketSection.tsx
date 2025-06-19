@@ -179,7 +179,7 @@ export default function TiketSesi({ orderId }: { orderId: string }) {
             <AlertDialogCancel onClick={() => setOpenDialog(false)}>
               Batal
             </AlertDialogCancel>
-            <AlertDialogAction onClick={handleConfirmBayar}>
+            <AlertDialogAction onClick={handleConfirmBayar} className="bg-Blue hover:bg-teal-600">
               Lanjutkan
             </AlertDialogAction>
           </AlertDialogFooter>

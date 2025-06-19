@@ -75,7 +75,7 @@ export default function SideNav() {
   return (
     <>
       {/* DESKTOP: Sidebar */}
-      <div className="hidden md:flex h-full w-[270px] flex-col px-4 py-6 text-black">
+      <div className="hidden md:flex h-full w-[270px] flex-col px-4 py-6 text-black overflow-y-auto">
         {/* Logo */}
         <div className="flex items-center gap-4 bg-gray-100 p-4 rounded-lg shadow-sm">
           <Image

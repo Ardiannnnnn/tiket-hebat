@@ -9,7 +9,7 @@ interface CreateKapasitasPayload {
 
 export const getManifest = async (page = 1, limit = 20) : Promise<ManifestResponse | null> => {
   try {
-    const response = await api.get("/manifests/?page=1&limit=5&sort=created_at:asc&search=");
+    const response = await api.get("/manifests/?page=1&limit=100&sort=created_at:asc&search=");
     return response.data;
   } catch (error) {
     console.error("Gagal mengambil data kelas:", error);

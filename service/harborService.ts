@@ -25,7 +25,7 @@ export const getHarbors = async (
 
 export const createHarbor = async (data: any): Promise<boolean> => {
   try {
-    await Baseapi.post("/v1/harbor/create", data);
+    await Baseapi.post("/harbor/create", data);
     return true;
   } catch (error) {
     console.error("Failed to create harbor:", error);
