@@ -62,5 +62,16 @@ export const schemas: Record<string, z.ZodObject<any>> = {
     capacity: z.string()
       .transform((val) => parseInt(val))
       .refine((val) => !isNaN(val) && val > 0, "kapasitas harus lebih dari 0")
-  })
+  }),
+  uploadJadwal: z.object({
+    route_id: z.string()
+      .transform((val) => parseInt(val))
+      .refine((val) => !isNaN(val), "Route ID harus berupa angka"),
+    ship_id: z.string()
+      .transform((val) => parseInt(val))  
+      .refine((val) => !isNaN(val), "ship ID harus berupa angka"),
+    departure_datetime: z.string().min(1, "Waktu keberangkatan wajib diisi"),
+    arrival_datetime: z.string().min(1, "Waktu tiba wajib diisi"),
+    status: z.enum(["Scheduled", "Unscheduled"]),
+  }),
 };

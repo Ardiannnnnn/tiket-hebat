@@ -2,43 +2,44 @@
 
 import TiketSesi from "@/app/ui/verifikasi/tiketSection";
 import Total from "@/app/ui/verifikasi/totalBayar";
-import { useSearchParams, useParams, useRouter } from "next/navigation";
+import { useSearchParams, useRouter } from "next/navigation";
 import { useEffect } from "react";
 
 export default function BayarPage() {
   const searchParams = useSearchParams();
-  const params = useParams();
   const router = useRouter();
-
   const orderId = searchParams?.get("order_id");
 
   useEffect(() => {
-    const handleBeforeUnload = (event: BeforeUnloadEvent) => {
-      event.preventDefault();
-      event.returnValue = "Jika Anda keluar, progress Anda akan terhapus.";
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      e.preventDefault();
+      (e as any).returnValue = "";
     };
-
-    const handlePopState = () => {
+    const handlePopState = (e: PopStateEvent) => {
       const confirmLeave = window.confirm(
-        "Jika Anda keluar, progress Anda akan terhapus. Apakah Anda yakin?"
+        "Apakah Anda yakin ingin keluar dari halaman pembayaran? Progres Anda akan hilang."
       );
+
       if (confirmLeave) {
-        router.push("/"); // Redirect ke halaman utama
+        router.replace("/");
       } else {
-        window.history.pushState(null, "", window.location.href); // Tetap di halaman ini
+        history.pushState({ fromPayment: true }, "", window.location.href);
       }
     };
 
-    // Tambahkan event listener untuk sebelum keluar dari halaman
+    // Tambahkan state hanya jika belum ada
+    if (!history.state?.fromPayment) {
+      history.pushState({ fromPayment: true }, "", window.location.href);
+    }
+
     window.addEventListener("beforeunload", handleBeforeUnload);
     window.addEventListener("popstate", handlePopState);
 
     return () => {
-      // Hapus event listener saat komponen dilepas
       window.removeEventListener("beforeunload", handleBeforeUnload);
       window.removeEventListener("popstate", handlePopState);
     };
-  }, [router, params?.id, orderId]);
+  }, [router]);
 
   return (
     <div>

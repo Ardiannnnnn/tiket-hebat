@@ -8,8 +8,8 @@ export interface SelectOption {
 export interface FieldConfig {
   name: string;
   label: string;
-  type: 'text' | 'number' | 'email' | 'password' | 'select';
+  type: 'text' | 'number' | 'email' | 'password' | 'select' | 'datetime-local';
   required?: boolean;
   placeholder?: string;
-  options?: SelectOption[];
+  options?: SelectOption[]; // Format for date fields, e.g., 'YYYY-MM-DD'
 }

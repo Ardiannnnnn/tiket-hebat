@@ -6,7 +6,7 @@ import { toast } from "sonner";
 
 import CardPrice from "./cardPrice";
 import FormData from "./formData";
-import { getSessionById, cancelSession } from "@/service/session";
+import { getSessionById } from "@/service/session";
 import { clearSessionCookie, getCookie, setSessionCookie } from "@/utils/cookies";
 import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogFooter } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
@@ -23,7 +23,6 @@ export default function Form() {
 
   const [session, setSession] = useState<SessionData | null>(null);
   const [loading, setLoading] = useState(true);
-  const [showDialog, setShowDialog] = useState(false);
   const [sessionExpired, setSessionExpired] = useState(false);
 
   // Validate session and fetch data
@@ -31,7 +30,7 @@ export default function Form() {
     const validateAndFetchSession = async () => {
       if (!sessionId) {
         toast.error("Session ID tidak ditemukan");
-        router.push(`/book/${bookId}`);
+        router.push(`/`);
         return;
       }
 
@@ -41,7 +40,7 @@ export default function Form() {
         setSessionCookie(sessionId);
       } else if (cookie !== sessionId) {
         toast.error("Sesi Anda telah berakhir");
-        router.push(`/book/${bookId}`);
+        router.push(`/`);
         return;
       }
 
@@ -66,57 +65,6 @@ export default function Form() {
 
     return () => clearTimeout(timeoutId);
   }, [sessionId, bookId, router]);
-
-  // Handle browser back button
- // Push formPage state lebih awal, begitu sessionId tersedia
-useEffect(() => {
-  if (sessionId) {
-    history.replaceState({ formPage: true }, "", location.href);
-  }
-}, [sessionId]);
-
-// Event listener untuk popstate, dijalankan setelah session valid
-useEffect(() => {
-  if (!session) return;
-
-  const handlePopState = (event: PopStateEvent) => {
-    event.preventDefault();
-    setShowDialog(true);
-    history.replaceState({ formPage: true }, "", location.href);
-  };
-
-  window.addEventListener("popstate", handlePopState);
-  return () => window.removeEventListener("popstate", handlePopState);
-}, [session]);
-
-
-  // Handle page unload
-  useEffect(() => {
-    const handleBeforeUnload = (event: BeforeUnloadEvent) => {
-      if (session) {
-        event.preventDefault();
-        event.returnValue = "";
-        navigator.sendBeacon("/api/cancel-session", JSON.stringify({ id: session.id }));
-      }
-    };
-
-    window.addEventListener("beforeunload", handleBeforeUnload);
-    return () => window.removeEventListener("beforeunload", handleBeforeUnload);
-  }, [session]);
-
-  const handleLeave = async () => {
-    try {
-      if (session) {
-        await cancelSession(session.id);
-        clearSessionCookie();
-      }
-      setShowDialog(false);
-      history.go(-2);
-    } catch (error) {
-      console.error("Failed to cancel session:", error);
-      toast.error("Gagal membatalkan sesi");
-    }
-  };
 
   if (loading) {
     return <div className="flex justify-center items-center min-h-screen">Loading...</div>;
@@ -143,25 +91,6 @@ useEffect(() => {
           </div>
         </div>
       </main>
-
-      <AlertDialog open={showDialog} onOpenChange={setShowDialog}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <h2 className="text-lg font-semibold">Konfirmasi Keluar</h2>
-            <p className="text-gray-500">
-              Apakah yakin untuk keluar? Jika keluar maka sesi anda berakhir!
-            </p>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <Button variant="outline" onClick={() => setShowDialog(false)}>
-              Batal
-            </Button>
-            <Button onClick={handleLeave}>
-              Kembali ke halaman sebelumnya
-            </Button>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
 
       <AlertDialog open={sessionExpired}>
         <AlertDialogContent>

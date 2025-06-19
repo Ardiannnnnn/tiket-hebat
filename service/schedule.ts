@@ -1,6 +1,14 @@
 import exp from "constants";
-import api from "./api";
+import api, { Baseapi } from "./api";
 import { Schedule, ScheduleResponse } from "@/types/schedule";
+
+interface CreateJadwalPayload {
+  ship_id: number;
+  route_id: number;
+  departure_datetime: string;
+  arrival_datetime: string;
+  status: string;
+}
 
 export const getSchedule = async (): Promise<ScheduleResponse | null> => {
   try {
@@ -14,6 +22,27 @@ export const getSchedule = async (): Promise<ScheduleResponse | null> => {
       throw new Error(message);
   } 
 };
+
+export const getScheduleAll = async (page = 1, limit = 20) : Promise<ScheduleResponse | null> => {
+  try {
+    const response = await api.get("/schedules/?page=1&limit=100&sort=created_at:asc&search=");
+    return response.data;
+  } catch (error) {
+    console.error("Gagal mengambil data harga:", error);
+    throw error;
+  }
+}
+
+export const createSchedule = async (payload: CreateJadwalPayload): Promise<boolean> => {
+  try {
+    const response = await Baseapi.post("/schedule/Schedule/create", payload);
+    return response.status === 201 || response.status === 200;
+  } catch (error) {
+    console.error("Error creating harga:", error);
+    return false;
+  }
+};
+
 
 export const getSchedules = async (
   page: number = 1,

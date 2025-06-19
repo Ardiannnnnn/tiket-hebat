@@ -3,7 +3,7 @@
 
 import SideNav from '@/app/ui/petugas/sidenav';
 import { poppins } from '../ui/fonts';
-import { withRoleGuard } from "@/lib/withRoleGuard";
+import { withRoleGuard } from "@/app/auth/withRoleGuard";
 
 function PetugasLayout({ children }: { children: React.ReactNode }) {
   return (

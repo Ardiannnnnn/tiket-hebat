@@ -1,4 +1,4 @@
-import JadwalPage from "@/app/ui/dashboard/uploadJadwal"
+import JadwalPage from "@/app/ui/dashboard/dataJadwal"
 
 export default function jadwal() {
     return (
