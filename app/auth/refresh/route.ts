@@ -3,7 +3,7 @@ import { NextResponse } from 'next/server';
 import { Baseapi } from '@/service/api';
 
 export async function GET(request: Request) {
-  const cookieStore = cookies();
+  const cookieStore = await cookies(); // Tambahkan await
   const refreshToken = cookieStore.get('refresh_token')?.value;
   const callbackUrl = new URL(request.url).searchParams.get('callback') || '/';
 
