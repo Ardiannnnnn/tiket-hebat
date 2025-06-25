@@ -28,6 +28,7 @@ import {
   Eye,
   Download,
   RefreshCw,
+  Info,
 } from "lucide-react";
 import Link from "next/link";
 import {
@@ -47,7 +48,15 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { Skeleton } from "@/app/ui/skeleton";
+import DriveImage from '@/app/ui/driveImage';
+import { ImageIcon } from 'lucide-react';
 
 export interface ColumnDef<T> {
   key: keyof T;
@@ -55,7 +64,102 @@ export interface ColumnDef<T> {
   render?: (value: T[keyof T], item: T) => React.ReactNode;
   sortable?: boolean;
   className?: string;
+  maxLength?: number; // ✅ New: Truncation length
+  showTooltip?: boolean; // ✅ New: Show tooltip on hover
+  width?: string; // ✅ New: Column width
+  type?: "text" | "words" | "number" | "date" | "image"; // ✅ Add image type
 }
+
+// ✅ Utility functions for text truncation
+const truncateText = (text: string, maxLength: number = 50): string => {
+  if (text.length <= maxLength) return text;
+  return text.substring(0, maxLength) + "...";
+};
+
+const truncateWords = (text: string, maxWords: number = 5): string => {
+  const words = text.split(' ');
+  if (words.length <= maxWords) return text;
+  return words.slice(0, maxWords).join(' ') + "...";
+};
+
+// ✅ Smart Cell Content Component
+const CellContent = ({ 
+  value, 
+  maxLength = 50, 
+  showTooltip = true,
+  type = "text" 
+}: {
+  value: any;
+  maxLength?: number;
+  showTooltip?: boolean;
+  type?: "text" | "words" | "number" | "date" | "image";
+}) => {
+  const stringValue = String(value || "");
+  
+  // ✅ Handle image type
+  if (type === "image") {
+    if (!stringValue || stringValue === "null" || stringValue === "undefined") {
+      return (
+        <div className="w-16 h-12 bg-gray-100 rounded-lg flex items-center justify-center">
+          <ImageIcon className="w-4 h-4 text-gray-400" />
+        </div>
+      );
+    }
+
+    return (
+      <div className="w-16 h-12 rounded-lg overflow-hidden border border-gray-200 hover:shadow-md transition-shadow">
+        <DriveImage
+          src={stringValue}
+          alt="Table image"
+          width={64}
+          height={48}
+          className="w-full h-full object-cover cursor-pointer"
+          fallbackSrc="/placeholder-image.jpg"
+        />
+      </div>
+    );
+  }
+  
+  // Handle different types
+  const formatValue = () => {
+    switch (type) {
+      case "number":
+        return typeof value === "number" ? value.toLocaleString() : stringValue;
+      case "date":
+        try {
+          return new Date(stringValue).toLocaleDateString('id-ID');
+        } catch {
+          return stringValue;
+        }
+      case "words":
+        return truncateWords(stringValue, 5);
+      default:
+        return truncateText(stringValue, maxLength);
+    }
+  };
+
+  const formattedValue = formatValue();
+  const isLongText = stringValue.length > maxLength;
+
+  if (!isLongText || !showTooltip) {
+    return <span className="text-gray-900">{formattedValue}</span>;
+  }
+
+  return (
+    <TooltipProvider>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <span className="text-gray-900 cursor-help hover:text-blue-600 transition-colors">
+            {formattedValue}
+          </span>
+        </TooltipTrigger>
+        <TooltipContent side="top" className="max-w-xs bg-gray-900 text-white p-3 rounded-lg shadow-lg">
+          <p className="text-sm leading-relaxed">{stringValue}</p>
+        </TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
+  );
+};
 
 interface MetaData {
   total: number;
@@ -171,7 +275,7 @@ export default function ReusableTable<T extends { id: string | number }>({
             .fill(0)
             .map((_, colIndex) => (
               <TableCell key={`skeleton-cell-${rowIndex}-${colIndex}`}>
-                <Skeleton className="h-4 w-full max-w-[200px]" />
+                <Skeleton className="h-4 w-full max-w-[150px]" />
               </TableCell>
             ))}
           {showActions && (
@@ -189,7 +293,7 @@ export default function ReusableTable<T extends { id: string | number }>({
 
   return (
     <div className="w-full space-y-4">
-      {/* ✅ Enhanced Header */}
+      {/* Header Section */}
       <Card>
         <CardHeader className="pb-4">
           <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
@@ -204,7 +308,7 @@ export default function ReusableTable<T extends { id: string | number }>({
               )}
             </div>
 
-            {/* ✅ Action Buttons */}
+            {/* Action Buttons */}
             <div className="flex flex-col sm:flex-row gap-2">
               {onRefresh && (
                 <Button
@@ -232,7 +336,7 @@ export default function ReusableTable<T extends { id: string | number }>({
             </div>
           </div>
 
-          {/* ✅ Enhanced Search & Filters */}
+          {/* Search & Filters */}
           {onSearchChange && (
             <div className="flex flex-col sm:flex-row gap-3 pt-4">
               <div className="relative flex-1">
@@ -246,7 +350,6 @@ export default function ReusableTable<T extends { id: string | number }>({
                 />
               </div>
               
-              {/* ✅ Optional Filter Button */}
               <Button variant="outline" size="sm" className="w-full sm:w-auto">
                 <Filter className="w-4 h-4 mr-2" />
                 Filter
@@ -254,7 +357,7 @@ export default function ReusableTable<T extends { id: string | number }>({
             </div>
           )}
 
-          {/* ✅ Stats Bar */}
+          {/* Stats Bar */}
           {!isLoading && totalItems > 0 && (
             <div className="flex flex-wrap items-center gap-4 pt-4 border-t">
               <Badge variant="secondary" className="bg-blue-50 text-blue-700">
@@ -273,9 +376,9 @@ export default function ReusableTable<T extends { id: string | number }>({
         </CardHeader>
 
         <CardContent className="p-4">
-          {/* ✅ Responsive Table Container */}
+          {/* ✅ Enhanced Responsive Table Container */}
           <div className="overflow-x-auto">
-            <Table>
+            <Table className="w-full">
               {caption && <TableCaption className="mt-4">{caption}</TableCaption>}
               <TableHeader>
                 <TableRow className="bg-gray-50/80 hover:bg-gray-50">
@@ -286,6 +389,7 @@ export default function ReusableTable<T extends { id: string | number }>({
                       <TableHead 
                         key={String(col.key)} 
                         className={`font-semibold text-gray-900 ${col.className || ''}`}
+                        style={{ width: col.width }}
                       >
                         <div className="flex items-center gap-2">
                           {col.label}
@@ -311,7 +415,7 @@ export default function ReusableTable<T extends { id: string | number }>({
                       key={item.id}
                       className="hover:bg-gray-50/80 transition-colors duration-150 border-b border-gray-100"
                     >
-                      <TableCell className="font-medium text-gray-600">
+                      <TableCell className="font-medium text-gray-600 w-16">
                         {(currentPage - 1) * pageSize + index + 1}
                       </TableCell>
                       {columns
@@ -319,21 +423,26 @@ export default function ReusableTable<T extends { id: string | number }>({
                         .map((col) => (
                           <TableCell 
                             key={String(col.key)}
-                            className={`${col.className || ''}`}
+                            className={`${col.className || ''} max-w-xs`}
+                            style={{ width: col.width }}
                           >
                             {col.render ? (
                               col.render(item[col.key], item)
                             ) : (
-                              <span className="text-gray-900">
-                                {String(item[col.key])}
-                              </span>
+                              <div className="min-w-0"> {/* ✅ Prevents overflow */}
+                                <CellContent
+                                  value={item[col.key]}
+                                  maxLength={col.maxLength || 50}
+                                  showTooltip={col.showTooltip !== false}
+                                />
+                              </div>
                             )}
                           </TableCell>
                         ))}
                       {showActions && (
-                        <TableCell>
+                        <TableCell className="w-32">
                           <div className="flex gap-1">
-                            {/* ✅ Mobile: Dropdown Menu */}
+                            {/* Mobile: Dropdown Menu */}
                             <div className="sm:hidden">
                               <DropdownMenu>
                                 <DropdownMenuTrigger asChild>
@@ -372,7 +481,7 @@ export default function ReusableTable<T extends { id: string | number }>({
                               </DropdownMenu>
                             </div>
 
-                            {/* ✅ Desktop: Individual Buttons */}
+                            {/* Desktop: Individual Buttons */}
                             <div className="hidden sm:flex gap-1">
                               {onView && (
                                 <Link href={viewUrl(item)}>
@@ -436,9 +545,9 @@ export default function ReusableTable<T extends { id: string | number }>({
             </Table>
           </div>
 
-          {/* ✅ Enhanced Pagination */}
+          {/* Pagination */}
           {totalPages > 0 && (
-            <div className="border-t bg-gray-50/50 px-4 py-4">
+            <div className="border-t bg-gray-50/50 px-4 py-4 mt-4">
               <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
                 <div className="text-sm text-gray-600 order-2 sm:order-1">
                   Menampilkan{" "}
@@ -505,7 +614,7 @@ export default function ReusableTable<T extends { id: string | number }>({
         </CardContent>
       </Card>
 
-      {/* ✅ Enhanced Delete Dialog */}
+      {/* Delete Dialog */}
       <AlertDialog open={isAlertOpen} onOpenChange={setIsAlertOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
@@ -518,7 +627,7 @@ export default function ReusableTable<T extends { id: string | number }>({
             <AlertDialogDescription className="text-base">
               Apakah Anda yakin ingin menghapus{" "}
               <span className="font-medium text-gray-900">
-                {itemToDelete ? getItemDisplayName(itemToDelete) : "data"}
+                {itemToDelete ? truncateText(getItemDisplayName(itemToDelete), 30) : "data"}
               </span>{" "}
               ini? Tindakan ini tidak dapat dibatalkan.
             </AlertDialogDescription>

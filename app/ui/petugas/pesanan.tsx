@@ -111,11 +111,11 @@ export default function OrderTable({
 
   // ✅ Filter tickets yang belum check-in untuk halaman pesanan
   const filteredTicketsForOrder = filteredTickets.filter((ticket) => {
-    const shouldShow = !ticket.is_checked_in;
-    console.log(
-      `🔍 Ticket ${ticket.id}: is_checked_in=${ticket.is_checked_in}, shouldShow=${shouldShow}`
-    );
-    return shouldShow;
+    console.log(`🔍 Verifikasi - Ticket ${ticket.id}:`, {
+      is_checked_in: ticket.is_checked_in,
+      status: ticket.status,
+      shouldShow: ticket.is_checked_in === false,
+    });
   });
 
   console.log(
@@ -180,12 +180,12 @@ export default function OrderTable({
               <div className="flex gap-2">
                 <Badge variant="outline" className="text-xs">
                   <Users className="w-3 h-3 mr-1" />
-                  {tickets.filter((t) => t.type === "passenger").length}{" "}
+                  {filteredTicketsForOrder.filter((t) => t.type === "passenger").length}{" "}
                   Penumpang
                 </Badge>
                 <Badge variant="outline" className="text-xs">
                   <Car className="w-3 h-3 mr-1" />
-                  {tickets.filter((t) => t.type === "vehicle").length} Kendaraan
+                  {filteredTicketsForOrder.filter((t) => t.type === "vehicle").length} Kendaraan
                 </Badge>
               </div>
             </div>

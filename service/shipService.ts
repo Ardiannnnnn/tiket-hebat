@@ -40,7 +40,7 @@ export const updateShip = async (
   data: Partial<Ship>
 ): Promise<boolean> => {
   try {
-    await Baseapi.put(`/ship/${id}`, data); // Gunakan PUT sesuai endpoint
+    await Baseapi.put(`/ship/update/${id}`, data); // Gunakan PUT sesuai endpoint
     return true;
   } catch (error) {
     console.error("Failed to update ship:", error);
@@ -50,7 +50,7 @@ export const updateShip = async (
 
 export const getShipById = async (id: string | number): Promise<Ship | null> => {
   try {
-    const response = await api.get<{ status: boolean; data: Ship }>(`/ships/${id}`);
+    const response = await api.get<{ status: boolean; data: Ship }>(`/ship/${id}`);
     return response.data.data;
   } catch (error) {
     console.error("Failed to fetch ship by ID:", error);

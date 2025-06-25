@@ -27,9 +27,9 @@ export default function UpdatePage() {
     try {
       const success = await updateShip(id as string, data);
       if (success) {
-        toast.success("Pelabuhan berhasil diperbarui");
+        toast.success("Kapal berhasil diperbarui");
       } else {
-        toast.error("Gagal memperbarui pelabuhan");
+        toast.error("Gagal memperbarui kapal");
       }
       return success;
     } catch (error) {

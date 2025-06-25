@@ -23,9 +23,16 @@ export const createFieldConfigs: Record<string, FieldConfig[]> = {
       type: "select",
       required: true,
       options: [
-        { label: "Beroperasi", value: "Beroperasi" },
-        { label: "Dock", value: "Dock" },
+        { label: "Beroperasi", value: "ACTIVE" },
+        { label: "Dock", value: "INACTIVE" },
       ],
+    },
+    {
+      name: "ship_alias",
+      label: "Alias",
+      type: "text",
+      required: true,
+      options: [],
     },
     { name: "year_operation", label: "Tahun Operasional", type: "text", required: true },
     {
