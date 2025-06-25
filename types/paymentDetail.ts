@@ -15,7 +15,7 @@ export interface PaymentTransactionDetail {
   total_fee: number;
   amount_received: number;
   pay_code: string;
-  pay_url: string | null;
+  pay_url: string | URL | undefined;
   checkout_url: string;
   status: string;
   expired_time: number;

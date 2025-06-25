@@ -36,3 +36,13 @@ export const getCurrentUser = async (): Promise<MeResponse> => {
     throw new Error(error?.response?.data?.message || "Gagal mengambil data user.");
   }
 };
+
+export const forgetPassword = async (email: string): Promise<void> => {
+  try {
+    const response = await Baseapi.post("/auth/forget-password", { email });
+    return response.data;
+  } catch (error: any) {
+    console.error("❌ Gagal mengirim email reset password:", error?.response?.data || error.message);
+    throw new Error(error?.response?.data?.message || "Gagal mengirim email reset password.");
+  }
+}

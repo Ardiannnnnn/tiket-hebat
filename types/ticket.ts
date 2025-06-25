@@ -5,6 +5,12 @@ export interface TicketResponse {
   meta: TicketMeta;
 }
 
+export interface SingleTicketResponse {
+  status: boolean;
+  message: string;
+  data: Ticket; // ✅ Single ticket, bukan array
+}
+
 export interface Ticket {
   id: number;
   claim_session_id: number;
@@ -43,6 +49,7 @@ export interface Ticket {
   id_number: string;
   seat_number: string | null;
   license_plate: string | null;
+  is_checked_in: boolean;
   price: number;
   expires_at: string;
   claimed_at: string;
@@ -61,4 +68,18 @@ export interface TicketMeta {
   path: string;
   has_next_page: boolean;
   has_prev_page: boolean;
+}
+
+export interface TicketForm {
+  schedule_id: number;
+  class_id: number;
+  type: string;
+  passenger_name: string;
+  passenger_age: number;
+  address: string;
+  id_type: string;
+  id_number: string;
+  license_plate: string | null;
+  gender: string | null;
+  price: number;
 }

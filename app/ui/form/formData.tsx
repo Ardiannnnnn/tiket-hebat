@@ -15,10 +15,20 @@ import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useForm, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { penumpangSchema} from "@/lib/penumpangSchema";
+import { penumpangSchema } from "@/lib/penumpangSchema";
 import type { SessionData } from "@/types/session";
 import { toast } from "sonner";
 import type { z } from "zod";
+import {
+  Car,
+  Users,
+  Info,
+  ArrowRight,
+  User,
+  CreditCard,
+  MapPin,
+  Calendar,
+} from "lucide-react";
 
 interface FormPenumpangProps {
   session: SessionData;
@@ -129,253 +139,338 @@ export default function FormPenumpang({ session }: FormPenumpangProps) {
   }, [watch("penumpang"), watch("kendaraan"), initialized]);
 
   const onSubmit = (data: PenumpangFormSchema) => {
-  if (passengerTickets.length === 0 && vehicleTickets.length === 0) {
-    toast.error("Pilih tiket terlebih dahulu");
-    return;
-  }
+    if (passengerTickets.length === 0 && vehicleTickets.length === 0) {
+      toast.error("Pilih tiket terlebih dahulu");
+      return;
+    }
 
-  const penumpangDenganKelas = data.penumpang.map((item, index) => ({
-    ...item,
-    usia: Number(item.usia),
-    kelas: passengerTickets[index]?.class.class_name || "Tidak diketahui",
-    ticket_id: passengerTickets[index]?.ticket_id,
-  }));
+    const penumpangDenganKelas = data.penumpang.map((item, index) => ({
+      ...item,
+      usia: Number(item.usia),
+      kelas: passengerTickets[index]?.class.class_name || "Tidak diketahui",
+      ticket_id: passengerTickets[index]?.ticket_id,
+    }));
 
-  const kendaraanDenganKelas = data.kendaraan.map((item, index) => ({
-    ...item,
-    kelas: vehicleTickets[index]?.class.class_name || "Tidak diketahui",
-    ticket_id: vehicleTickets[index]?.ticket_id,
-  }));
+    const kendaraanDenganKelas = data.kendaraan.map((item, index) => ({
+      ...item,
+      kelas: vehicleTickets[index]?.class.class_name || "Tidak diketahui",
+      ticket_id: vehicleTickets[index]?.ticket_id,
+    }));
 
-  sessionStorage.setItem(
-    STORAGE_KEY,
-    JSON.stringify({
-      penumpang: penumpangDenganKelas,
-      kendaraan: kendaraanDenganKelas,
-    })
-  );
+    sessionStorage.setItem(
+      STORAGE_KEY,
+      JSON.stringify({
+        penumpang: penumpangDenganKelas,
+        kendaraan: kendaraanDenganKelas,
+      })
+    );
 
-  console.log("Penumpang yang disimpan:", penumpangDenganKelas);
-  console.log("Kendaraan yang disimpan:", kendaraanDenganKelas);
+    console.log("Penumpang yang disimpan:", penumpangDenganKelas);
+    console.log("Kendaraan yang disimpan:", kendaraanDenganKelas);
 
-  router.push(`/book/${id}/form/verifikasi?session_id=${sessionId}`);
-};
-
+    router.push(`/book/${id}/form/verifikasi?session_id=${sessionId}`);
+  };
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="md:space-y-6 space-y-8">
+    <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+      {/* Vehicle Forms */}
       {kendaraanFields.map((field, index) => (
-        <Card key={field.id} className={cn("py-0 gap-0")}>
-          <CardHeader className="p-4 border-b flex flex-row justify-between">
-            <p className="flex flex-col md:flex-row md:gap-2">
-              Isi Data Kendaraan{" "}
-              <span className="font-bold">
-                ({vehicleTickets[index]?.class.class_name})
-              </span>
-            </p>
-          </CardHeader>
-          <div className="p-6">
-            <div className="bg-red-300 flex items-center gap-6 p-4 rounded-lg">
-              <div className="text-xl h-4 w-4 p-4 border border-red-500 rounded-full flex items-center justify-center">
-                i
+        <Card key={field.id} className="shadow-md py-0 gap-0">
+          <CardHeader className="p-4 border-b bg-green-50">
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
+                <Car className="w-4 h-4 text-green-600" />
               </div>
-              <div className="text-xs text-gray-600">
-                <p>1. Isi Nomor Polisi sesuai dengan STNK.</p>
-                <p>2. Golongan tidak sesuai akan dikenakan biaya tambahan.</p>
+              <div>
+                <h3 className="font-semibold text-gray-800">Data Kendaraan</h3>
+                <p className="text-sm text-gray-600">
+                  {vehicleTickets[index]?.class.class_name}
+                </p>
+              </div>
+            </div>
+          </CardHeader>
+
+          {/* Info Notice */}
+          <div className="p-4 bg-amber-50 border-l-4 border-amber-400">
+            <div className="flex items-start gap-3">
+              <Info className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
+              <div className="text-sm text-amber-800">
+                <p className="font-medium mb-1">Perhatian:</p>
+                <ul className="space-y-1">
+                  <li>• Isi Nomor Polisi sesuai dengan STNK</li>
+                  <li>• Golongan tidak sesuai akan dikenakan biaya tambahan</li>
+                </ul>
               </div>
             </div>
           </div>
-          <CardContent className="p-4 md:px-8">
-            <div className="grid grid-cols-2 gap-6 md:text-sm">
-              <div className="w-full">
-                <Label className="text-gray-600">Nomor Polisi</Label>
+
+          <CardContent className="p-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label className="flex items-center gap-2 text-gray-700 font-medium">
+                  <CreditCard className="w-4 h-4" />
+                  Nomor Polisi
+                </Label>
                 <Input
-                  className="h-10 placeholder:text-sm"
-                  placeholder="Nomor Polisi"
+                  className="h-11"
+                  placeholder="Contoh: B 1234 XYZ"
                   {...register(`kendaraan.${index}.nomor_polisi`)}
                 />
+                {errors.kendaraan?.[index]?.nomor_polisi && (
+                  <p className="text-xs text-red-500">
+                    {errors.kendaraan[index].nomor_polisi?.message}
+                  </p>
+                )}
               </div>
-              <div className="w-full">
-                <label>Golongan</label>
+
+              <div className="space-y-2">
+                <Label className="flex items-center gap-2 text-gray-700 font-medium">
+                  <Car className="w-4 h-4" />
+                  Golongan Kendaraan
+                </Label>
                 <Input
-                  className={cn("h-10 placeholder:text-black")}
-                  placeholder={vehicleTickets[index]?.class.class_name}
-                  type="text"
+                  className="h-11 bg-gray-50"
+                  value={vehicleTickets[index]?.class.class_name}
                   readOnly
                 />
               </div>
-              <div className="w-full">
-                <Label className="text-gray-600">Nama</Label>
+
+              <div className="space-y-2">
+                <Label className="flex items-center gap-2 text-gray-700 font-medium">
+                  <User className="w-4 h-4" />
+                  Nama Pemilik
+                </Label>
                 <Input
-                  className="h-10 placeholder:text-sm"
-                  placeholder="Nama"
+                  className="h-11"
+                  placeholder="Nama sesuai STNK"
                   {...register(`kendaraan.${index}.nama`)}
                 />
+                {errors.kendaraan?.[index]?.nama && (
+                  <p className="text-xs text-red-500">
+                    {errors.kendaraan[index].nama?.message}
+                  </p>
+                )}
               </div>
-              <div className="w-full">
-                <Label className="text-gray-600">Alamat</Label>
+
+              <div className="space-y-2">
+                <Label className="flex items-center gap-2 text-gray-700 font-medium">
+                  <Calendar className="w-4 h-4" />
+                  Usia
+                </Label>
                 <Input
-                  className="h-10 placeholder:text-sm"
-                  placeholder="Alamat"
-                  {...register(`kendaraan.${index}.alamat`)}
-                />
-              </div>
-              <div className="w-full">
-                <Label className="text-gray-600">Umur</Label>
-                <Input
-                  className="h-10 placeholder:text-sm"
+                  className="h-11"
                   type="number"
-                  placeholder="0"
+                  placeholder="Usia pemilik"
                   {...register(`kendaraan.${index}.usia`, {
                     valueAsNumber: true,
                   })}
                 />
+                {errors.kendaraan?.[index]?.usia && (
+                  <p className="text-xs text-red-500">
+                    {errors.kendaraan[index].usia?.message}
+                  </p>
+                )}
+              </div>
+
+              <div className="space-y-2 md:col-span-2">
+                <Label className="flex items-center gap-2 text-gray-700 font-medium">
+                  <MapPin className="w-4 h-4" />
+                  Alamat
+                </Label>
+                <Input
+                  className="h-11"
+                  placeholder="Alamat lengkap"
+                  {...register(`kendaraan.${index}.alamat`)}
+                />
+                {errors.kendaraan?.[index]?.alamat && (
+                  <p className="text-xs text-red-500">
+                    {errors.kendaraan[index].alamat?.message}
+                  </p>
+                )}
               </div>
             </div>
           </CardContent>
         </Card>
       ))}
 
-      {passengerFields.length > 0 &&
-        passengerFields.map((field, index) => (
-          <Card key={field.id} className={cn("py-0 gap-0")}>
-            <CardHeader className="p-4 border-b flex flex-row justify-between">
-              <p className="flex flex-col md:flex-row md:gap-2">
-                Isi Data Penumpang{" "}
-                <span className="font-bold">
-                  ({passengerTickets[index]?.class.class_name})
-                </span>
-              </p>
-            </CardHeader>
-            <CardContent className="p-4 md:px-8">
-              <div className="grid grid-cols-3 gap-6 md:text-sm">
-                <div className="col-span-1">
-                  <Label className="text-gray-600 md:block hidden">
-                    Jenis Kelamin
-                  </Label>
-                  <Label className="md:hidden">JK</Label>
-                  <Select
-                    value={watch(`penumpang.${index}.jenis_kelamin`) || ""}
-                    onValueChange={(val) =>
-                      setValue(
-                        `penumpang.${index}.jenis_kelamin`,
-                        val as "pria" | "wanita"
-                      )
-                    }
-                  >
-                    <SelectTrigger className="w-full h-10 placeholder:text-sm">
-                      <SelectValue placeholder="Pria" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="pria">Pria</SelectItem>
-                      <SelectItem value="wanita">Wanita</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  {errors.penumpang?.[index]?.jenis_kelamin && (
-                    <p className="text-xs text-red-500 mt-1">
-                      {errors.penumpang[index].jenis_kelamin?.message}
-                    </p>
-                  )}
-                </div>
-                <div className="col-span-2">
-                  <Label className="text-gray-600">Nama Lengkap</Label>
-                  <Input
-                    className="h-10 text-sm placeholder:text-sm"
-                    placeholder="Masukkan Nama"
-                    {...register(`penumpang.${index}.nama`)}
-                  />
-                  <p className="text-xs text-gray-500 mt-1">
-                    Isi sesuai dengan KTP/SIM/Paspor (tanpa gelar khusus)
-                  </p>
-                  {errors.penumpang?.[index]?.nama && (
-                    <p className="text-xs text-red-500 mt-1">
-                      {errors.penumpang[index].nama?.message}
-                    </p>
-                  )}
-                </div>
-                <div className="col-span-1">
-                  <Label className="text-gray-600">Jenis ID</Label>
-                  <Select
-                    value={watch(`penumpang.${index}.jenis_id`) || ""}
-                    onValueChange={(val) =>
-                      setValue(
-                        `penumpang.${index}.jenis_id`,
-                        val as "nik" | "sim" | "paspor"
-                      )
-                    }
-                  >
-                    <SelectTrigger className="w-full h-10 placeholder:text-sm">
-                      <SelectValue placeholder="NIK" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="nik">NIK</SelectItem>
-                      <SelectItem value="sim">SIM</SelectItem>
-                      <SelectItem value="paspor">Paspor</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  {errors.penumpang?.[index]?.jenis_id && (
-                    <p className="text-xs text-red-500 mt-1">
-                      {errors.penumpang[index].jenis_id?.message}
-                    </p>
-                  )}
-                </div>
-                <div className="col-span-2">
-                  <Label className="text-gray-600">Nomor Identitas</Label>
-                  <Input
-                    className="h-10 placeholder:text-sm"
-                    placeholder="Masukkan Nomor"
-                    {...register(`penumpang.${index}.nomor_identitas`)}
-                  />
-                  <p className="text-xs text-gray-500 mt-1">
-                    Penumpang di bawah 18 tahun, isi dengan tanggal lahir
-                    (hhbbtttt)
-                  </p>
-                  {errors.penumpang?.[index]?.nomor_identitas && (
-                    <p className="text-xs text-red-500 mt-1">
-                      {errors.penumpang[index].nomor_identitas?.message}
-                    </p>
-                  )}
-                </div>
-                <div className="col-span-1">
-                  <Label className="text-gray-600">Usia</Label>
-                  <Input
-                    className="h-10 placeholder:text-sm"
-                    type="number"
-                    placeholder="0"
-                    {...register(`penumpang.${index}.usia`, {
-                      valueAsNumber: true,
-                    })}
-                  />
-                  {errors.penumpang?.[index]?.usia && (
-                    <p className="text-xs text-red-500 mt-1">
-                      {errors.penumpang[index].usia?.message}
-                    </p>
-                  )}
-                </div>
-                <div className="col-span-2">
-                  <Label className="text-gray-600">Alamat</Label>
-                  <Input
-                    className="h-10 placeholder:text-sm"
-                    placeholder="Masukkan alamat"
-                    {...register(`penumpang.${index}.alamat`)}
-                  />
-                  <p className="text-xs text-gray-500 mt-1">Contoh: Air Dingin</p>
-                  {errors.penumpang?.[index]?.alamat && (
-                    <p className="text-xs text-red-500 mt-1">
-                      {errors.penumpang[index].alamat?.message}
-                    </p>
-                  )}
-                </div>
+      {/* Passenger Forms */}
+      {passengerFields.map((field, index) => (
+        <Card key={field.id} className="shadow-md py-0 gap-0">
+          <CardHeader className="p-4 border-b">
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
+                <Users className="w-4 h-4 text-blue-600" />
               </div>
-            </CardContent>
-          </Card>
-        ))}
-      <Button
-        type="submit"
-        className="w-full bg-Blue text-white hover:bg-teal-600"
-      >
-        Lanjutkan
-      </Button>
+              <div>
+                <h3 className="font-semibold text-gray-800">
+                  Data Penumpang {index + 1}
+                </h3>
+                <p className="text-sm text-gray-600">
+                  {passengerTickets[index]?.class.class_name}
+                </p>
+              </div>
+            </div>
+          </CardHeader>
+
+          <CardContent className="p-6">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              {/* Jenis Kelamin */}
+              <div className="space-y-2">
+                <Label className="flex items-center gap-2 text-gray-700 font-medium">
+                  <User className="w-4 h-4" />
+                  Jenis Kelamin
+                </Label>
+                <Select
+                  value={watch(`penumpang.${index}.jenis_kelamin`) || ""}
+                  onValueChange={(val) =>
+                    setValue(
+                      `penumpang.${index}.jenis_kelamin`,
+                      val as "pria" | "wanita"
+                    )
+                  }
+                >
+                  <SelectTrigger className="h-11 w-full">
+                    <SelectValue placeholder="Pilih jenis kelamin" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="pria">Pria</SelectItem>
+                    <SelectItem value="wanita">Wanita</SelectItem>
+                  </SelectContent>
+                </Select>
+                {errors.penumpang?.[index]?.jenis_kelamin && (
+                  <p className="text-xs text-red-500">
+                    {errors.penumpang[index].jenis_kelamin?.message}
+                  </p>
+                )}
+              </div>
+
+              {/* Nama Lengkap */}
+              <div className="space-y-2 md:col-span-2">
+                <Label className="flex items-center gap-2 text-gray-700 font-medium">
+                  <User className="w-4 h-4" />
+                  Nama Lengkap
+                </Label>
+                <Input
+                  className="h-11"
+                  placeholder="Nama sesuai identitas"
+                  {...register(`penumpang.${index}.nama`)}
+                />
+                <p className="text-xs text-gray-500">
+                  Sesuai KTP/SIM/Paspor (tanpa gelar)
+                </p>
+                {errors.penumpang?.[index]?.nama && (
+                  <p className="text-xs text-red-500">
+                    {errors.penumpang[index].nama?.message}
+                  </p>
+                )}
+              </div>
+
+              {/* Jenis ID */}
+              <div className="space-y-2">
+                <Label className="flex items-center gap-2 text-gray-700 font-medium">
+                  <CreditCard className="w-4 h-4" />
+                  Jenis Identitas
+                </Label>
+                <Select
+                  value={watch(`penumpang.${index}.jenis_id`) || ""}
+                  onValueChange={(val) =>
+                    setValue(
+                      `penumpang.${index}.jenis_id`,
+                      val as "nik" | "sim" | "paspor"
+                    )
+                  }
+                >
+                  <SelectTrigger className="h-11 w-full">
+                    <SelectValue placeholder="Pilih jenis ID" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="nik">NIK (KTP)</SelectItem>
+                    <SelectItem value="sim">SIM</SelectItem>
+                    <SelectItem value="paspor">Paspor</SelectItem>
+                  </SelectContent>
+                </Select>
+                {errors.penumpang?.[index]?.jenis_id && (
+                  <p className="text-xs text-red-500">
+                    {errors.penumpang[index].jenis_id?.message}
+                  </p>
+                )}
+              </div>
+
+              {/* Nomor Identitas */}
+              <div className="space-y-2">
+                <Label className="flex items-center gap-2 text-gray-700 font-medium">
+                  <CreditCard className="w-4 h-4" />
+                  Nomor Identitas
+                </Label>
+                <Input
+                  className="h-11"
+                  placeholder="Nomor identitas"
+                  {...register(`penumpang.${index}.nomor_identitas`)}
+                />
+
+                {errors.penumpang?.[index]?.nomor_identitas && (
+                  <p className="text-xs text-red-500">
+                    {errors.penumpang[index].nomor_identitas?.message}
+                  </p>
+                )}
+              </div>
+
+              {/* Usia */}
+              <div className="space-y-2">
+                <Label className="flex items-center gap-2 text-gray-700 font-medium">
+                  <Calendar className="w-4 h-4" />
+                  Usia
+                </Label>
+                <Input
+                  className="h-11"
+                  type="number"
+                  placeholder="Usia"
+                  {...register(`penumpang.${index}.usia`, {
+                    valueAsNumber: true,
+                  })}
+                />
+                {errors.penumpang?.[index]?.usia && (
+                  <p className="text-xs text-red-500">
+                    {errors.penumpang[index].usia?.message}
+                  </p>
+                )}
+              </div>
+
+              {/* Alamat */}
+              <div className="space-y-2 md:col-span-3">
+                <Label className="flex items-center gap-2 text-gray-700 font-medium">
+                  <MapPin className="w-4 h-4" />
+                  Alamat
+                </Label>
+                <Input
+                  className="h-11"
+                  placeholder="Alamat lengkap"
+                  {...register(`penumpang.${index}.alamat`)}
+                />
+                <p className="text-xs text-gray-500">
+                  Contoh: Jl. Merdeka No. 123, Air Dingin
+                </p>
+                {errors.penumpang?.[index]?.alamat && (
+                  <p className="text-xs text-red-500">
+                    {errors.penumpang[index].alamat?.message}
+                  </p>
+                )}
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      ))}
+
+      {/* Submit Button */}
+      <div className="pt-4">
+        <Button
+          type="submit"
+          className="w-full h-12 bg-Blue text-white hover:bg-teal-600 font-medium flex items-center justify-center gap-2"
+        >
+          <span>Lanjutkan ke Verifikasi</span>
+          <ArrowRight className="w-4 h-4" />
+        </Button>
+      </div>
     </form>
   );
 }

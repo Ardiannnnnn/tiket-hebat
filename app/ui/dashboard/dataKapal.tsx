@@ -12,7 +12,7 @@ import { Button } from "@/components/ui/button";
 
 function StatusBadge({ value }: { value: string }) {
   const statusClass = clsx("text-white text-xs px-2 py-1 rounded-md w-fit", {
-    "bg-green-500": value === "Beroperasi",
+    "bg-green-500": value === "ACTIVE",
     "bg-orange-500": value === "Dock",
   });
 

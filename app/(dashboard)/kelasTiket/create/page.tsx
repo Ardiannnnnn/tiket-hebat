@@ -25,7 +25,7 @@ export default function CreatePage() {
   return (
     <div className="container mx-auto py-8">
       <h1 className="text-2xl font-bold mb-6">Tambah Kapal Baru</h1>
-      <CreatePageDynamic type="kelas" onSubmit={handleSubmit} />
+      <CreatePageDynamic type="kelasTiket" onSubmit={handleSubmit} />
     </div>
   );
 }

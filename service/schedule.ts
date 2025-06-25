@@ -35,7 +35,7 @@ export const getScheduleAll = async (page = 1, limit = 20) : Promise<ScheduleRes
 
 export const createSchedule = async (payload: CreateJadwalPayload): Promise<boolean> => {
   try {
-    const response = await Baseapi.post("/schedule/Schedule/create", payload);
+    const response = await Baseapi.post("/schedule/allocation/create", payload);
     return response.status === 201 || response.status === 200;
   } catch (error) {
     console.error("Error creating harga:", error);

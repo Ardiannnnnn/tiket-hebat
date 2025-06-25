@@ -10,7 +10,7 @@ export const schemas: Record<string, z.ZodObject<any>> = {
   }),
   kapal: z.object({
     ship_name: z.string().min(1, "Nama kapal wajib diisi"),
-    status: z.enum(["Beroperasi", "Dock"]),
+    status: z.enum(["ACTIVE", "INACTIVE"]),
     ship_type: z.string().min(1, "Tipe kapal wajib diisi"),
     year_operation: z.string().min(1, "Tahun Operasi wajib diisi"),
     image_link: z.string().min(1, "Gambar wajib diisi"),
@@ -19,9 +19,9 @@ export const schemas: Record<string, z.ZodObject<any>> = {
   pelabuhan: z.object({
     harbor_name: z.string().min(1, "Nama pelabuhan wajib diisi"),
     year_operation: z.string().min(1, "Tahun wajib diisi"),
-    status: z.enum(["Beroperasi", "Tidak Beroperasi"]),
+    status: z.enum(["active", "inactive"]),
   }),
- pengguna: z.object({
+  pengguna: z.object({
     username: z.string().min(1, "Username wajib diisi"),
     email: z.string().email("Email tidak valid"),
     password: z.string().min(6, "Password minimal 6 karakter"),
@@ -29,49 +29,62 @@ export const schemas: Record<string, z.ZodObject<any>> = {
     role_id: z.number().min(1, "Role wajib dipilih"),
   }),
   hargaTiket: z.object({
-    route_id: z.string()
+    route_id: z
+      .string()
       .transform((val) => parseInt(val))
       .refine((val) => !isNaN(val), "Route ID harus berupa angka"),
-    manifest_id: z.string()
+    manifest_id: z
+      .string()
       .transform((val) => parseInt(val))
       .refine((val) => !isNaN(val), "Manifest ID harus berupa angka"),
-    ticket_price: z.string()
+    ticket_price: z
+      .string()
       .transform((val) => parseInt(val))
-      .refine((val) => !isNaN(val) && val > 0, "Harga tiket harus lebih dari 0")
+      .refine(
+        (val) => !isNaN(val) && val > 0,
+        "Harga tiket harus lebih dari 0"
+      ),
   }),
-  kelas: z.object({ 
+  kelasTiket: z.object({
     class_name: z.string().min(1, "Nama kelas wajib diisi"),
     type: z.string().min(1, "Tipe wajib diisi"),
     class_alias: z.string().min(1, "Alias wajib dipilih"),
   }),
   dataRute: z.object({
-     departure_harbor_id: z.string()
+    departure_harbor_id: z
+      .string()
       .transform((val) => parseInt(val))
       .refine((val) => !isNaN(val), "Pelabuhan ID harus berupa angka"),
-      arrival_harbor_id: z.string()
+    arrival_harbor_id: z
+      .string()
       .transform((val) => parseInt(val))
       .refine((val) => !isNaN(val), "Pelabuhan ID harus berupa angka"),
   }),
   kapasitasTiket: z.object({
-    ship_id: z.string()
+    ship_id: z
+      .string()
       .transform((val) => parseInt(val))
       .refine((val) => !isNaN(val), "ship_id harus berupa angka"),
-    class_id: z.string()
+    class_id: z
+      .string()
       .transform((val) => parseInt(val))
       .refine((val) => !isNaN(val), "class_id harus berupa angka"),
-    capacity: z.string()
+    capacity: z
+      .string()
       .transform((val) => parseInt(val))
-      .refine((val) => !isNaN(val) && val > 0, "kapasitas harus lebih dari 0")
+      .refine((val) => !isNaN(val) && val > 0, "kapasitas harus lebih dari 0"),
   }),
   uploadJadwal: z.object({
-    route_id: z.string()
+    route_id: z
+      .string()
       .transform((val) => parseInt(val))
       .refine((val) => !isNaN(val), "Route ID harus berupa angka"),
-    ship_id: z.string()
-      .transform((val) => parseInt(val))  
+    ship_id: z
+      .string()
+      .transform((val) => parseInt(val))
       .refine((val) => !isNaN(val), "ship ID harus berupa angka"),
     departure_datetime: z.string().min(1, "Waktu keberangkatan wajib diisi"),
     arrival_datetime: z.string().min(1, "Waktu tiba wajib diisi"),
-    status: z.enum(["Scheduled", "Unscheduled"]),
+    status: z.enum(["SCHEDULED", "FINISHED", "CANCELED"]),
   }),
 };
