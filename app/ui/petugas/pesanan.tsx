@@ -111,11 +111,11 @@ export default function OrderTable({
 
   // ✅ Filter tickets yang belum check-in untuk halaman pesanan
   const filteredTicketsForOrder = filteredTickets.filter((ticket) => {
-    console.log(`🔍 Verifikasi - Ticket ${ticket.id}:`, {
-      is_checked_in: ticket.is_checked_in,
-      status: ticket.status,
-      shouldShow: ticket.is_checked_in === false,
-    });
+    const shouldShow = !ticket.is_checked_in;
+    console.log(
+      `🔍 Ticket ${ticket.id}: is_checked_in=${ticket.is_checked_in}, shouldShow=${shouldShow}`
+    );
+    return shouldShow;
   });
 
   console.log(
