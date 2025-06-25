@@ -39,7 +39,7 @@ export const jadwalLinks = [
    { name: "Upload Jadwal", href: "/uploadJadwal", icon: RiCalendarFill },
 ];
 
-export default function NavLinks({ links }: { links: typeof dashboardLinks }) {
+export default function NavLinks({ links, disabled }: { links: typeof dashboardLinks, disabled?: boolean }) {
   const pathname = usePathname();
   return (
     <>

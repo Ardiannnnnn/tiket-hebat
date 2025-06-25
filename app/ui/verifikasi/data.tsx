@@ -2,7 +2,6 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import { Table, TableBody, TableCell, TableRow } from "@/components/ui/table";
-import Link from "next/link";
 import {
   Popover,
   PopoverContent,
@@ -16,7 +15,7 @@ import { submitPassengerData } from "@/service/passenger";
 import { useParams } from "next/navigation";
 import { PassengerEntry, TicketEntryPayload } from "@/types/passenger";
 import { useForm, FormProvider } from "react-hook-form";
-import FormPemesan from "./formPemesan"; // Pastikan path ini benar
+import FormPemesan from "./formPemesan";
 import { toast } from "sonner";
 import {
   AlertDialog,
@@ -26,12 +25,22 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-  AlertDialogTrigger,
   AlertDialogDescription,
 } from "@/components/ui/alert-dialog";
 import { ClaimSessionResponse } from "@/types/responBook";
 import { AxiosResponse } from "axios";
-import DialogPembayaran from "./tiketSection";
+import {
+  Users,
+  Car,
+  Eye,
+  CreditCard,
+  ArrowRight,
+  CheckCircle,
+  AlertTriangle,
+  User,
+  MapPin,
+  Calendar,
+} from "lucide-react";
 
 interface Passenger {
   nama: string;
@@ -59,44 +68,45 @@ const Detail = ({ penumpang }: { penumpang: Passenger }) => {
   return (
     <Popover>
       <PopoverTrigger asChild>
-        <Button variant="outline">Detail</Button>
+        <Button variant="outline" size="sm" className="flex items-center gap-1">
+          <Eye className="w-3 h-3" />
+          Detail
+        </Button>
       </PopoverTrigger>
       <PopoverContent
-        className={`${poppins.className} w-64 p-4 shadow-lg rounded-lg bg-[#F7FAFF]`}
+        className={`${poppins.className} w-72 p-4 shadow-lg rounded-lg bg-white border`}
       >
-        <div className="space-y-2 text-sm">
-          <table>
-            <tbody>
-              <tr>
-                <td className="pr-4 font-semibold">Nama</td>
-                <td>: {penumpang.nama}</td>
-              </tr>
-              <tr>
-                <td className="font-semibold">Alamat</td>
-                <td>: {penumpang.alamat}</td>
-              </tr>
-              <tr>
-                <td className="font-semibold">Umur</td>
-                <td>: {penumpang.usia}</td>
-              </tr>
-              <tr>
-                <td className="font-semibold">JK</td>
-                <td>: {penumpang.jk}</td>
-              </tr>
-              <tr>
-                <td className="font-semibold">ID</td>
-                <td>: {penumpang.jenisID}</td>
-              </tr>
-              <tr>
-                <td className="font-semibold">NoID</td>
-                <td>: {penumpang.noID}</td>
-              </tr>
-              <tr>
-                <td className="font-semibold">Kelas</td>
-                <td>: {penumpang.kelas}</td>
-              </tr>
-            </tbody>
-          </table>
+        <div className="space-y-3">
+          <div className="flex items-center gap-2 pb-2 border-b">
+            <User className="w-4 h-4 text-blue-600" />
+            <h4 className="font-semibold text-gray-800">Detail Penumpang</h4>
+          </div>
+          <div className="space-y-2 text-sm">
+            <div className="grid grid-cols-3 gap-2">
+              <span className="font-medium text-gray-600">Nama:</span>
+              <span className="col-span-2">{penumpang.nama}</span>
+            </div>
+            <div className="grid grid-cols-3 gap-2">
+              <span className="font-medium text-gray-600">Alamat:</span>
+              <span className="col-span-2">{penumpang.alamat}</span>
+            </div>
+            <div className="grid grid-cols-3 gap-2">
+              <span className="font-medium text-gray-600">Umur:</span>
+              <span className="col-span-2">{penumpang.usia} tahun</span>
+            </div>
+            <div className="grid grid-cols-3 gap-2">
+              <span className="font-medium text-gray-600">Kelamin:</span>
+              <span className="col-span-2">{penumpang.jk}</span>
+            </div>
+            <div className="grid grid-cols-3 gap-2">
+              <span className="font-medium text-gray-600">ID:</span>
+              <span className="col-span-2">{penumpang.jenisID}</span>
+            </div>
+            <div className="grid grid-cols-3 gap-2">
+              <span className="font-medium text-gray-600">No ID:</span>
+              <span className="col-span-2">{penumpang.noID}</span>
+            </div>
+          </div>
         </div>
       </PopoverContent>
     </Popover>
@@ -107,53 +117,56 @@ const DetailKendaraan = ({ kendaraan }: { kendaraan: Vehicle }) => {
   return (
     <Popover>
       <PopoverTrigger asChild>
-        <Button variant="outline">Detail</Button>
+        <Button variant="outline" size="sm" className="flex items-center gap-1">
+          <Eye className="w-3 h-3" />
+          Detail
+        </Button>
       </PopoverTrigger>
       <PopoverContent
-        className={`${poppins.className} w-64 p-4 shadow-lg rounded-lg bg-[#F7FAFF]`}
+        className={`${poppins.className} w-72 p-4 shadow-lg rounded-lg bg-white border`}
       >
-        <div className="space-y-2 text-sm">
-          <table>
-            <tbody>
-              <tr>
-                <td className="pr-4 font-semibold">Nama</td>
-                <td>: {kendaraan.nama}</td>
-              </tr>
-              <tr>
-                <td className="font-semibold">Alamat</td>
-                <td>: {kendaraan.alamat}</td>
-              </tr>
-              <tr>
-                <td className="font-semibold">Nomor Polisi</td>
-                <td>: {kendaraan.nomor_polisi}</td>
-              </tr>
-              <tr>
-                <td className="font-semibold">Kelas</td>
-                <td>: {kendaraan.kelas}</td>
-              </tr>
-              <tr>
-                <td className="font-semibold">Usia</td>
-                <td>: {kendaraan.usia}</td>
-              </tr>
-            </tbody>
-          </table>
+        <div className="space-y-3">
+          <div className="flex items-center gap-2 pb-2 border-b">
+            <Car className="w-4 h-4 text-green-600" />
+            <h4 className="font-semibold text-gray-800">Detail Kendaraan</h4>
+          </div>
+          <div className="space-y-2 text-sm">
+            <div className="grid grid-cols-3 gap-2">
+              <span className="font-medium text-gray-600">Pemilik:</span>
+              <span className="col-span-2">{kendaraan.nama}</span>
+            </div>
+            <div className="grid grid-cols-3 gap-2">
+              <span className="font-medium text-gray-600">Alamat:</span>
+              <span className="col-span-2">{kendaraan.alamat}</span>
+            </div>
+            <div className="grid grid-cols-3 gap-2">
+              <span className="font-medium text-gray-600">No Polisi:</span>
+              <span className="col-span-2 font-mono">
+                {kendaraan.nomor_polisi}
+              </span>
+            </div>
+            <div className="grid grid-cols-3 gap-2">
+              <span className="font-medium text-gray-600">Kelas:</span>
+              <span className="col-span-2">{kendaraan.kelas}</span>
+            </div>
+          </div>
         </div>
       </PopoverContent>
     </Popover>
   );
-}
+};
 
 const KelasBadge = ({ kelas }: { kelas: string }) => {
   const kelasStyles: Record<string, string> = {
-    ECONOMY: "bg-teal-400 text-white",
-    BUSSINESS: "bg-yellow-300 text-black",
-    VIP: "bg-orange-500 text-white",
+    ECONOMY: "bg-blue-100 text-blue-800 border-blue-200",
+    BUSSINESS: "bg-yellow-100 text-yellow-800 border-yellow-200",
+    VIP: "bg-orange-100 text-orange-800 border-orange-200",
   };
 
   return (
     <span
       className={cn(
-        "px-3 py-1 rounded-full text-sm font-semibold",
+        "px-2 py-1 rounded-full text-xs font-medium border",
         kelasStyles[kelas]
       )}
     >
@@ -303,60 +316,47 @@ export default function Data({ sessionId }: DataProps) {
   };
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
+      {/* Vehicle Data Card */}
       {kendaraanList.length > 0 && (
-        <Card className={cn("py-0 gap-0")}>
-          <CardHeader className="border-b p-4 text-center">
-            <CardTitle>Detail Data Kendaraan</CardTitle>
+        <Card className="shadow-md py-0 gap-0">
+          <CardHeader className="border-b p-4 sm:p-6">
+            <CardTitle className="flex items-center gap-3">
+              <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
+                <Car className="w-4 h-4 text-green-600" />
+              </div>
+              <span>Data Kendaraan</span>
+              <span className="text-sm font-normal text-gray-500">
+                ({kendaraanList.length} kendaraan)
+              </span>
+            </CardTitle>
           </CardHeader>
-          <CardContent className="p-4 gap-4">
-            <div className="border rounded-lg">
+          <CardContent className="p-4 sm:p-6">
+            <div className="overflow-x-auto">
               <Table>
-                {kendaraanList.map((kendaraan, index) => (
-                  <TableBody key={index} className="border-b">
-                    <TableRow>
-                      <TableCell className="font-medium py-2 text-center">
-                        {kendaraan.nomor_polisi}
-                      </TableCell>
-                      <TableCell className="text-center">
-                        {kendaraan.kelas}
-                      </TableCell>
-                      <TableCell className="text-center">
-                        <DetailKendaraan kendaraan={kendaraan} />
-                      </TableCell>
-                    </TableRow>
-                  </TableBody>
-                ))}
-              </Table>
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      {penumpangList.length > 0 && (
-        <Card className={cn("py-0 gap-0")}>
-          <CardHeader className="border-b p-4 text-center">
-            <CardTitle>Detail Data Penumpang</CardTitle>
-          </CardHeader>
-          <CardContent className="p-4 gap-4">
-            <div className="border rounded-lg">
-              <Table className="w-full border">
                 <TableBody>
-                  {penumpangList.map((penumpang, index) => (
-                    <TableRow key={index} className="border-b">
-                      <TableCell className="px-8">
-                        <div className="flex flex-col">
-                          <span className="font-medium">{penumpang.nama}</span>
-                          <span className="text-sm text-gray-500">
-                            {penumpang.noID}
-                          </span>
+                  {kendaraanList.map((kendaraan, index) => (
+                    <TableRow key={index} className="border-b last:border-b-0">
+                      <TableCell className="font-medium py-4">
+                        <div className="flex items-center gap-3">
+                          <div className="w-6 h-6 bg-green-100 rounded-full flex items-center justify-center">
+                            <Car className="w-3 h-3 text-green-600" />
+                          </div>
+                          <div>
+                            <div className="font-mono font-semibold">
+                              {kendaraan.nomor_polisi}
+                            </div>
+                            <div className="text-sm text-gray-500">
+                              {kendaraan.nama}
+                            </div>
+                          </div>
                         </div>
                       </TableCell>
-                      <TableCell className="px-12">
-                        <Detail penumpang={penumpang} />
+                      <TableCell className="text-center">
+                        <KelasBadge kelas={kendaraan.kelas} />
                       </TableCell>
-                      <TableCell className="px-8 text-right">
-                        <KelasBadge kelas={penumpang.kelas} />
+                      <TableCell className="text-right">
+                        <DetailKendaraan kendaraan={kendaraan} />
                       </TableCell>
                     </TableRow>
                   ))}
@@ -367,40 +367,91 @@ export default function Data({ sessionId }: DataProps) {
         </Card>
       )}
 
-      {/* Tambahkan form pemesan di sini */}
+      {/* Passenger Data Card */}
+      {penumpangList.length > 0 && (
+        <Card className="shadow-md py-0 gap-0">
+          <CardHeader className="border-b p-4 sm:p-6">
+            <CardTitle className="flex items-center gap-3">
+              <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
+                <Users className="w-4 h-4 text-blue-600" />
+              </div>
+              <span>Data Penumpang</span>
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="">
+            <div className="overflow-x-auto">
+              <Table>
+                <TableBody>
+                  {penumpangList.map((penumpang, index) => (
+                    <TableRow key={index} className="border-b last:border-b-0">
+                      <TableCell className="font-medium py-4">
+                        <div className="flex items-center gap-3">
+                          <div className="w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center">
+                            <User className="w-3 h-3 text-blue-600" />
+                          </div>
+                          <div>
+                            <div className="font-semibold">
+                              {penumpang.nama}
+                            </div>
+                            <div className="text-sm text-gray-500">
+                              {penumpang.noID}
+                            </div>
+                          </div>
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-center">
+                        <KelasBadge kelas={penumpang.kelas} />
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <Detail penumpang={penumpang} />
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Form Pemesan */}
       <FormProvider {...form}>
         <FormPemesan />
       </FormProvider>
 
-      {/* Tombol Pesan Tiket */}
-      <div
-        className={cn(
-          "bg-Blue p-2 rounded-xl text-center text-white font-semibold cursor-pointer",
-          "hover:bg-teal-600"
-        )}
+      {/* Enhanced Submit Button */}
+      <Button
         onClick={handleClickPesanTiket}
-        tabIndex={0}
-        role="button"
+        className="w-full h-12 bg-Blue hover:bg-teal-600 text-white font-semibold flex items-center justify-center gap-2 transition-colors"
       >
-        Pesan Tiket
-      </div>
+        <CheckCircle className="w-4 h-4" />
+        <span>Pesan Tiket</span>
+        <ArrowRight className="w-4 h-4" />
+      </Button>
 
-      {/* Dialog Konfirmasi 2 Jam */}
+      {/* Enhanced Confirmation Dialog */}
       <AlertDialog open={openConfirm} onOpenChange={setOpenConfirm}>
-        <AlertDialogContent>
+        <AlertDialogContent className="max-w-md">
           <AlertDialogHeader>
-            <AlertDialogTitle>Konfirmasi Pembayaran</AlertDialogTitle>
-            <AlertDialogDescription>
-              Pastikan data yang Anda masukkan sudah benar. Setelah
-              konfirmasi, Anda akan diarahkan ke halaman pembayaran dan tidak bisa kembali kehalaman verifikasi lagi .
+            <div className="flex items-center gap-3 mb-2">
+              <div className="w-10 h-10 bg-orange-100 rounded-full flex items-center justify-center">
+                <AlertTriangle className="w-5 h-5 text-orange-600" />
+              </div>
+              <AlertDialogTitle>Konfirmasi Pembayaran</AlertDialogTitle>
+            </div>
+            <AlertDialogDescription className="text-sm leading-relaxed">
+              Pastikan data yang Anda masukkan sudah benar. Setelah konfirmasi,
+              Anda akan diarahkan ke halaman pembayaran dan tidak bisa kembali
+              ke halaman verifikasi lagi.
             </AlertDialogDescription>
           </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Batal</AlertDialogCancel>
+          <AlertDialogFooter className="gap-2">
+            <AlertDialogCancel className="flex-1">Batal</AlertDialogCancel>
             <AlertDialogAction
               onClick={handleSubmitAndRedirect}
-              className="bg-Blue text-white hover:bg-teal-600"
+              className="flex-1 bg-Blue text-white hover:bg-teal-600 flex items-center gap-2"
             >
+              <CreditCard className="w-4 h-4" />
               Ya, Lanjutkan Bayar
             </AlertDialogAction>
           </AlertDialogFooter>

@@ -3,8 +3,8 @@ import { NextRequest, NextResponse } from 'next/server';
 
 // Mapping role yang diizinkan per rute
 const routeRoleMap: Record<string, string[]> = {
-  '/beranda': ['admin'],
-  '/petugas': ['operator'],
+  '/beranda': ['ADMIN'],
+  '/petugas': ['OPERATOR'],
 };
 
 export function middleware(request: NextRequest) {

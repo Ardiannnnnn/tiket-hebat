@@ -1,9 +1,10 @@
+// app/ui/beranda/tiketCek.tsx
 "use client";
 
 import { useEffect, useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { getBookingById } from "@/service/invoice"; // pastikan path benar
+import { getBookingById } from "@/service/invoice";
 import { BookingData, BookingResponse } from "@/types/invoice";
 import { Toaster, toast } from "sonner";
 import {
@@ -13,11 +14,27 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
 import Image from "next/image";
 import asdp from "@/public/image/asdp.png";
 import { cn } from "@/lib/utils";
 import { getPaymentTransactionDetail } from "@/service/payment";
 import { PaymentTransactionDetail } from "@/types/paymentDetail";
+import {
+  Clock,
+  MapPin,
+  User,
+  Calendar,
+  CreditCard,
+  QrCode,
+  Ship,
+  Ticket,
+  Timer,
+  CheckCircle,
+  AlertCircle,
+  Hash,
+} from "lucide-react";
 
 export default function CekTiket() {
   const [orderId, setOrderId] = useState("");
@@ -66,6 +83,7 @@ export default function CekTiket() {
       }
     } catch (error) {
       console.error("Error fetching data:", error);
+      toast.error("Tiket tidak ditemukan atau terjadi kesalahan");
     } finally {
       setLoading(false);
     }
@@ -77,6 +95,7 @@ export default function CekTiket() {
     const minutes = date.getMinutes().toString().padStart(2, "0");
     return `${hours}:${minutes}`;
   }
+
   function formatPrice(price: number): string {
     return new Intl.NumberFormat("id-ID", {
       style: "currency",
@@ -85,227 +104,454 @@ export default function CekTiket() {
     }).format(price);
   }
 
-  console.log(bookingData);
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case "PAID":
+        return "bg-green-100 text-green-800 border-green-200";
+      case "PENDING":
+        return "bg-yellow-100 text-yellow-800 border-yellow-200";
+      default:
+        return "bg-red-100 text-red-800 border-red-200";
+    }
+  };
+
+  const getStatusIcon = (status: string) => {
+    switch (status) {
+      case "PAID":
+        return <CheckCircle className="w-4 h-4" />;
+      case "PENDING":
+        return <Timer className="w-4 h-4" />;
+      default:
+        return <AlertCircle className="w-4 h-4" />;
+    }
+  };
 
   return (
-    <div className="flex flex-col justify-center items-center p-4">
-      <Toaster />
-      <h1 className="font-semibold">Cek Tiket Anda</h1>
-      <div className="flex items-center gap-2 w-full max-w-md mx-auto m-4">
-        <Input
-          type="text"
-          placeholder="Masukkan Nomor Tiket"
-          className="flex-1 p-4 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-Orange focus:border-transparent"
-          value={orderId}
-          onChange={(e) => setOrderId(e.target.value)}
-        />
-        <Button
-          onClick={handleCekTiket}
-          className="bg-Orange hover:bg-amber-600 text-white"
-          disabled={loading}
-        >
-          {loading ? "Mengecek..." : "Cek Tiket"}
-        </Button>
-      </div>
+    <div className="py-8">
+      <div className="container mx-auto px-4">
+        <Toaster />
 
-      {bookingData && (
-        <Card className="w-fit py-0 gap-0 ">
-          <CardHeader className="p-4 border-b-2 gap-4 md:gap-0 border-dashed flex-row justify-between items-center">
-            <CardTitle>PT ASDP Indonesia Ferry</CardTitle>
-            <div>
-              <Image
-                src={asdp}
-                className="w-16 md:w-32"
-                alt="Screenshots of the dashboard project showing desktop version"
-              />
-            </div>
-          </CardHeader>
-          <CardContent className="p-4 space-y-4">
-            <div>
-              <p>Hari/Tanggal</p>
-              <p>
-                {new Date(
-                  bookingData.schedule.departure_datetime
-                ).toLocaleDateString("id-ID", {
-                  weekday: "long",
-                  year: "numeric",
-                  month: "long",
-                  day: "numeric",
-                })}
+        {/* Header Section */}
+        <div className="text-center mb-8">
+          <h1 className="text-3xl font-bold text-gray-400 mb-2">
+            Cek Status Tiket
+          </h1>
+          <p className="text-gray-600">
+            Masukkan nomor tiket untuk melihat detail pemesanan Anda
+          </p>
+        </div>
+
+        {/* Search Section */}
+        <div className="flex flex-col sm:flex-row items-center gap-4 max-w-lg mx-auto mb-8">
+          <div className="relative flex-1 w-full">
+            <Ticket className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+            <Input
+              type="text"
+              placeholder="Masukkan Nomor Tiket"
+              className="pl-10 h-12 text-lg border-2 border-gray-200 focus:border-Orange focus:ring-Orange"
+              value={orderId}
+              onChange={(e) => setOrderId(e.target.value)}
+              onKeyPress={(e) => e.key === "Enter" && handleCekTiket()}
+            />
+          </div>
+          <Button
+            onClick={handleCekTiket}
+            className="bg-Orange hover:bg-Orange/90 text-white px-8 h-12 text-lg font-medium"
+            disabled={loading || !orderId.trim()}
+          >
+            {loading ? (
+              <div className="flex items-center gap-2">
+                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                Mengecek...
+              </div>
+            ) : (
+              "Cek Tiket"
+            )}
+          </Button>
+        </div>
+
+        {/* Ticket Card */}
+        {bookingData && (
+          <div className="max-w-5xl mx-auto">
+            <Card className="overflow-hidden shadow-2xl border-0 bg-white py-0 gap-0">
+              {/* Header - Blue Theme */}
+              <CardHeader className="bg-gradient-to-r from-Blue to-Blue/90 text-white p-6">
+                <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
+                  <div className="flex items-center gap-4">
+                    <div className="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center">
+                      <Ship className="w-8 h-8 text-white" />
+                    </div>
+                    <div>
+                      <CardTitle className="text-2xl font-bold">
+                        PT ASDP Indonesia Ferry
+                      </CardTitle>
+                      <p className="text-Blue-100 text-sm mt-1">
+                        Tiket Elektronik Resmi
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-4">
+                    <Image src={asdp} className="w-20 h-auto" alt="ASDP Logo" />
+                    <Badge
+                      className={cn(
+                        "px-3 py-1 text-sm font-medium border",
+                        getStatusColor(paymentData?.status || "")
+                      )}
+                    >
+                      <div className="flex items-center gap-1">
+                        {getStatusIcon(paymentData?.status || "")}
+                        {paymentData?.status === "PAID"
+                          ? "Sudah Dibayar"
+                          : "Belum Dibayar"}
+                      </div>
+                    </Badge>
+                  </div>
+                </div>
+              </CardHeader>
+
+              <CardContent className="p-0">
+                {/* Trip Information - Blue accent */}
+                <div className="p-6 bg-Blue/10 border-b border-Blue/20">
+                  <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    {/* Date & Order Info */}
+                    <div className="space-y-4">
+                      <div className="flex items-center gap-3">
+                        <Calendar className="w-5 h-5 text-Blue" />
+                        <div>
+                          <p className="text-sm text-Blue/80">
+                            Tanggal Keberangkatan
+                          </p>
+                          <p className="font-semibold text-gray-900">
+                            {new Date(
+                              bookingData.schedule.departure_datetime
+                            ).toLocaleDateString("id-ID", {
+                              weekday: "long",
+                              year: "numeric",
+                              month: "long",
+                              day: "numeric",
+                            })}
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-3">
+                        <User className="w-5 h-5 text-Blue" />
+                        <div>
+                          <p className="text-sm text-Blue/80">Nama Pemesan</p>
+                          <p className="font-semibold text-gray-900">
+                            {bookingData.customer_name}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Route & Time - Blue/Orange theme - RESPONSIVE FIX */}
+                    <div className="lg:col-span-2">
+                      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6 md:gap-4">
+                        {/* Departure Section */}
+                        <div className="flex-1 text-center">
+                          <div className="flex items-center gap-2 mb-3 justify-center">
+                            <MapPin className="w-4 h-4 text-Blue" />
+                            <p className="text-sm text-Blue/80 font-medium">
+                              Keberangkatan
+                            </p>
+                          </div>
+                          <div className="bg-Blue/5 rounded-lg p-4 border border-Blue/20">
+                            <p className="font-bold text-2xl md:text-xl text-Blue mb-2">
+                              {getTimeFromDateTime(
+                                bookingData.schedule.departure_datetime
+                              )}
+                            </p>
+                            <p className="font-medium text-gray-700 text-sm md:text-base leading-tight">
+                              {
+                                bookingData.schedule.route.departure_harbor
+                                  .harbor_name
+                              }
+                            </p>
+                          </div>
+                        </div>
+
+                        {/* Ferry Connection - Hidden on mobile, show on md+ */}
+                        <div className="hidden md:flex flex-col items-center mx-4 flex-shrink-0">
+                          <Ship className="w-8 h-8 text-Blue mb-2" />
+                          <div className="w-20 h-0.5 bg-Blue/50"></div>
+                          <p className="text-xs text-Blue mt-2 font-medium">
+                            Ferry
+                          </p>
+                        </div>
+
+                        {/* Mobile Ferry Connection - Show only on mobile */}
+                        <div className="flex md:hidden justify-center my-4">
+                          <div className="flex flex-col items-center">
+                            <div className="w-0.5 h-8 bg-Blue/30"></div>
+                            <Ship className="w-6 h-6 text-Blue my-2" />
+                            <div className="w-0.5 h-8 bg-Orange/30"></div>
+                          </div>
+                        </div>
+
+                        {/* Arrival Section */}
+                        <div className="flex-1 text-center">
+                          <div className="flex items-center gap-2 mb-3 justify-center">
+                            <MapPin className="w-4 h-4 text-Orange" />
+                            <p className="text-sm text-Orange/80 font-medium">
+                              Kedatangan
+                            </p>
+                          </div>
+                          <div className="bg-Orange/5 rounded-lg p-4 border border-Orange/20">
+                            <p className="font-bold text-2xl md:text-xl text-Orange mb-2">
+                              {getTimeFromDateTime(
+                                bookingData.schedule.arrival_datetime
+                              )}
+                            </p>
+                            <p className="font-medium text-gray-700 text-sm md:text-base leading-tight">
+                              {
+                                bookingData.schedule.route.arrival_harbor
+                                  .harbor_name
+                              }
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Ticket Details */}
+                <div className="p-6">
+                  <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                    {/* Passenger Tickets - Blue theme */}
+                    {bookingData.tickets.some(
+                      (item) => item.type === "passenger"
+                    ) && (
+                      <div className="lg:col-span-2">
+                        <h3 className="text-lg font-semibold text-Blue mb-4 flex items-center gap-2">
+                          <User className="w-5 h-5 text-Blue" />
+                          Tiket Penumpang
+                        </h3>
+                        <div className="space-y-3">
+                          {bookingData.tickets
+                            .filter((item) => item.type === "passenger")
+                            .map((ticket, index) => (
+                              <div
+                                key={index}
+                                className="bg-Blue/10 border border-Blue/30 rounded-lg p-4"
+                              >
+                                <div className="grid grid-cols-3 gap-4">
+                                  <div>
+                                    <p className="text-sm text-Blue/80">
+                                      Kelas
+                                    </p>
+                                    <p className="font-semibold text-gray-900">
+                                      {ticket.class.class_name}
+                                    </p>
+                                  </div>
+                                  <div>
+                                    <p className="text-sm text-Blue/80">
+                                      Kursi
+                                    </p>
+                                    <p className="font-semibold text-gray-900">
+                                      {ticket.seat_number || "Tidak ada"}
+                                    </p>
+                                  </div>
+                                  <div>
+                                    <p className="text-sm text-Blue/80">
+                                      Harga
+                                    </p>
+                                    <p className="font-semibold text-Orange">
+                                      {formatPrice(ticket.price)}
+                                    </p>
+                                  </div>
+                                </div>
+                              </div>
+                            ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Vehicle Tickets - Orange theme */}
+                    {bookingData.tickets.some(
+                      (item) => item.type === "vehicle"
+                    ) && (
+                      <div
+                        className={
+                          bookingData.tickets.some(
+                            (item) => item.type === "passenger"
+                          )
+                            ? ""
+                            : "lg:col-span-2"
+                        }
+                      >
+                        <h3 className="text-lg font-semibold text-Orange mb-4 flex items-center gap-2">
+                          <CreditCard className="w-5 h-5 text-Orange" />
+                          Tiket Kendaraan
+                        </h3>
+                        <div className="space-y-3">
+                          {bookingData.tickets
+                            .filter((item) => item.type === "vehicle")
+                            .map((ticket, index) => (
+                              <div
+                                key={index}
+                                className="bg-Orange/10 border border-Orange/30 rounded-lg p-4"
+                              >
+                                <div className="grid grid-cols-2 gap-4">
+                                  <div>
+                                    <p className="text-sm text-Orange/80">
+                                      Jenis Kendaraan
+                                    </p>
+                                    <p className="font-semibold text-gray-900">
+                                      {ticket.class.class_name}
+                                    </p>
+                                  </div>
+                                  <div>
+                                    <p className="text-sm text-Orange/80">
+                                      Harga
+                                    </p>
+                                    <p className="font-semibold text-Orange">
+                                      {formatPrice(ticket.price)}
+                                    </p>
+                                  </div>
+                                </div>
+                              </div>
+                            ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* QR Code - Blue border */}
+                    <div className="flex flex-col items-center justify-center">
+                      <div className="bg-white p-6 rounded-xl shadow-lg border-2 border-Blue/30">
+                        <div className="text-center mb-4">
+                          <QrCode className="w-6 h-6 text-Blue mx-auto mb-2" />
+                          <p className="text-sm text-Blue font-medium">
+                            {qrUrl
+                              ? "QR Code Tiket"
+                              : paymentData?.pay_url
+                              ? "Checkout Link"
+                              : "Nomor Virtual"}
+                          </p>
+                        </div>
+                        {qrUrl ? (
+                          <Image
+                            width={150}
+                            height={150}
+                            src={qrUrl}
+                            className="w-32 h-32 mx-auto"
+                            alt="QR Code"
+                          />
+                        ) : paymentData?.pay_url ? (
+                          <div className="w-32 h-32 bg-Orange/10 rounded-lg flex flex-col items-center justify-center p-3">
+                            <div className="text-center space-y-2">
+                              <div className="w-8 h-8 bg-Orange/20 rounded-full flex items-center justify-center mx-auto">
+                                <CreditCard className="w-4 h-4 text-Orange" />
+                              </div>
+                              <p className="text-xs text-Orange/60">
+                                Payment Link
+                              </p>
+                              <Button
+                                onClick={() =>
+                                  window.open(paymentData.pay_url, "_blank")
+                                }
+                                size="sm"
+                                className="bg-Orange hover:bg-Orange/90 text-white text-xs px-2 py-1"
+                              >
+                                Bayar
+                              </Button>
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="w-32 h-32 bg-Blue/10 rounded-lg flex flex-col items-center justify-center p-3">
+                            <div className="text-center space-y-2">
+                              <div className="w-8 h-8 bg-Blue/20 rounded-full flex items-center justify-center mx-auto">
+                                <Hash className="w-4 h-4 text-Blue" />
+                              </div>
+                              <p className="text-xs text-Blue/60">
+                                Virtual Number
+                              </p>
+                              <p className="font-mono font-bold text-sm text-Blue leading-tight break-all">
+                                {paymentData?.pay_code || bookingData.order_id}
+                              </p>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <Separator />
+
+                {/* Footer Information - Blue/Orange theme */}
+                <div className="p-6 bg-gradient-to-r from-Blue/10 to-Orange/10">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    {/* Order Number - Blue theme */}
+                    <div className="text-center md:text-left">
+                      <div className="flex items-center gap-2 justify-center md:justify-start mb-2">
+                        <Ticket className="w-4 h-4 text-Blue" />
+                        <p className="text-sm text-Blue/80">Nomor Pemesanan</p>
+                      </div>
+                      <p className="font-mono font-bold text-lg text-Blue">
+                        {bookingData.order_id}
+                      </p>
+                    </div>
+
+                    {/* Payment Status */}
+                    <div className="text-center">
+                      <div className="flex items-center gap-2 justify-center mb-2">
+                        <CreditCard className="w-4 h-4 text-Blue" />
+                        <p className="text-sm text-Blue/80">
+                          Status Pembayaran
+                        </p>
+                      </div>
+                      <Badge
+                        className={cn(
+                          "px-4 py-2 text-sm font-medium border",
+                          getStatusColor(paymentData?.status || "")
+                        )}
+                      >
+                        <div className="flex items-center gap-2">
+                          {getStatusIcon(paymentData?.status || "")}
+                          {paymentData?.status === "PAID"
+                            ? "Sudah Dibayar"
+                            : "Belum Dibayar"}
+                        </div>
+                      </Badge>
+                    </div>
+
+                    {/* Countdown - Orange theme */}
+                    <div className="text-center md:text-right">
+                      <div className="flex items-center gap-2 justify-center md:justify-end mb-2">
+                        <Clock className="w-4 h-4 text-Orange" />
+                        <p className="text-sm text-Orange/80">
+                          Waktu Pembayaran
+                        </p>
+                      </div>
+                      {paymentData?.status === "PAID" ? (
+                        <p className="font-semibold text-green-600">
+                          Sudah Dibayar
+                        </p>
+                      ) : (
+                        <p className="font-mono font-bold text-Orange">
+                          {countdown}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Additional Info - Blue/Orange gradient */}
+            <div className="mt-6 text-center text-sm bg-gradient-to-r from-Blue/20 to-Orange/20 rounded-lg p-4">
+              <p className="text-Blue font-medium">
+                Simpan tiket ini sebagai bukti sah perjalanan Anda
+              </p>
+              <p className="text-Orange font-medium">
+                Tunjukkan QR Code saat boarding
               </p>
             </div>
-            <div className="flex justify-between">
-              <div className="">
-                <div className="mb-2">
-                  <p>Jam Berangkat</p>
-                  <p className="font-semibold">
-                    {getTimeFromDateTime(
-                      bookingData.schedule.departure_datetime
-                    )}
-                  </p>
-                </div>
-                <div>
-                  <p>Jam Tiba</p>
-                  <p className="font-semibold">
-                    {getTimeFromDateTime(bookingData.schedule.arrival_datetime)}
-                  </p>
-                </div>
-              </div>
-              <div className="text-end md:mr-2">
-                <div className="mb-2">
-                  <p>Asal</p>
-                  <p className="font-semibold">
-                    {bookingData.schedule.route.departure_harbor.harbor_name}
-                  </p>
-                </div>
-                <div>
-                  <p>Tujuan</p>
-                  <p className="font-semibold">
-                    {bookingData.schedule.route.arrival_harbor.harbor_name}
-                  </p>
-                </div>
-              </div>
-            </div>
-          </CardContent>
-          <CardFooter
-            className={cn(
-              "md:flex-row items-start flex-col border-t-2 border-dashed px-0 h-full"
-            )}
-          >
-            {/* No. Order */}
-            <div className="w-full md:w-fit border-b-2 md:border-none border-dashed p-4 md:items-start items-center justify-center flex flex-col">
-              <p>No. Order</p>
-              <p className="font-semibold">{bookingData.order_id}</p>
-            </div>
-
-            {/* Informasi Tiket */}
-            <div className="p-4 w-full space-y-4 md:border-l-2 border-dashed flex-grow">
-              <div className="text-center md:text-start">
-                <p>Nama Pemesan</p>
-                <p className="font-semibold">{bookingData.customer_name}</p>
-              </div>
-
-              {/* Detail Kelas dan Harga */}
-              {/* Informasi Penumpang */}
-              {bookingData.tickets.some(
-                (item) => item.type === "passenger"
-              ) && (
-                <div className="grid text-center md:text-start grid-cols-3 gap-4 space-y-4 md:space-y-0">
-                  <div>
-                    <p>Kelas</p>
-                    {bookingData.tickets
-                      .filter((item) => item.type === "passenger")
-                      .map((data, index) => (
-                        <p key={index} className="font-semibold">
-                          {data.class.class_name}
-                        </p>
-                      ))}
-                  </div>
-                  <div>
-                    <p>Tempat</p>
-                    {bookingData.tickets
-                      .filter((item) => item.type === "passenger")
-                      .map((data, index) => (
-                        <p key={index} className="font-semibold">
-                          {data.seat_number || "Tidak ada tempat"}
-                        </p>
-                      ))}
-                  </div>
-                  <div>
-                    <p>Harga</p>
-                    {bookingData.tickets
-                      .filter((item) => item.type === "passenger")
-                      .map((data, index) => (
-                        <p key={index} className="font-semibold">
-                          {formatPrice(data.price)}
-                        </p>
-                      ))}
-                  </div>
-                </div>
-              )}
-
-              {/* Kendaraan & Harga */}
-              {bookingData.tickets.some((item) => item.type === "vehicle") && (
-                <div className="text-center md:text-start grid grid-cols-2 md:grid-cols-3 gap-4 items-start">
-                  <div>
-                    <p>Kendaraan</p>
-                    {bookingData.tickets
-                      .filter((item) => item.type === "vehicle")
-                      .map((data, index) => (
-                        <p key={index} className="font-semibold">
-                          {data.class.class_name}
-                        </p>
-                      ))}
-                  </div>
-                  <div>
-                    <p>Harga</p>
-                    {bookingData.tickets
-                      .filter((item) => item.type === "vehicle")
-                      .map((data, index) => (
-                        <p key={index} className="font-semibold">
-                          {formatPrice(data.price)}
-                        </p>
-                      ))}
-                  </div>
-                </div>
-              )}
-            </div>
-
-            {/* QR Code */}
-            <div className="w-full flex justify-center p-8 md:w-100">
-              {qrUrl ? (
-                <Image
-                  width={70}
-                  height={10}
-                  src={qrUrl}
-                  className="w-40 md:w-60"
-                  alt="QR Code"
-                />
-              ) : (
-                <p>QR Code tidak tersedia.</p>
-              )}
-            </div>
-            <div
-              className={cn(
-                "md:flex-row flex-col border-t-2 border-dashed px-0 h-full w-full"
-              )}
-            >
-              {/* Status Pembayaran */}
-              <div className="w-full text-center py-4">
-                <p>Status Pembayaran:</p>
-                <p
-                  className={`font-semibold ${
-                    paymentData?.status === "PAID"
-                      ? "text-green-500"
-                      : "text-red-500"
-                  }`}
-                >
-                  {paymentData?.status === "PAID"
-                    ? "Sudah Dibayar"
-                    : "Belum Dibayar"}
-                </p>
-              </div>
-
-              {/* Countdown atau Status */}
-              <div className="w-full text-center py-4">
-                {paymentData?.status === "PAID" ? (
-                  <>
-                    <p>Waktu Tersisa untuk Pembayaran:</p>
-                    <p className="font-semibold text-green-500">
-                      Sudah Dibayar
-                    </p>
-                  </>
-                ) : (
-                  <>
-                    <p>Waktu Tersisa untuk Pembayaran:</p>
-                    <p className="font-semibold text-blue-500">{countdown}</p>
-                  </>
-                )}
-              </div>
-            </div>
-          </CardFooter>
-        </Card>
-      )}
+          </div>
+        )}
+      </div>
     </div>
   );
 }

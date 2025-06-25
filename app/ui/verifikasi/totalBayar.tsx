@@ -11,6 +11,7 @@ import {
 import { FaLongArrowAltRight } from "react-icons/fa";
 import { getBookingById } from "@/service/invoice";
 import { BookingResponse } from "@/types/invoice";
+import { Ship, Calendar, MapPin, Users, Car, Receipt } from "lucide-react";
 
 interface TotalBayarProps {
   orderId: string;
@@ -68,13 +69,30 @@ export default function TotalBayar({ orderId }: TotalBayarProps) {
     return Array.from(map.values());
   };
 
-  if (loading) return <p>Loading...</p>;
-  if (!data) return <p>Data tidak ditemukan.</p>;
+  if (loading) {
+    return (
+      <Card className="shadow-xl border-0 bg-white">
+        <CardContent className="p-8 text-center">
+          <div className="w-12 h-12 border-4 border-Blue border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-gray-600">Memuat detail pesanan...</p>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (!data) {
+    return (
+      <Card className="shadow-xl border-0 bg-white">
+        <CardContent className="p-8 text-center">
+          <p className="text-red-600">Data tidak ditemukan</p>
+        </CardContent>
+      </Card>
+    );
+  }
 
   const formatTime = (dateTime: string): { date: string; time: string } => {
     const date = new Date(dateTime);
     const formattedDate = date.toLocaleDateString("id-ID", {
-    
       year: "numeric",
       month: "long",
       day: "numeric",
@@ -93,93 +111,159 @@ export default function TotalBayar({ orderId }: TotalBayarProps) {
   const totalHargaKendaraan = kendaraan.reduce((sum, t) => sum + t.subtotal, 0);
 
   return (
-    <Card className="py-0 gap-0 text-sm">
-      <CardHeader className="flex flex-row justify-between border-b p-6">
-        <CardTitle className="font-normal">Detail Keberangkatan</CardTitle>
-        <CardTitle>{data.schedule.ship.ship_name}</CardTitle>
-      </CardHeader>
-
-      <CardContent className="flex gap-4 md:gap-24 px-3 md:px-6">
-        <div>
-          {/* Keberangkatan */}
-          <div className="w-full mt-4">
-            <label className="text-gray-500">Keberangkatan</label>
-            <div className="flex items-center gap-2">
-              <span>{data.schedule.route.departure_harbor.harbor_name}</span>
-              <FaLongArrowAltRight className="text-lg" />
-              <span>{data.schedule.route.arrival_harbor.harbor_name}</span>
+    <Card className="border-0 bg-white overflow-hidden py-0 gap-0">
+      {/* ✅ Enhanced Header */}
+      <CardHeader className="bg-gradient-to-r from-Orange/10 to-Blue/10 border-b border-Orange/20 p-6">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-Orange/20 rounded-full flex items-center justify-center">
+              <Receipt className="w-5 h-5 text-Orange" />
+            </div>
+            <div>
+              <CardTitle className="text-lg font-semibold text-gray-900">
+                Detail Pesanan
+              </CardTitle>
+              <p className="text-sm text-gray-600">
+                {data.schedule.ship.ship_name}
+              </p>
             </div>
           </div>
+          <div className="text-right">
+            <p className="text-xs text-gray-500">Order ID</p>
+            <p className="font-mono text-sm font-medium text-Blue">{orderId}</p>
+          </div>
+        </div>
+      </CardHeader>
 
-          {/* Kelas Tiket */}
-          <div className="w-full mt-4">
-            <label className="text-gray-500">Kelas tiket</label>
-            {penumpang.map((t, i) => (
-              <div key={i} className="flex flex-col">
-                <p>
-                  {t.class_name} x {t.quantity}
-                </p>
-              </div>
-            ))}
+      <CardContent className="p-6 space-y-6">
+        {/* ✅ Route Information */}
+        <div className="bg-Blue/5 rounded-lg p-4 border border-Blue/20">
+          <div className="flex items-center gap-2 mb-3">
+            <Ship className="w-4 h-4 text-Blue" />
+            <span className="text-sm font-medium text-Blue">Rute Perjalanan</span>
           </div>
 
-          {/* Kendaraan */}
-          <div className="w-full mt-4">
-            <label className="text-gray-500">Kendaraan</label>
-            {kendaraan.map((t, i) => (
-              <div key={i} className="flex flex-col">
-                <p>
-                  {t.class_name} x {t.quantity}
-                </p>
+          <div className="flex items-center justify-between text-sm">
+            <div className="text-center">
+              <p className="font-medium text-gray-900">
+                {data.schedule.route.departure_harbor.harbor_name}
+              </p>
+              <p className="text-xs text-gray-500">Keberangkatan</p>
+            </div>
+
+            <div className="flex-1 mx-4">
+              <div className="h-0.5 bg-Blue/30 relative">
+                <div className="absolute inset-0 bg-gradient-to-r from-Blue to-Orange"></div>
               </div>
-            ))}
+            </div>
+
+            <div className="text-center">
+              <p className="font-medium text-gray-900">
+                {data.schedule.route.arrival_harbor.harbor_name}
+              </p>
+              <p className="text-xs text-gray-500">Kedatangan</p>
+            </div>
           </div>
         </div>
 
-        <div>
-          {/* Jadwal */}
-          <div className="w-full mt-4">
-            <label className="text-gray-500 flex justify-end">Jadwal</label>
-            <div className="text-end flex flex-col">
-              <span>{formatTime(data.schedule.departure_datetime).date}</span>
-              <span>{formatTime(data.schedule.departure_datetime).time}</span>
+        {/* ✅ Schedule Information */}
+        <div className="grid grid-cols-1 gap-4">
+          <div className="flex items-start gap-3">
+            <Calendar className="w-5 h-5 text-Orange mt-0.5 flex-shrink-0" />
+            <div className="min-w-0 flex-1">
+              <p className="text-sm text-gray-600">Jadwal Keberangkatan</p>
+              <p className="font-medium text-gray-900">
+                {formatTime(data.schedule.departure_datetime).date}
+              </p>
+              <p className="text-lg font-bold text-Orange">
+                {formatTime(data.schedule.departure_datetime).time}
+              </p>
             </div>
           </div>
+        </div>
 
-          {/* Harga Penumpang */}
-          <div className="w-full mt-4 flex flex-col text-end">
-            <label className="text-gray-500">Harga Penumpang</label>
-            {penumpang.map((t, i) => (
-              <div key={i}>
-                <p>Rp{t.subtotal.toLocaleString()}</p>
+        {/* ✅ Ticket Details */}
+        <div className="space-y-4">
+          {/* Passenger Tickets */}
+          {penumpang.length > 0 && (
+            <div className="border border-Blue/20 rounded-lg p-4 bg-Blue/5">
+              <div className="flex items-center gap-2 mb-3">
+                <Users className="w-4 h-4 text-Blue" />
+                <span className="text-sm font-medium text-Blue">Tiket Penumpang</span>
               </div>
-            ))}
-          </div>
+              <div className="space-y-2">
+                {penumpang.map((t, i) => (
+                  <div key={i} className="flex items-center justify-between">
+                    <div>
+                      <p className="font-medium text-gray-900">{t.class_name}</p>
+                      <p className="text-sm text-gray-600">
+                        {t.quantity} penumpang
+                      </p>
+                    </div>
+                    <p className="font-bold text-Blue">
+                      Rp{t.subtotal.toLocaleString()}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
 
-          {/* Harga Kendaraan */}
-          <div className="w-full mt-4 flex flex-col text-end">
-            <label className="text-gray-500">Harga Kendaraan</label>
-            {kendaraan.map((t, i) => (
-              <div key={i}>
-                <p>Rp{t.subtotal.toLocaleString()}</p>
+          {/* Vehicle Tickets */}
+          {kendaraan.length > 0 && (
+            <div className="border border-Orange/20 rounded-lg p-4 bg-Orange/5">
+              <div className="flex items-center gap-2 mb-3">
+                <Car className="w-4 h-4 text-Orange" />
+                <span className="text-sm font-medium text-Orange">Tiket Kendaraan</span>
               </div>
-            ))}
-          </div>
+              <div className="space-y-2">
+                {kendaraan.map((t, i) => (
+                  <div key={i} className="flex items-center justify-between">
+                    <div>
+                      <p className="font-medium text-gray-900">{t.class_name}</p>
+                      <p className="text-sm text-gray-600">{t.quantity} unit</p>
+                    </div>
+                    <p className="font-bold text-Orange">
+                      Rp{t.subtotal.toLocaleString()}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       </CardContent>
 
-      <CardFooter className="border-t px-3 md:px-6 py-4 mt-4 flex justify-between">
-        <div>
-          <p>Harga Total Tiket :</p>
-          <p>Harga Total Kendaraan :</p>
-          <p className="mt-4 font-bold">Total:</p>
-        </div>
-        <div>
-          <p>Rp{totalHargaPenumpang.toLocaleString()}</p>
-          <p>Rp{totalHargaKendaraan.toLocaleString()}</p>
-          <p className="mt-4 font-bold">
-            Rp{(totalHargaPenumpang + totalHargaKendaraan).toLocaleString()}
-          </p>
+      {/* ✅ Enhanced Footer with Total */}
+      <CardFooter className="bg-gradient-to-r from-gray-50 to-gray-100 border-t border-gray-200 p-6">
+        <div className="w-full space-y-3">
+          {/* Subtotals */}
+          <div className="space-y-2 text-sm">
+            {totalHargaPenumpang > 0 && (
+              <div className="flex justify-between text-gray-600">
+                <span>Total Penumpang:</span>
+                <span>Rp{totalHargaPenumpang.toLocaleString()}</span>
+              </div>
+            )}
+            {totalHargaKendaraan > 0 && (
+              <div className="flex justify-between text-gray-600">
+                <span>Total Kendaraan:</span>
+                <span>Rp{totalHargaKendaraan.toLocaleString()}</span>
+              </div>
+            )}
+          </div>
+
+          {/* Grand Total */}
+          <div className="border-t border-gray-300 pt-3">
+            <div className="flex justify-between items-center">
+              <span className="text-base font-semibold text-gray-900">
+                Total Pembayaran:
+              </span>
+              <span className="text-base font-semibold text-Blue">
+                Rp{(totalHargaPenumpang + totalHargaKendaraan).toLocaleString()}
+              </span>
+            </div>
+          </div>
         </div>
       </CardFooter>
     </Card>

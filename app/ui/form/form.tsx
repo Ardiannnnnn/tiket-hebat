@@ -85,7 +85,7 @@ export default function Form() {
             <h1 className="text-2xl font-semibold">Isi Data Diri</h1>
           </header>
 
-          <div className="flex flex-col-reverse justify-center md:items-start md:flex-row gap-8 w-full max-w-7xl">
+          <div className="flex flex-col-reverse justify-center md:items-start md:flex-row gap-8 w-full">
             <FormData session={session} />
             <CardPrice session={session} />
           </div>

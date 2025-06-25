@@ -51,8 +51,8 @@ export const createFieldConfigs: Record<string, FieldConfig[]> = {
       type: "select",
       required: true,
       options: [
-        { label: "Beroperasi", value: "Beroperasi" },
-        { label: "Tidak Beroperasi", value: "Tidak Beroperasi" },
+        { label: "Beroperasi", value: "active" },
+        { label: "Tidak Beroperasi", value: "inactive" },
       ],
     },
   ],
@@ -76,7 +76,7 @@ export const createFieldConfigs: Record<string, FieldConfig[]> = {
     { name: "manifest_id", label: "Manifest", type: "select", required: true, options: [] },
     { name: "ticket_price", label: "Harga Tiket", type: "number", required: true },
   ],
-  kelas: [
+  kelasTiket: [
     { name: "class_name", label: "Nama Kelas", type: "text", required: true },
     { name: "class_alias", label: "Alias", type: "text", required: true },
     { name: "type", label: "Tipe", type: "select", required: true, options: [
@@ -114,8 +114,9 @@ export const createFieldConfigs: Record<string, FieldConfig[]> = {
       type: "select",
       required: true,
       options: [
-        { label: "Sudah Berangkat", value: "Scheduled" },
-        { label: "Belum Berangkat", value: "Unscheduled" },
+        { label: "Sudah Berangkat", value: "FINISHED" },
+        { label: "Belum Berangkat", value: "SCHEDULED" },
+        { label: "Gagal Berangkat", value: "CANCELLED" },
       ],
     },
   ],
