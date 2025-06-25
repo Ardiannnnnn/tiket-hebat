@@ -11,6 +11,7 @@ export const schemas: Record<string, z.ZodObject<any>> = {
   kapal: z.object({
     ship_name: z.string().min(1, "Nama kapal wajib diisi"),
     status: z.enum(["ACTIVE", "INACTIVE"]),
+    ship_alias: z.string().min(1, "Alias wajib diisi"),
     ship_type: z.string().min(1, "Tipe kapal wajib diisi"),
     year_operation: z.string().min(1, "Tahun Operasi wajib diisi"),
     image_link: z.string().min(1, "Gambar wajib diisi"),

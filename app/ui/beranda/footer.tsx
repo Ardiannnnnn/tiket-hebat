@@ -1,4 +1,5 @@
 // app/ui/beranda/footer.tsx
+import Link from "next/link";
 import { mouseMemoirs } from "../fonts";
 import {
   MapPin,
@@ -98,12 +99,12 @@ export default function Footer() {
                 <Phone className="w-5 h-5 text-Blue flex-shrink-0" />
                 <div>
                   <p className="text-sm text-white/80">Contact Support</p>
-                  <p className="text-white font-medium">Andi Hidayat</p>
+                  <p className="text-white font-medium">Ardian</p>
                   <a
                     href="tel:+6282227778899"
                     className="text-white/80 hover:text-white transition-colors"
                   >
-                    0822-2777-88899
+                    0822-3783-4717
                   </a>
                 </div>
               </div>
@@ -140,42 +141,36 @@ export default function Footer() {
             </h4>
 
             <div className="space-y-2">
-              <a
-                href="#"
+               <Link
+                href="/"
                 className="block text-white/80 hover:text-white hover:bg-Blue/20 transition-all duration-200 text-sm p-2 rounded"
               >
                 Pesan Tiket
-              </a>
-              <a
-                href="#"
+              </Link>
+              <Link
+                href="/jadwal"
                 className="block text-white/80 hover:text-white hover:bg-Blue/20 transition-all duration-200 text-sm p-2 rounded"
               >
                 Cek Jadwal
-              </a>
-              <a
-                href="#"
+              </Link>
+              <Link
+                href="/tiket"
                 className="block text-white/80 hover:text-white hover:bg-Blue/20 transition-all duration-200 text-sm p-2 rounded"
               >
                 Status Tiket
-              </a>
-              <a
-                href="#"
+              </Link>
+              <Link
+                href="/syarat"
                 className="block text-white/80 hover:text-white hover:bg-Blue/20 transition-all duration-200 text-sm p-2 rounded"
               >
                 Syarat & Ketentuan
-              </a>
-              <a
-                href="#"
+              </Link>
+              <Link
+                href="/kebijakan"
                 className="block text-white/80 hover:text-white hover:bg-Blue/20 transition-all duration-200 text-sm p-2 rounded"
               >
                 Kebijakan Privasi
-              </a>
-              <a
-                href="#"
-                className="block text-white/80 hover:text-white hover:bg-Blue/20 transition-all duration-200 text-sm p-2 rounded"
-              >
-                FAQ
-              </a>
+              </Link>
             </div>
           </div>
         </div>

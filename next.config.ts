@@ -12,7 +12,14 @@ const nextConfig: NextConfig = {
     ];
   },
   images: {
-    domains: ["tripay.co.id"], // Tambahkan domain eksternal di sini
+    domains: ["tripay.co.id"], 
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: 'drive.google.com',
+        pathname: '/uc/**',
+      }, // Tambahkan domain eksternal di sini
+    ],
   },
 };
 
