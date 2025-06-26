@@ -264,7 +264,7 @@ export default function CekTiket() {
                             </p>
                             <p className="font-medium text-gray-700 text-sm md:text-base leading-tight">
                               {
-                                bookingData.schedule.route.departure_harbor
+                                bookingData.schedule.departure_harbor
                                   .harbor_name
                               }
                             </p>
@@ -305,7 +305,7 @@ export default function CekTiket() {
                             </p>
                             <p className="font-medium text-gray-700 text-sm md:text-base leading-tight">
                               {
-                                bookingData.schedule.route.arrival_harbor
+                                bookingData.schedule.arrival_harbor
                                   .harbor_name
                               }
                             </p>
