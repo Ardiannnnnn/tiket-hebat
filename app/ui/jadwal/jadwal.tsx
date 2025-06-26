@@ -70,8 +70,8 @@ export default function JadwalKapal() {
   const search = debouncedSearch.toLowerCase();
   return scheduleData.filter((item) =>
     [
-      item.route.departure_harbor.harbor_name,
-      item.route.arrival_harbor.harbor_name,
+      item.departure_harbor.harbor_name,
+      item.arrival_harbor.harbor_name,
       item.ship.ship_name,
       getFormattedDate(item.departure_datetime),
       getFormattedTime(item.departure_datetime),
@@ -126,8 +126,8 @@ export default function JadwalKapal() {
               <TableRow key={schedule.id}>
                 <TableCell className="p-4">{index + 1}.</TableCell>
                 <TableCell className="font-semibold">
-                  {schedule.route.departure_harbor.harbor_name} -{" "}
-                  {schedule.route.arrival_harbor.harbor_name}
+                  {schedule.departure_harbor.harbor_name} -{" "}
+                  {schedule.arrival_harbor.harbor_name}
                 </TableCell>
                 <TableCell>{getFormattedDay(schedule.departure_datetime)}</TableCell>
                 <TableCell>{getFormattedDate(schedule.departure_datetime)}</TableCell>
