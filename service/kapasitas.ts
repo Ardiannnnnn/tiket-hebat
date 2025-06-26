@@ -2,14 +2,15 @@ import api, { Baseapi } from "./api";
 import { ManifestResponse } from "@/types/kapasitas"; // atau sesuaikan path-nya
 
 interface CreateKapasitasPayload {
-  ship_id: number;
+  schedule_id: number;
   class_id: number;
-  capacity: number;
+  quota: number;
+  price: number;
 }
 
 export const getManifest = async (page = 1, limit = 20) : Promise<ManifestResponse | null> => {
   try {
-    const response = await api.get("/manifests/?page=1&limit=100&sort=created_at:asc&search=");
+    const response = await api.get("/quotas");
     return response.data;
   } catch (error) {
     console.error("Gagal mengambil data kelas:", error);
@@ -17,15 +18,27 @@ export const getManifest = async (page = 1, limit = 20) : Promise<ManifestRespon
   }
 }
 
+// service/kapasitas.ts
 export const createKapasitas = async (payload: CreateKapasitasPayload): Promise<boolean> => {
   try {
-    const response = await Baseapi.post("/manifest/create", payload);
-    return response.data
-  } catch(err){
-    console.error("Error Creating Capasity")
-    return false
+    console.log("📤 Creating kapasitas with payload:", payload);
+    
+    const response = await api.post("/quota/create", payload);
+    
+    console.log("✅ Create kapasitas response:", response.data);
+    
+    // ✅ Handle different response structures
+    if (response.data.status === true || response.data.success === true) {
+      return true;
+    }
+    
+    return false;
+  } catch (error: any) {
+    console.error("❌ Error creating kapasitas:", error);
+    console.error("❌ Error response:", error.response?.data);
+    return false;
   }
-}
+};
 
 export const deleteManifest= async (id: number): Promise<boolean> => {
   try {

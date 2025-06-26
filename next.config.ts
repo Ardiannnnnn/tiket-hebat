@@ -1,13 +1,12 @@
-// filepath: c:\Users\LENOVO\Documents\semester 7\TA\tiket-hebat\next.config.ts
+// next.config.ts
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   async rewrites() {
     return [
       {
-        source: "/api/:path*", // tetap
-        destination:
-          "https://tikethebat.gentleglacier-f20ff377.southeastasia.azurecontainerapps.io/api/:path*", // TANPA /api/v1
+        source: "/api/v1/:path*",
+        destination: "https://tikethebat.gentleglacier-f20ff377.southeastasia.azurecontainerapps.io/api/v1/:path*",
       },
     ];
   },
@@ -18,7 +17,12 @@ const nextConfig: NextConfig = {
         protocol: 'https',
         hostname: 'drive.google.com',
         pathname: '/uc/**',
-      }, // Tambahkan domain eksternal di sini
+      },
+      {
+        protocol: 'https',
+        hostname: '16qwbq9b-8080.asse.devtunnels.ms',
+        pathname: '/**',
+      }
     ],
   },
 };

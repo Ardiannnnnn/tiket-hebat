@@ -52,6 +52,7 @@ export const createFieldConfigs: Record<string, FieldConfig[]> = {
   pelabuhan: [
     { name: "harbor_name", label: "Nama Pelabuhan", type: "text", required: true },
     { name: "year_operation", label: "Tahun Operasional", type: "text", required: true },
+    { name: "harbor_alias", label: "Alias Pelabuhan", type: "text", required: true },
     {
       name: "status",
       label: "Status Pelabuhan",
@@ -101,29 +102,61 @@ export const createFieldConfigs: Record<string, FieldConfig[]> = {
   ],
   kapasitasTiket: [
     {
-      name:"ship_id", label: "Kapal", type: "select", required: true, options:[]
+      name:"schedule_id", label: "jadwal", type: "select", required: true, options:[]
     },
     {
       name:"class_id", label: "Kelas", type: "select", required: true, options:[]
     },
     {
-      name:"capacity", label:"Kapasitas", type:"text", required:true
+      name:"quota", label:"Kapasitas", type:"text", required:true
+    },
+    {
+      name:"price", label:"Harga", type:"text", required:true
     }
   ],
-  uploadJadwal: [
-    { name: "route_id", label: "Rute", type: "select", required: true, options: [] },
-    { name: "ship_id", label: "Kapal", type: "select", required: true, options: [] },
-    { name: "departure_datetime", label: "Waktu Keberangkatan", type: "datetime-local", required: true },
-    { name: "arrival_datetime", label: "Waktu Tiba", type: "datetime-local", required: true },
+   uploadJadwal: [
+    { 
+      name: "departure_harbor_id", 
+      label: "Pelabuhan Asal", 
+      type: "select", 
+      required: true, 
+      options: [] // Will be populated from options prop
+    },
+    { 
+      name: "arrival_harbor_id", 
+      label: "Pelabuhan Tujuan", 
+      type: "select", 
+      required: true, 
+      options: [] // Will be populated from options prop
+    },
+    { 
+      name: "ship_id", 
+      label: "Kapal", 
+      type: "select", 
+      required: true, 
+      options: [] // Will be populated from options prop
+    },
+    { 
+      name: "departure_datetime", 
+      label: "Waktu Keberangkatan", 
+      type: "datetime-local", 
+      required: true 
+    },
+    { 
+      name: "arrival_datetime", 
+      label: "Waktu Tiba", 
+      type: "datetime-local", 
+      required: true 
+    },
     {
       name: "status",
-      label: "Status",
+      label: "Status Jadwal",
       type: "select",
       required: true,
       options: [
-        { label: "Sudah Berangkat", value: "FINISHED" },
-        { label: "Belum Berangkat", value: "SCHEDULED" },
-        { label: "Gagal Berangkat", value: "CANCELLED" },
+        { label: "Terjadwal", value: "SCHEDULED" },
+        { label: "Selesai", value: "FINISHED" },
+        { label: "Dibatalkan", value: "CANCELLED" },
       ],
     },
   ],

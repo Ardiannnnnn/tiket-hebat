@@ -19,20 +19,18 @@ export interface Schedule {
     id: number;
     ship_name: string;
   };
-  route: {
+  departure_harbor: {
     id: number;
-    departure_harbor: {
-      id: number;
-      harbor_name: string;
-    };
-    arrival_harbor: {
-      id: number;
-      harbor_name: string;
-    };
+    harbor_name: string;
+  };
+  arrival_harbor: {
+    id: number;
+    harbor_name: string;
   };
   departure_datetime: string;
   arrival_datetime: string;
   status: string;
+  quotas: any[];
   created_at: string;
   updated_at: string;
 }

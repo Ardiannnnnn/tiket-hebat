@@ -146,7 +146,7 @@ export default function TotalBayar({ orderId }: TotalBayarProps) {
           <div className="flex items-center justify-between text-sm">
             <div className="text-center">
               <p className="font-medium text-gray-900">
-                {data.schedule.route.departure_harbor.harbor_name}
+                {data.schedule.departure_harbor.harbor_name}
               </p>
               <p className="text-xs text-gray-500">Keberangkatan</p>
             </div>
@@ -159,7 +159,7 @@ export default function TotalBayar({ orderId }: TotalBayarProps) {
 
             <div className="text-center">
               <p className="font-medium text-gray-900">
-                {data.schedule.route.arrival_harbor.harbor_name}
+                {data.schedule.arrival_harbor.harbor_name}
               </p>
               <p className="text-xs text-gray-500">Kedatangan</p>
             </div>

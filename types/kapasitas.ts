@@ -14,7 +14,9 @@ export interface Manifest {
   id: number;
   class: ClassData;
   ship: ShipData;
-  capacity: number;
+  schedule_id: number;
+  quota: number;
+  price: number;
   created_at: string;
   updated_at: string;
 }

@@ -3,7 +3,7 @@ import { kelasResponse } from "@/types/kelas"; // atau sesuaikan path-nya
 
 export const getKelas = async (page = 1, limit = 20) : Promise<kelasResponse | null> => {
   try {
-    const response = await api.get("/classes/?page=1&limit=5&sort=created_at:asc&search=");
+    const response = await api.get("/classes");
     return response.data;
   } catch (error) {
     console.error("Gagal mengambil data kelas:", error);

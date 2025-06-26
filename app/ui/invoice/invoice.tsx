@@ -345,7 +345,7 @@ export default function Invoice({
                             </p>
                             <p className="font-medium text-gray-700 mt-1">
                               {
-                                booking.schedule.route.departure_harbor
+                                booking.schedule.departure_harbor
                                   .harbor_name
                               }
                             </p>
@@ -373,7 +373,7 @@ export default function Invoice({
                             </p>
                             <p className="font-medium text-gray-700 mt-1">
                               {
-                                booking.schedule.route.arrival_harbor
+                                booking.schedule.arrival_harbor
                                   .harbor_name
                               }
                             </p>

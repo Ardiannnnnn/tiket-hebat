@@ -95,6 +95,7 @@ export default function PageLogin() {
       const me = await getCurrentUser();
       const userRole = me.data.role.role_name;
 
+      console.log("User data:", me.data);
       // Step 3: Prepare redirect
       setLoginState('redirecting');
       await new Promise(resolve => setTimeout(resolve, 300));

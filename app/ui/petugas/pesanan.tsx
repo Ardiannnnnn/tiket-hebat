@@ -149,7 +149,7 @@ export default function OrderTable({
       <div className="p-4 border-b bg-gradient-to-r from-blue-50 to-indigo-50">
         {selectedScheduleData ? (
           <div className="space-y-3">
-            {/* Route Info */}
+            {/* Info */}
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <div className="p-2 bg-blue-500 text-white rounded-lg">
@@ -160,8 +160,8 @@ export default function OrderTable({
                     {selectedScheduleData.ship.ship_name}
                   </h3>
                   <p className="text-sm text-gray-600">
-                    {selectedScheduleData.route.departure_harbor.harbor_name} →{" "}
-                    {selectedScheduleData.route.arrival_harbor.harbor_name}
+                    {selectedScheduleData.departure_harbor.harbor_name} →{" "}
+                    {selectedScheduleData.arrival_harbor.harbor_name}
                   </p>
                 </div>
               </div>

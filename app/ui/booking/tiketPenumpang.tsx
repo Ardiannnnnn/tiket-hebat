@@ -76,26 +76,45 @@ export default function TiketPenumpang({
   useEffect(() => {
     const fetchQuota = async () => {
       try {
+        console.log(`🚀 Fetching quota for schedule ID: ${scheduleid}`);
+
         const availability = await getQuotaByScheduleId(scheduleid);
+
+        console.log("📋 Kuota yang didapat:", {
+          count: availability.length,
+          data: availability,
+        });
+
+        if (availability.length === 0) {
+          console.warn("⚠️ No availability data received");
+          toast.warning("Tidak ada data kuota untuk jadwal ini");
+          return;
+        }
+
         setClasses(availability);
 
-        const defaultPassengers = availability.map((cls: ClassAvailability) => ({
-          classId: cls.class_id,
-          className: cls.class_name,
-          adults: 0, // Tidak ada tiket bonus, semua 0
-          children: 0,
-        }));
+        const defaultPassengers = availability
+          .filter((cls) => cls.type === "passenger") // ✅ Filter hanya passenger
+          .map((cls: ClassAvailability) => ({
+            classId: cls.class_id,
+            className: cls.class_name,
+            adults: 0,
+            children: 0,
+          }));
+
+        console.log("👥 Default passengers setup:", defaultPassengers);
 
         form.reset({ passengers: defaultPassengers });
       } catch (error) {
-        console.error("Gagal mengambil data kuota:", error);
+        console.error("❌ Gagal mengambil data kuota:", error);
+        toast.error("Gagal mengambil data kuota. Silakan coba lagi.");
       }
     };
 
     if (scheduleid) {
       fetchQuota();
     }
-  }, [scheduleid, selectedVehicleClass]);
+  }, [scheduleid, selectedVehicleClass, form]);
 
   // Helper function untuk menghitung total tiket yang sudah dipilih
   const getTotalTickets = () => {
@@ -188,7 +207,7 @@ export default function TiketPenumpang({
       ? [
           {
             class_id: selectedVehicleClass.class_id,
-            quantity: 1
+            quantity: 1,
           },
         ]
       : [];
@@ -366,7 +385,10 @@ export default function TiketPenumpang({
           </AlertDialogHeader>
           <AlertDialogFooter className="md:mx-auto">
             <AlertDialogCancel>Batal</AlertDialogCancel>
-            <AlertDialogAction onClick={dialogAction} className="bg-Blue :hover:bg-teal-600 text-white">
+            <AlertDialogAction
+              onClick={dialogAction}
+              className="bg-Blue :hover:bg-teal-600 text-white"
+            >
               Lanjutkan
             </AlertDialogAction>
           </AlertDialogFooter>
