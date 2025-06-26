@@ -27,11 +27,11 @@ export const dashboardLinks = [
 export const menuLinks = [
   { name: "Kapal", href: "/kapal", icon: RiShipFill },
   { name: "Pelabuhan", href: "/pelabuhan", icon: RiAnchorFill },
-  { name: "Rute Perjalanan", href: "/dataRute", icon: RiRoadMapFill },
+  // { name: "Rute Perjalanan", href: "/dataRute", icon: RiRoadMapFill },
   // { name: "Tiket Kapal", href: "/dataTiket", icon: RiFileListFill },
   { name: "Kelas Tiket", href: "/kelasTiket", icon: MdFlightClass },
-  { name: "Harga Tiket", href: "/hargaTiket", icon: IoIosPricetag  },
-  { name: "KapasitasTiket", href: "/kapasitasTiket", icon: MdOutlineReduceCapacity },
+  // { name: "Harga Tiket", href: "/hargaTiket", icon: IoIosPricetag  },
+  { name: "Kuota Tiket", href: "/kapasitasTiket", icon: MdOutlineReduceCapacity },
   
 ];
 

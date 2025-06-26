@@ -43,7 +43,6 @@ interface TambahModalProps {
 interface ClassAvailability {
   class_id: number;
   class_name: string;
-  total_capacity: number;
   available_capacity: number;
   price: number;
   currency: string;
@@ -232,11 +231,11 @@ export default function TambahModal({
                   {/* Rute */}
                   <div className="flex items-center justify-center gap-3">
                     <span className="font-semibold text-blue-900">
-                      {scheduleData.route.departure_harbor.harbor_name}
+                      {scheduleData.departure_harbor.harbor_name}
                     </span>
                     <span className="text-blue-600">→</span>
                     <span className="font-semibold text-blue-900">
-                      {scheduleData.route.arrival_harbor.harbor_name}
+                      {scheduleData.arrival_harbor.harbor_name}
                     </span>
                   </div>
                   {/* Nama Kapal */}

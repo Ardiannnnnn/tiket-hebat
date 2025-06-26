@@ -24,7 +24,8 @@ export interface BookingData {
 export interface Schedule {
   id: number;
   ship: Ship;
-  route: Route;
+  departure_harbor: Harbor;
+  arrival_harbor: Harbor;
   departure_datetime: string;
   arrival_datetime: string;
 }
@@ -32,12 +33,6 @@ export interface Schedule {
 export interface Ship {
   id: number;
   ship_name: string;
-}
-
-export interface Route {
-  id: number;
-  departure_harbor: Harbor;
-  arrival_harbor: Harbor;
 }
 
 export interface Harbor {

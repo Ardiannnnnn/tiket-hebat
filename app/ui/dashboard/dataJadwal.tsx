@@ -1,24 +1,48 @@
+// app/ui/dashboard/dataJadwal.tsx
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
 import ReusableTable, { ColumnDef } from "./table";
-import { HargaProps } from "@/types/harga";
 import { toast } from "sonner";
-import { deleteHarga, getharga } from "@/service/harga";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useDebouncedCallback } from "use-debounce";
-import { Schedule } from "@/types/invoice";
-import { getScheduleAll } from "@/service/schedule";
+import { getScheduleAll, deleteSchedule } from "@/service/schedule";
 
-interface FlattenedHargaProps {
+// ✅ Update interface sesuai response API
+interface ScheduleResponse {
+  id: number;
+  ship: {
+    id: number;
+    ship_name: string;
+  };
+  departure_harbor: {
+    id: number;
+    harbor_name: string;
+  };
+  arrival_harbor: {
+    id: number;
+    harbor_name: string;
+  };
+  departure_datetime: string;
+  arrival_datetime: string;
+  status: string;
+  quotas: any[];
+  created_at: string;
+  updated_at: string;
+}
+
+// ✅ Interface untuk data yang diflat
+interface FlattenedScheduleProps {
   id: number;
   departure_harbor: string;
   arrival_harbor: string;
   ship_name: string;
   departure_datetime: string;
   arrival_datetime: string;
+  status: string;
+  quotas_count: number;
 }
 
 const formatDatetime = (datetime: string): string => {
@@ -26,7 +50,7 @@ const formatDatetime = (datetime: string): string => {
 
   const options: Intl.DateTimeFormatOptions = {
     day: "2-digit",
-    month: "long", // 'Oktober'
+    month: "long",
     year: "numeric",
     hour: "2-digit",
     minute: "2-digit",
@@ -43,25 +67,45 @@ const formatDatetime = (datetime: string): string => {
   const hour = parts.find(p => p.type === "hour")?.value;
   const minute = parts.find(p => p.type === "minute")?.value;
 
-  return `${day}-${month}-${year}, ${hour}.${minute}`;
+  return `${day} ${month} ${year}, ${hour}:${minute}`;
 };
 
-
-const flattenData = (data: Schedule[]): FlattenedHargaProps[] => {
+// ✅ Update fungsi flattenData sesuai struktur baru
+const flattenData = (data: ScheduleResponse[]): FlattenedScheduleProps[] => {
   return data.map((item) => ({
     id: item.id,
-    departure_harbor: item.route.departure_harbor.harbor_name,
-    arrival_harbor: item.route.arrival_harbor.harbor_name,
+    departure_harbor: item.departure_harbor.harbor_name,
+    arrival_harbor: item.arrival_harbor.harbor_name,
     ship_name: item.ship.ship_name,
-    departure_datetime:formatDatetime(item.departure_datetime),
-    arrival_datetime: formatDatetime( item.arrival_datetime),
+    departure_datetime: formatDatetime(item.departure_datetime),
+    arrival_datetime: formatDatetime(item.arrival_datetime),
+    status: item.status,
+    quotas_count: item.quotas?.length || 0,
   }));
 };
 
-export default function kelas() {
-  const [allData, setAllData] = useState<FlattenedHargaProps[]>([]);
+// ✅ Fungsi untuk format status
+const getStatusBadge = (status: string) => {
+  const statusConfig = {
+    SCHEDULED: { label: "Terjadwal", color: "bg-blue-100 text-blue-800" },
+    FINISHED: { label: "Selesai", color: "bg-green-100 text-green-800" },
+    CANCELLED: { label: "Dibatalkan", color: "bg-red-100 text-red-800" },
+  };
+  
+  const config = statusConfig[status as keyof typeof statusConfig] || 
+    { label: status, color: "bg-gray-100 text-gray-800" };
+  
+  return (
+    <span className={`px-2 py-1 rounded-full text-xs font-medium ${config.color}`}>
+      {config.label}
+    </span>
+  );
+};
+
+export default function DataJadwal() {
+  const [allData, setAllData] = useState<FlattenedScheduleProps[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [filteredData, setFilteredData] = useState<FlattenedHargaProps[]>([]);
+  const [filteredData, setFilteredData] = useState<FlattenedScheduleProps[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [meta, setMeta] = useState<{
@@ -73,32 +117,53 @@ export default function kelas() {
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize] = useState(10);
 
-  const columns: ColumnDef<FlattenedHargaProps>[] = [
-    { key: "id", label: "ID" },
-    { key: "departure_harbor", label: "Pelabuhan Asal" },
-    { key: "arrival_harbor", label: "Pelabuhan Tujuan" },
-    { key: "ship_name", label: "Kapal" },
-    { key: "departure_datetime", label: "Waktu Keberangkatan" },
-    { key: "arrival_datetime", label: "Waktu Tiba" },
-  ];
+  // ✅ Update columns definition
+  const columns: ColumnDef<FlattenedScheduleProps>[] = [
+  { key: "id", label: "ID" },
+  { key: "ship_name", label: "Kapal" },
+  { key: "departure_harbor", label: "Pelabuhan Asal" },
+  { key: "arrival_harbor", label: "Pelabuhan Tujuan" },
+  { key: "departure_datetime", label: "Keberangkatan" },
+  { key: "arrival_datetime", label: "Tiba" },
+  { 
+    key: "status", 
+    label: "Status",
+    // ✅ Fix: Handle both string and number types
+    render: (value: string | number, item: FlattenedScheduleProps) => {
+      const statusValue = String(value); // Convert to string
+      return getStatusBadge(statusValue);
+    }
+  },
+  { key: "quotas_count", label: "Kuota" },
+];
 
-  console.log("data:", filteredData);
+  console.log("📊 Schedule data:", filteredData);
 
   const fetchData = useCallback(
     async (page: number) => {
       setIsLoading(true);
       try {
+        console.log(`🔄 Fetching schedules page ${page}...`);
         const response = await getScheduleAll(page, pageSize);
+        
+        console.log("📊 API Response:", response);
+        
         if (response && response.status) {
           const flattened = flattenData(response.data);
+          console.log("📋 Flattened data:", flattened);
+          
           setAllData(flattened);
           setMeta(response.meta ?? null);
           setFilteredData(flattened);
+          
+          toast.success(`${flattened.length} jadwal dimuat`);
         } else {
-          toast.error("Gagal memuat data");
+          console.error("❌ Invalid response:", response);
+          toast.error("Gagal memuat data jadwal");
         }
       } catch (error) {
-        toast.error("Terjadi kesalahan saat memuat data");
+        console.error("❌ Error fetching schedules:", error);
+        toast.error("Terjadi kesalahan saat memuat data jadwal");
       }
       setIsLoading(false);
     },
@@ -122,7 +187,12 @@ export default function kelas() {
       const search = searchTerm.toLowerCase();
       setFilteredData(
         allData.filter((item) =>
-          [item.departure_harbor, item.arrival_harbor, item.ship_name].some((field) =>
+          [
+            item.departure_harbor, 
+            item.arrival_harbor, 
+            item.ship_name,
+            item.status
+          ].some((field) =>
             field.toLowerCase().includes(search)
           )
         )
@@ -130,14 +200,24 @@ export default function kelas() {
     }
   }, [searchTerm, allData]);
 
-  const handleDelete = async (item: FlattenedHargaProps) => {
-    const success = await deleteHarga(item.id);
-    if (success) {
-      toast.success("Kapal berhasil dihapus");
-      // refetch data supaya data terbaru sesuai API
-      fetchData(currentPage);
-    } else {
-      toast.error("Gagal menghapus kapal");
+  // ✅ Update handleDelete untuk menggunakan deleteSchedule
+  const handleDelete = async (item: FlattenedScheduleProps) => {
+    if (!confirm(`Apakah Anda yakin ingin menghapus jadwal ${item.ship_name}?`)) {
+      return;
+    }
+
+    try {
+      const success = await deleteSchedule(item.id);
+      if (success) {
+        toast.success("Jadwal berhasil dihapus");
+        // Refetch data
+        fetchData(currentPage);
+      } else {
+        toast.error("Gagal menghapus jadwal");
+      }
+    } catch (error) {
+      console.error("❌ Error deleting schedule:", error);
+      toast.error("Terjadi kesalahan saat menghapus jadwal");
     }
   };
 
@@ -153,8 +233,9 @@ export default function kelas() {
     [handleSearch]
   );
 
-  const handleEdit = (item: FlattenedHargaProps) => {
-    window.location.href = `/kapal/edit/${item.id}`;
+  // ✅ Update handleEdit untuk redirect ke edit jadwal
+  const handleEdit = (item: FlattenedScheduleProps) => {
+    window.location.href = `/uploadJadwal/edit/${item.id}`;
   };
 
   const handlePageChange = (page: number) => {
@@ -164,24 +245,59 @@ export default function kelas() {
   return (
     <div className="p-4">
       <div className="md:flex justify-between items-center mb-4 space-y-4">
-        <h1 className="text-xl font-bold text-center md:text-start">
-          Data Jadwal
-        </h1>
+        <div>
+          <h1 className="text-xl font-bold text-center md:text-start">
+            Data Jadwal Kapal
+          </h1>
+          <p className="text-sm text-gray-600 mt-1">
+            Kelola jadwal keberangkatan dan kedatangan kapal
+          </p>
+        </div>
+        
         <div className="flex gap-4 items-center">
           <Link href="/uploadJadwal/create">
-            <Button className="bg-Blue hover:bg-teal-600">Tambah</Button>
+            <Button className="bg-Blue hover:bg-teal-600">
+              + Tambah Jadwal
+            </Button>
           </Link>
 
           <Input
-            placeholder="Cari pelabuhan..."
+            placeholder="Cari kapal, pelabuhan, atau status..."
             value={searchTerm}
             onChange={handleSearchChange}
             className="w-64"
           />
         </div>
       </div>
-      <ReusableTable<FlattenedHargaProps>
-        caption="Data Kelas"
+
+      {/* ✅ Summary card */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+        <div className="bg-white p-4 rounded-lg border">
+          <h3 className="text-sm font-medium text-gray-600">Total Jadwal</h3>
+          <p className="text-2xl font-bold text-gray-900">{meta?.total || 0}</p>
+        </div>
+        <div className="bg-white p-4 rounded-lg border">
+          <h3 className="text-sm font-medium text-gray-600">Terjadwal</h3>
+          <p className="text-2xl font-bold text-blue-600">
+            {allData.filter(item => item.status === 'SCHEDULED').length}
+          </p>
+        </div>
+        <div className="bg-white p-4 rounded-lg border">
+          <h3 className="text-sm font-medium text-gray-600">Selesai</h3>
+          <p className="text-2xl font-bold text-green-600">
+            {allData.filter(item => item.status === 'FINISHED').length}
+          </p>
+        </div>
+        <div className="bg-white p-4 rounded-lg border">
+          <h3 className="text-sm font-medium text-gray-600">Dibatalkan</h3>
+          <p className="text-2xl font-bold text-red-600">
+            {allData.filter(item => item.status === 'CANCELLED').length}
+          </p>
+        </div>
+      </div>
+
+      <ReusableTable<FlattenedScheduleProps>
+        caption="Data Jadwal Kapal"
         columns={columns}
         data={filteredData}
         isLoading={isLoading}
@@ -190,7 +306,7 @@ export default function kelas() {
         onEdit={handleEdit}
         onDelete={handleDelete}
         skeletonRows={pageSize}
-        editUrl={(item) => `/kapal/edit/${item.id}`}
+        editUrl={(item) => `/uploadJadwal/edit/${item.id}`}
         onPageChange={handlePageChange}
       />
     </div>

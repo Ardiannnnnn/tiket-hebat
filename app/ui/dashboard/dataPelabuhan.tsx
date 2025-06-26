@@ -53,8 +53,8 @@ function TableSkeleton() {
 
 function StatusBadge({ value }: { value: string }) {
   const statusClass = clsx("text-white text-xs px-2 py-1 rounded-md w-fit", {
-    "bg-green-500": value === "active",
-    "bg-red-500": value === "Tidak Beroperasi",
+    "bg-green-500": value === "ACTIVE",
+    "bg-red-500": value === "INACTIVE",
   });
   return <span className={statusClass}>{value}</span>;
 }
@@ -77,6 +77,7 @@ export default function DataPelabuhanPage() {
   const columns: ColumnDef<Harbor>[] = [
     { key: "id", label: "ID" },
     { key: "harbor_name", label: "Nama Pelabuhan" },
+    { key: "harbor_alias", label: "Alias Pelabuhan" },
     {
       key: "status",
       label: "Status",
@@ -165,7 +166,7 @@ export default function DataPelabuhanPage() {
           <h1 className="text-2xl font-bold text-gray-900">Data Pelabuhan</h1>
           <div className="flex gap-4 items-center">
             <Link href="/pelabuhan/create">
-              <Button className="bg-blue-600 hover:bg-blue-700">
+              <Button className="bg-Blue hover:bg-teal-600">
                 Tambah Pelabuhan
               </Button>
             </Link>

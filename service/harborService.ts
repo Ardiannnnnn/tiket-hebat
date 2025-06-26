@@ -15,7 +15,7 @@ export const getHarbors = async (
       params.append("search", search.trim());
     }
 
-    const response = await api.get<HarborResponse>(`/harbors?${params.toString()}`);
+    const response = await api.get<HarborResponse>(`/harbors`);
     return response.data;
   } catch (error) {
     console.error("Failed to fetch harbors:", error);

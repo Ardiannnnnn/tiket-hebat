@@ -5,6 +5,7 @@ export interface Harbor {
   year_operation: string;
   created_at: string;
   updated_at: string;
+  harbor_alias: string;
 }
 
 export interface HarborResponse {

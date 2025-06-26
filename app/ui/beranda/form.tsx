@@ -43,11 +43,11 @@ export function Form() {
 
       if (field === "asal") {
         const foundSchedule = schedules.find(
-          (sch) => sch.route.departure_harbor.harbor_name === value
+          (sch) => sch.departure_harbor.harbor_name === value
         );
 
         if (foundSchedule) {
-          newSelected.tujuan = foundSchedule.route.arrival_harbor.harbor_name;
+          newSelected.tujuan = foundSchedule.arrival_harbor.harbor_name;
           newSelected.kapal = foundSchedule.ship.ship_name;
           newSelected.jadwal = getDateTimeString(foundSchedule.arrival_datetime);
           newSelected.scheduleid = String(foundSchedule.id);
@@ -64,8 +64,8 @@ export function Form() {
         const foundSchedule = schedules.find(
           (sch) =>
             getDateTimeString(sch.departure_datetime) === value &&
-            sch.route.departure_harbor.harbor_name === prev.asal &&
-            sch.route.arrival_harbor.harbor_name === prev.tujuan
+            sch.departure_harbor.harbor_name === prev.asal &&
+            sch.arrival_harbor.harbor_name === prev.tujuan
         );
         if (foundSchedule) {
           newSelected.kapal = foundSchedule.ship.ship_name;
@@ -89,11 +89,11 @@ export function Form() {
   }
 
   const asalOptions = Array.from(
-    new Set(schedules.map((sch) => sch.route.departure_harbor.harbor_name))
+    new Set(schedules.map((sch) => sch.departure_harbor.harbor_name))
   );
 
   const tujuanOptions = Array.from(
-    new Set(schedules.map((sch) => sch.route.arrival_harbor.harbor_name))
+    new Set(schedules.map((sch) => sch.arrival_harbor.harbor_name))
   );
 
   const kapalOptions = Array.from(
@@ -163,8 +163,8 @@ export function Form() {
 
     const selectedSchedule = schedules.find(
       (sch) =>
-        sch.route.departure_harbor.harbor_name === selected.asal &&
-        sch.route.arrival_harbor.harbor_name === selected.tujuan &&
+        sch.departure_harbor.harbor_name === selected.asal &&
+        sch.arrival_harbor.harbor_name === selected.tujuan &&
         getDateTimeString(sch.departure_datetime) === selected.jadwal &&
         sch.ship.ship_name === selected.kapal
     );

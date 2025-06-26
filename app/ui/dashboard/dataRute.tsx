@@ -12,6 +12,7 @@ import { useDebouncedCallback } from "use-debounce";
 
 interface FlattenedRoute {
   id: number;
+  
   route_asal: string;
   route_tujuan: string;
 }

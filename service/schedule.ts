@@ -4,7 +4,8 @@ import { Schedule, ScheduleResponse } from "@/types/schedule";
 
 interface CreateJadwalPayload {
   ship_id: number;
-  route_id: number;
+  departure_harbor_id: number;
+  arrival_harbor_id: number;
   departure_datetime: string;
   arrival_datetime: string;
   status: string;
@@ -25,7 +26,7 @@ export const getSchedule = async (): Promise<ScheduleResponse | null> => {
 
 export const getScheduleAll = async (page = 1, limit = 20) : Promise<ScheduleResponse | null> => {
   try {
-    const response = await api.get("/schedules/?page=1&limit=100&sort=created_at:asc&search=");
+    const response = await api.get("/schedules/active");
     return response.data;
   } catch (error) {
     console.error("Gagal mengambil data harga:", error);
@@ -35,7 +36,7 @@ export const getScheduleAll = async (page = 1, limit = 20) : Promise<ScheduleRes
 
 export const createSchedule = async (payload: CreateJadwalPayload): Promise<boolean> => {
   try {
-    const response = await Baseapi.post("/schedule/allocation/create", payload);
+    const response = await Baseapi.post("/schedule/create", payload);
     return response.status === 201 || response.status === 200;
   } catch (error) {
     console.error("Error creating harga:", error);
@@ -71,3 +72,16 @@ export const getScheduleById = async (
     return null;
   }
 };  
+
+export const deleteSchedule = async (
+  id: string | number
+  ): Promise<boolean> => {
+              try {
+    const response = await Baseapi.delete(`/schedule/${id}`);
+    return response.status === 200;
+  } catch (error) {
+    console.error(`Error deleting schedule with id ${id}:`, error);
+    return false;
+  }
+
+}

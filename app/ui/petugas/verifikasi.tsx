@@ -158,8 +158,8 @@ export default function VerifikasiPage({ selectedSchedule }: VerifikasiProps) {
                     {selectedScheduleData.ship.ship_name}
                   </h3>
                   <p className="text-sm text-gray-600">
-                    {selectedScheduleData.route.departure_harbor.harbor_name} →{" "}
-                    {selectedScheduleData.route.arrival_harbor.harbor_name}
+                    {selectedScheduleData.departure_harbor.harbor_name} →{" "}
+                    {selectedScheduleData.arrival_harbor.harbor_name}
                   </p>
                 </div>
               </div>
