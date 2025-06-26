@@ -183,9 +183,9 @@ export default function Home() {
                 <MapPin className="w-5 h-5 text-blue-200" />
                 <div className="flex-1">
                   <p className="text-white font-medium">
-                    {selectedScheduleInfo.route.departure_harbor.harbor_name} 
+                    {selectedScheduleInfo.departure_harbor.harbor_name} 
                     <ArrowRight className="w-4 h-4 inline mx-2" />
-                    {selectedScheduleInfo.route.arrival_harbor.harbor_name}
+                    {selectedScheduleInfo.arrival_harbor.harbor_name}
                   </p>
                   <p className="text-blue-200 text-sm">
                     {new Date(selectedScheduleInfo.departure_datetime).toLocaleString('id-ID')} • 
@@ -243,7 +243,7 @@ export default function Home() {
                           <div className="flex items-center gap-2">
                             <Ship className="w-4 h-4" />
                             <span>
-                              {schedule.route.departure_harbor.harbor_name} → {schedule.route.arrival_harbor.harbor_name}
+                              {schedule.departure_harbor.harbor_name} → {schedule.arrival_harbor.harbor_name}
                             </span>
                             <Badge variant="outline" className="ml-2">
                               {new Date(schedule.departure_datetime).toLocaleDateString('id-ID')}
@@ -541,7 +541,7 @@ export default function Home() {
                       <SelectContent>
                         {schedules.map((schedule) => (
                           <SelectItem key={schedule.id} value={schedule.id.toString()}>
-                            {schedule.route.departure_harbor.harbor_name} → {schedule.route.arrival_harbor.harbor_name}
+                            {schedule.departure_harbor.harbor_name} → {schedule.arrival_harbor.harbor_name}
                           </SelectItem>
                         ))}
                       </SelectContent>
