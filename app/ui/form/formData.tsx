@@ -259,7 +259,10 @@ export default function FormPenumpang({ session }: FormPenumpangProps) {
       console.log("📝 Form submission data (string usia):", data);
 
       const submissionData = penumpangSubmissionSchema.parse(data);
-      console.log("🔄 Transformed submission data (number usia):", submissionData);
+      console.log(
+        "🔄 Transformed submission data (number usia):",
+        submissionData
+      );
 
       // ✅ Add class information with proper mapping
       const penumpangDenganKelas = submissionData.penumpang?.map(
@@ -301,7 +304,9 @@ export default function FormPenumpang({ session }: FormPenumpangProps) {
       router.push(`/book/${id}/form/verifikasi?session_id=${finalSessionId}`);
     } catch (error) {
       console.error("❌ Form submission error:", error);
-      toast.error("Terjadi kesalahan saat memproses data. Silakan periksa input Anda.");
+      toast.error(
+        "Terjadi kesalahan saat memproses data. Silakan periksa input Anda."
+      );
     }
   };
 
@@ -370,7 +375,9 @@ export default function FormPenumpang({ session }: FormPenumpangProps) {
                     <p className="font-medium mb-1">Perhatian:</p>
                     <ul className="space-y-1">
                       <li>• Isi Nomor Polisi sesuai dengan STNK</li>
-                      <li>• Golongan tidak sesuai akan dikenakan biaya tambahan</li>
+                      <li>
+                        • Golongan tidak sesuai akan dikenakan biaya tambahan
+                      </li>
                     </ul>
                   </div>
                 </div>
@@ -432,7 +439,9 @@ export default function FormPenumpang({ session }: FormPenumpangProps) {
                       }}
                     />
                     <div className="flex justify-between text-xs">
-                      <span className="text-gray-500">Sesuai STNK (huruf saja)</span>
+                      <span className="text-gray-500">
+                        Sesuai STNK (huruf saja)
+                      </span>
                       <span
                         className={`${
                           (watch(`kendaraan.${index}.nama`)?.length || 0) > 20
@@ -475,8 +484,7 @@ export default function FormPenumpang({ session }: FormPenumpangProps) {
                     )}
                   </div>
 
-                  {/* Alamat */}
-                  {/* ✅ Change to xl:col-span-2 instead of md:col-span-2 */}
+                  {/* Alamat - Kendaraan */}
                   <div className="space-y-2 xl:col-span-2">
                     <Label className="flex items-center gap-2 text-gray-700 font-medium">
                       <MapPin className="w-4 h-4" />
@@ -485,19 +493,22 @@ export default function FormPenumpang({ session }: FormPenumpangProps) {
                     <Input
                       className="h-11"
                       placeholder="Alamat pemilik kendaraan"
-                      maxLength={20}
+                      maxLength={100} // ✅ Update maxLength from 20 to 100
                       {...register(`kendaraan.${index}.alamat`)}
                     />
                     <div className="flex justify-between text-xs">
-                      <span className="text-gray-500">Alamat pemilik kendaraan</span>
+                      <span className="text-gray-500">
+                        Alamat pemilik kendaraan
+                      </span>
                       <span
                         className={`${
-                          (watch(`kendaraan.${index}.alamat`)?.length || 0) > 15
+                          (watch(`kendaraan.${index}.alamat`)?.length || 0) > 80 // ✅ Warning at 80 chars
                             ? "text-amber-600"
                             : "text-gray-400"
                         }`}
                       >
-                        {watch(`kendaraan.${index}.alamat`)?.length || 0}/20
+                        {watch(`kendaraan.${index}.alamat`)?.length || 0}/100{" "}
+                        {/* ✅ Update counter */}
                       </span>
                     </div>
                     {errors.kendaraan?.[index]?.alamat && (
@@ -648,32 +659,57 @@ export default function FormPenumpang({ session }: FormPenumpangProps) {
                       Nomor Identitas
                     </Label>
                     {(() => {
-                      const currentJenisId = watch(`penumpang.${index}.jenis_id`);
-                      const currentNomor = watch(`penumpang.${index}.nomor_identitas`) || "";
+                      const currentJenisId = watch(
+                        `penumpang.${index}.jenis_id`
+                      );
+                      const currentNomor =
+                        watch(`penumpang.${index}.nomor_identitas`) || "";
                       const format = getIdentityFormat(currentJenisId);
-                      const validation = validateIdentityInput(currentJenisId, currentNomor);
+                      const validation = validateIdentityInput(
+                        currentJenisId,
+                        currentNomor
+                      );
 
                       return (
                         <>
                           <Input
-                            className={`h-11 ${!validation.isValid ? "border-red-300 focus:border-red-500" : ""}`}
+                            className={`h-11 ${
+                              !validation.isValid
+                                ? "border-red-300 focus:border-red-500"
+                                : ""
+                            }`}
                             placeholder={format.placeholder}
                             maxLength={format.digits}
                             inputMode="numeric"
                             {...register(`penumpang.${index}.nomor_identitas`)}
                             onInput={(e) => {
                               const target = e.target as HTMLInputElement;
-                              target.value = target.value.replace(/[^0-9]/g, "");
+                              target.value = target.value.replace(
+                                /[^0-9]/g,
+                                ""
+                              );
                             }}
                           />
                           <div className="flex justify-between text-xs">
-                            <span className="text-gray-500">{format.description}</span>
-                            <span className={`${!validation.isValid ? "text-red-500" : currentNomor.length === format.digits ? "text-green-600" : "text-gray-400"}`}>
+                            <span className="text-gray-500">
+                              {format.description}
+                            </span>
+                            <span
+                              className={`${
+                                !validation.isValid
+                                  ? "text-red-500"
+                                  : currentNomor.length === format.digits
+                                  ? "text-green-600"
+                                  : "text-gray-400"
+                              }`}
+                            >
                               {currentNomor.length}/{format.digits}
                             </span>
                           </div>
                           {!validation.isValid && validation.message && (
-                            <p className="text-xs text-amber-600">{validation.message}</p>
+                            <p className="text-xs text-amber-600">
+                              {validation.message}
+                            </p>
                           )}
                         </>
                       );
@@ -710,8 +746,6 @@ export default function FormPenumpang({ session }: FormPenumpangProps) {
                     )}
                   </div>
 
-                  {/* Alamat */}
-                  {/* ✅ Change to xl:col-span-3 instead of md:col-span-3 */}
                   <div className="space-y-2 xl:col-span-3">
                     <Label className="flex items-center gap-2 text-gray-700 font-medium">
                       <MapPin className="w-4 h-4" />
@@ -720,11 +754,25 @@ export default function FormPenumpang({ session }: FormPenumpangProps) {
                     <Input
                       className="h-11"
                       placeholder="Alamat lengkap tempat tinggal"
+                      maxLength={100} // ✅ Add maxLength for consistency
                       {...register(`penumpang.${index}.alamat`)}
                     />
-                    <p className="text-xs text-gray-500">
-                      Contoh: Jl. Merdeka No. 123, Kelurahan Air Dingin, Kecamatan Johan Pahlawan
-                    </p>
+                    <div className="flex justify-between text-xs">
+                      <span className="text-gray-500">
+                        Contoh: Jl. Merdeka No. 123, Kelurahan Air Dingin,
+                        Kecamatan Johan Pahlawan
+                      </span>
+                      <span
+                        className={`${
+                          (watch(`penumpang.${index}.alamat`)?.length || 0) > 80 // ✅ Add character counter
+                            ? "text-amber-600"
+                            : "text-gray-400"
+                        }`}
+                      >
+                        {watch(`penumpang.${index}.alamat`)?.length || 0}/100{" "}
+                        {/* ✅ Add counter display */}
+                      </span>
+                    </div>
                     {errors.penumpang?.[index]?.alamat && (
                       <p className="text-xs text-red-500">
                         {errors.penumpang[index].alamat?.message}

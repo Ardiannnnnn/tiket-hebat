@@ -13,67 +13,60 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { ArrowLeft, FileText } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 
 export default function InvoicePage() {
   const params = useParams();
   const router = useRouter();
-  const rawOrderId = params?.orderid; // Ambil orderId dari URL
+  const rawOrderId = params?.orderid;
   const orderId = Array.isArray(rawOrderId) ? rawOrderId[0] : rawOrderId;
 
   const [showExitDialog, setShowExitDialog] = useState(false);
 
   useEffect(() => {
-    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
-      e.preventDefault();
-      (e as any).returnValue = "";
-      setShowExitDialog(true);
-    };
-
+    // ✅ Only handle back button navigation
     const handlePopState = (e: PopStateEvent) => {
-      // Tampilkan dialog modern alih-alih window.confirm
+      e.preventDefault();
       setShowExitDialog(true);
 
-      // Dorong kembali state sementara dialog ditampilkan
+      // Push state back to prevent actual navigation
       history.pushState({ fromInvoice: true }, "", window.location.href);
     };
 
-    // Tambahkan state hanya jika belum ada
+    // Add state for back button detection
     if (!history.state?.fromInvoice) {
       history.pushState({ fromInvoice: true }, "", window.location.href);
     }
 
-    window.addEventListener("beforeunload", handleBeforeUnload);
     window.addEventListener("popstate", handlePopState);
 
     return () => {
-      window.removeEventListener("beforeunload", handleBeforeUnload);
       window.removeEventListener("popstate", handlePopState);
     };
   }, [router]);
 
   const handleConfirmExit = () => {
     setShowExitDialog(false);
+    // ✅ Remove the history state before navigating
+    history.replaceState(null, "", window.location.href);
     router.replace("/");
   };
 
   const handleCancelExit = () => {
     setShowExitDialog(false);
-    // State sudah di-push kembali di handlePopState
+    // State already pushed back in handlePopState
   };
 
   return (
     <>
       {/* ✅ Main Invoice Content */}
       <div className="min-h-screen">
-
-
         {/* ✅ Invoice Component */}
-        <div className="container mx-auto p-4">
+        <div className="container mx-auto">
           <Invoices orderId={orderId} />
         </div>
 
-        {/* ✅ Security Notice */}
+        {/* ✅ Enhanced Security Notice */}
         <div className="container mx-auto px-4 pb-8">
           <div className="max-w-4xl mx-auto">
             <div className="bg-gradient-to-r from-green-50 to-blue-50 rounded-lg p-4 border border-green-200">
@@ -84,6 +77,10 @@ export default function InvoicePage() {
                 <div className="text-gray-700">
                   <span className="font-medium">Transaksi Berhasil</span> -
                   Invoice ini adalah bukti pembayaran resmi. Simpan untuk keperluan perjalanan Anda.
+                  <div className="flex items-center gap-4 mt-2 text-xs text-gray-500">
+                    <span>🔄 Refresh halaman: ✅ Diizinkan</span>
+                    <span>↩️ Tombol back: ⚠️ Akan dikonfirmasi</span>
+                  </div>
                 </div>
               </div>
             </div>
@@ -91,7 +88,7 @@ export default function InvoicePage() {
         </div>
       </div>
 
-      {/* ✅ Enhanced Exit Dialog */}
+      {/* ✅ Exit Dialog */}
       <AlertDialog open={showExitDialog} onOpenChange={setShowExitDialog}>
         <AlertDialogContent className="sm:max-w-[450px]">
           <AlertDialogHeader>
@@ -102,14 +99,19 @@ export default function InvoicePage() {
               <div>
                 <p className="text-lg">Keluar dari Invoice?</p>
                 <p className="text-sm text-gray-500 font-normal">
-                  Pastikan Anda sudah menyimpan invoice
+                  Menggunakan tombol back browser
                 </p>
               </div>
             </AlertDialogTitle>
             <AlertDialogDescription className="text-gray-600 leading-relaxed">
-              Anda akan meninggalkan halaman invoice. Pastikan Anda sudah mengunduh
-              atau menyimpan invoice untuk keperluan perjalanan. Anda masih bisa
-              mengakses invoice ini melalui menu "Riwayat Pemesanan".
+              Anda mencoba kembali menggunakan tombol back browser. Pastikan Anda sudah
+              mengunduh atau menyimpan invoice untuk keperluan perjalanan.
+              <br /><br />
+              <div className="bg-blue-50 p-3 rounded-lg border border-blue-200">
+                <span className="text-sm font-medium text-blue-700">
+                  💡 Tip: Anda bisa refresh halaman ini kapan saja tanpa konfirmasi
+                </span>
+              </div>
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter className="gap-3">
@@ -117,7 +119,7 @@ export default function InvoicePage() {
               onClick={handleCancelExit}
               className="bg-gray-100 hover:bg-gray-200 text-gray-800 border-gray-300"
             >
-              Tetap di Halaman
+              Tetap di Invoice
             </AlertDialogCancel>
             <AlertDialogAction
               onClick={handleConfirmExit}
