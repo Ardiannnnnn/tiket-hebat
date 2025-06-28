@@ -65,8 +65,8 @@ export default function TambahModal({
     type: "passenger",
     passenger_name: "",
     passenger_age: 0,
+    passenger_gender: "",
     address: "",
-    gender: null,
     id_type: "",
     id_number: "",
     license_plate: "",
@@ -93,8 +93,8 @@ export default function TambahModal({
         passenger_name: "",
         license_plate: "",
         passenger_age: 0,
+        passenger_gender: "",
         address: "",
-        gender: null,
         id_type: "",
         id_number: "",
         schedule_id: scheduleId,
@@ -155,8 +155,8 @@ export default function TambahModal({
       type: selectedClass.type,
       passenger_name: formData.passenger_name || "",
       passenger_age: Number(formData.passenger_age) || 0,
+      passenger_gender: formData.passenger_gender,
       address: formData.address || "",
-      gender: formData.gender,
       id_type: formData.id_type || "",
       id_number: formData.id_number || "",
       license_plate: formData.license_plate || null,
@@ -185,7 +185,7 @@ export default function TambahModal({
       class_id: 0,
       type: "passenger",
       passenger_name: "",
-      gender: null,
+      passenger_gender: "",
       passenger_age: 0,
       address: "",
       id_type: "",
@@ -347,7 +347,7 @@ export default function TambahModal({
                       onValueChange={(value) =>
                         handleInputChange("gender", value)
                       }
-                      value={formData.gender || ""}
+                      value={formData.passenger_gender || ""}
                     >
                       <SelectTrigger className="w-full">
                         <SelectValue placeholder="Pilih Jenis Kelamin" />
@@ -579,12 +579,12 @@ export default function TambahModal({
                         </dd>
                       </div>
 
-                      {formData.gender && (
+                      {formData.passenger_gender && (
                         <div className="flex justify-between">
                           <dt className="font-medium text-gray-700">
                             Jenis Kelamin:
                           </dt>
-                          <dd className="text-gray-900">{formData.gender}</dd>
+                          <dd className="text-gray-900">{formData.passenger_gender}</dd>
                         </div>
                       )}
                     </>

@@ -2,7 +2,7 @@
 "use client";
 
 import Link from "next/link";
-import { LuPower, LuMenu, LuX, LuLoader} from "react-icons/lu";
+import { LuPower, LuMenu, LuX, LuLoader, LuChrome, LuBell} from "react-icons/lu";
 import { FormEvent, useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import NavLinks, { dashboardLinks, jadwalLinks, menuLinks } from "./navlink";
@@ -16,7 +16,11 @@ import { toast } from "sonner";
 
 type LoadingState = 'idle' | 'fetching-user' | 'logging-out' | 'redirecting';
 
-export default function SideNav() {
+interface SideNavProps {
+  onToggle?: (isOpen: boolean) => void;
+}
+
+export default function SideNav({ onToggle }: SideNavProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [loadingState, setLoadingState] = useState<LoadingState>('fetching-user');
   const [user, setUser] = useState<User | null>(null);
@@ -29,15 +33,20 @@ export default function SideNav() {
   const isUserLoading = loadingState === 'fetching-user';
   const isLoggingOut = loadingState === 'logging-out' || loadingState === 'redirecting';
 
+  // ✅ Notify parent component about sidebar state
+  useEffect(() => {
+    onToggle?.(isOpen);
+  }, [isOpen, onToggle]);
+
   const toggleNavbar = () => {
     if (!isLoggingOut) {
       setIsOpen(!isOpen);
     }
   };
 
-  // Enhanced click outside detection with loading state check
+  // Enhanced click outside detection
   const handleClickOutside = (event: MouseEvent) => {
-    if (isLoggingOut) return; // Prevent closing during logout
+    if (isLoggingOut) return;
     
     const target = event.target as Element;
     if (!target.closest('.mobile-sidebar') && !target.closest('.hamburger-btn')) {
@@ -60,7 +69,7 @@ export default function SideNav() {
     };
   }, [isOpen, isLoggingOut]);
 
-  // Enhanced user fetching with proper loading states
+  // User fetching (existing code)
   useEffect(() => {
     const fetchProfile = async () => {
       try {
@@ -70,7 +79,6 @@ export default function SideNav() {
         const data = await getCurrentUser();
         setUser(data.data);
         
-        // Small delay for UX
         await new Promise(resolve => setTimeout(resolve, 300));
         
       } catch (error: any) {
@@ -78,7 +86,6 @@ export default function SideNav() {
         setError("Gagal memuat profil pengguna");
         setUser(null);
         
-        // If token is invalid, redirect to login
         if (error.message?.includes('401') || error.message?.includes('Unauthorized')) {
           toast.error("Sesi telah berakhir", {
             description: "Silakan login kembali"
@@ -94,36 +101,30 @@ export default function SideNav() {
     fetchProfile();
   }, [router]);
 
-  // Enhanced logout with proper loading states
+  // Logout handler (existing code)
   const handleLogout = async (e: FormEvent) => {
     e.preventDefault();
     
-    if (isLoading) return; // Prevent double-click
+    if (isLoading) return;
     
     try {
       setLoadingState('logging-out');
       setError(null);
       
-      // Step 1: Call logout API
       await logoutUser();
       
-      // Step 2: Clear cookies
       destroyCookie(null, "role");
       destroyCookie(null, "refresh_token");
       destroyCookie(null, "access_token");
       
-      // Step 3: Prepare redirect
       setLoadingState('redirecting');
       
-      // Step 4: Show success message
       toast.success("Logout berhasil", {
         description: "Anda telah keluar dari sistem"
       });
       
-      // Step 5: Small delay for UX
       await new Promise(resolve => setTimeout(resolve, 500));
       
-      // Step 6: Redirect
       router.push("/login");
       
     } catch (err: any) {
@@ -137,7 +138,6 @@ export default function SideNav() {
         description: errorMessage
       });
       
-      // Force redirect on critical error
       if (err.message?.includes('network') || err.message?.includes('500')) {
         setTimeout(() => {
           router.push("/login");
@@ -146,7 +146,6 @@ export default function SideNav() {
     }
   };
 
-  // Enhanced navigation click handler
   const handleNavClick = () => {
     if (!isLoggingOut) {
       setIsOpen(false);
@@ -164,9 +163,20 @@ export default function SideNav() {
     </div>
   );
 
+  // ✅ Get current page title for mobile header
+  const getCurrentPageTitle = () => {
+    if (pathname === '/beranda') return 'Dashboard';
+    if (pathname?.includes('/kapal')) return 'Data Kapal';
+    if (pathname?.includes('/pelabuhan')) return 'Data Pelabuhan';
+    if (pathname?.includes('/uploadJadwal')) return 'Jadwal Kapal';
+    if (pathname?.includes('/kapasitas')) return 'Kapasitas';
+    if (pathname?.includes('/kelasTiket')) return 'Kelas Tiket';
+    return 'Dashboard';
+  };
+
   return (
     <>
-      {/* DESKTOP: Enhanced Sidebar */}
+      {/* ✅ DESKTOP: Sidebar (unchanged) */}
       <div className="hidden md:flex h-full w-[270px] flex-col px-4 py-6 text-black overflow-y-auto">
         {/* Logo */}
         <div className="flex items-center gap-4 bg-gray-100 p-4 rounded-lg shadow-sm">
@@ -183,7 +193,7 @@ export default function SideNav() {
           </div>
         </div>
 
-        {/* Navigation with loading state */}
+        {/* Navigation */}
         <div className={`mt-4 bg-gray-100 p-3 rounded-lg shadow-sm transition-opacity ${isLoggingOut ? 'opacity-50 pointer-events-none' : ''}`}>
           <div className="mt-4 p-3">
             <p className="text-sm font-semibold text-gray-700">Dashboard</p>
@@ -209,9 +219,8 @@ export default function SideNav() {
 
         <div className="flex-grow"></div>
 
-        {/* Enhanced Profile + Logout Section */}
+        {/* Profile + Logout Section */}
         <div className="mt-4 bg-gray-100 p-4 rounded-lg shadow-sm">
-          {/* User Profile */}
           {isUserLoading ? (
             <UserSkeleton />
           ) : error ? (
@@ -245,7 +254,6 @@ export default function SideNav() {
             </div>
           )}
 
-          {/* Enhanced Logout Button */}
           <button
             type="button"
             onClick={handleLogout}
@@ -273,85 +281,107 @@ export default function SideNav() {
         </div>
       </div>
 
-      {/* MOBILE: Enhanced Top Header */}
-      <div className={`md:hidden fixed top-0 left-0 right-0 bg-white shadow-lg z-30 border-b transition-opacity ${isLoggingOut ? 'opacity-50' : ''}`}>
+      {/* ✅ MOBILE: Enhanced Fixed Header */}
+      <div className={`md:hidden fixed top-0 left-0 right-0 bg-white z-50 border-b transition-all duration-300 ${isLoggingOut ? 'opacity-50' : ''}`}>
         <div className="flex items-center justify-between px-4 py-3">
-          {/* Enhanced Hamburger Button */}
+          {/* ✅ Enhanced Hamburger Button */}
           <button
             onClick={toggleNavbar}
             disabled={isLoggingOut}
             className={`
-              hamburger-btn p-2 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500
+              hamburger-btn p-2 rounded-xl transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-Blue
               ${isLoggingOut 
                 ? 'cursor-not-allowed opacity-50' 
-                : 'hover:bg-gray-100 active:bg-gray-200'
+                : 'hover:bg-gradient-to-r hover:from-blue-50 hover:to-indigo-50 active:scale-95'
               }
             `}
             aria-label="Toggle navigation menu"
           >
-            {isOpen ? (
-              <LuX className="w-6 h-6 text-gray-700" />
-            ) : (
-              <LuMenu className="w-6 h-6 text-gray-700" />
-            )}
+            <div className="relative">
+              {isOpen ? (
+                <LuX className="w-6 h-6 text-gray-700 transition-transform duration-200" />
+              ) : (
+                <LuMenu className="w-6 h-6 text-gray-700 transition-transform duration-200" />
+              )}
+            </div>
           </button>
 
-          {/* Enhanced Logo & Brand */}
-          <div className="flex items-center gap-2">
-            <Image src={logo} width={24} height={24} alt="ASDP Logo" className="rounded" />
-            <span className="text-sm font-semibold text-gray-900">ASDP Singkil</span>
+          {/* ✅ Enhanced Center Content */}
+          <div className="flex-1 flex flex-col items-center">
+            <div className="flex items-center gap-2 mb-1">
+              <Image src={logo} width={28} height={28} alt="ASDP Logo" className="rounded-lg" />
+              <span className="text-lg font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
+                ASDP
+              </span>
+            </div>
+            <span className="text-xs text-gray-500 font-medium">
+              {getCurrentPageTitle()}
+            </span>
           </div>
 
-          {/* Enhanced User Avatar */}
+          {/* ✅ Enhanced User Avatar */}
           <div className="relative">
             {isUserLoading ? (
-              <div className="w-8 h-8 rounded-full bg-gray-300 animate-pulse"></div>
+              <div className="w-10 h-10 rounded-full bg-gradient-to-r from-gray-200 to-gray-300 animate-pulse"></div>
             ) : (
-              <Image
-                src={adminImg}
-                width={32}
-                height={32}
-                alt="User"
-                className="rounded-full"
-              />
-            )}
-            {isLoggingOut && (
-              <div className="absolute inset-0 bg-black/20 rounded-full flex items-center justify-center">
-                <LuLoader className="w-3 h-3 text-white animate-spin" />
+              <div className="relative">
+                <Image
+                  src={adminImg}
+                  width={40}
+                  height={40}
+                  alt="User"
+                  className="rounded-full border-2 border-white shadow-lg"
+                />
+                {/* ✅ Online status indicator */}
+                {!isLoggingOut && (
+                  <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-green-400 border-2 border-white rounded-full"></div>
+                )}
+                {isLoggingOut && (
+                  <div className="absolute inset-0 bg-black/30 rounded-full flex items-center justify-center">
+                    <LuLoader className="w-4 h-4 text-white animate-spin" />
+                  </div>
+                )}
               </div>
             )}
           </div>
         </div>
+
+        {/* ✅ Enhanced Progress Bar */}
+        {isLoggingOut && (
+          <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-red-400 to-red-600 animate-pulse"></div>
+        )}
       </div>
 
-      {/* MOBILE: Enhanced Slide-out Sidebar */}
+      {/* ✅ MOBILE: Enhanced Slide-out Sidebar */}
       <div
         ref={navbarRef}
         className={`
-          mobile-sidebar fixed top-0 left-0 h-full w-80 bg-white shadow-xl z-40 transform transition-all duration-300 ease-in-out md:hidden
+          mobile-sidebar fixed top-0 left-0 h-full w-80 bg-white shadow-2xl z-40 transform transition-all duration-300 ease-out md:hidden
           ${isOpen ? 'translate-x-0' : '-translate-x-full'}
           ${isLoggingOut ? 'pointer-events-none' : ''}
         `}
       >
         <div className="flex flex-col h-full">
-          {/* Enhanced Header */}
-          <div className={`bg-gradient-to-r from-blue-600 to-blue-700 p-6 text-white transition-opacity ${isLoggingOut ? 'opacity-70' : ''}`}>
-            <div className="flex items-center justify-between mb-4">
+          {/* ✅ Enhanced Header dengan Gradient */}
+          <div className={`bg-gradient-to-br from-blue-600 via-blue-700 to-indigo-800 p-6 text-white transition-opacity ${isLoggingOut ? 'opacity-70' : ''}`}>
+            <div className="flex items-center justify-between mb-6">
               <div className="flex items-center gap-3">
-                <Image src={logo} width={40} height={40} alt="ASDP Logo" className="rounded-lg" />
+                <div className="p-2 bg-white/10 rounded-xl backdrop-blur-sm">
+                  <Image src={logo} width={32} height={32} alt="ASDP Logo" className="rounded-lg" />
+                </div>
                 <div>
-                  <p className="text-sm font-bold">ASDP Ferry</p>
-                  <p className="text-xs opacity-90">Cabang Singkil</p>
+                  <p className="text-sm font-bold">ASDP Ferry Indonesia</p>
+                  <p className="text-xs opacity-80">Cabang Singkil</p>
                 </div>
               </div>
               <button
                 onClick={() => setIsOpen(false)}
                 disabled={isLoggingOut}
                 className={`
-                  p-2 rounded-lg transition-colors
+                  p-2 rounded-xl transition-all duration-200
                   ${isLoggingOut 
                     ? 'cursor-not-allowed opacity-50' 
-                    : 'hover:bg-white/10'
+                    : 'hover:bg-white/10 active:scale-95'
                   }
                 `}
               >
@@ -359,130 +389,150 @@ export default function SideNav() {
               </button>
             </div>
 
-            {/* Enhanced User Info in Header */}
+            {/* ✅ Enhanced User Info */}
             {isUserLoading ? (
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-white/20 rounded-full animate-pulse"></div>
-                <div className="space-y-1">
-                  <div className="h-3 w-20 bg-white/20 rounded animate-pulse"></div>
-                  <div className="h-2 w-16 bg-white/20 rounded animate-pulse"></div>
+              <div className="flex items-center gap-3 p-3 bg-white/10 rounded-xl backdrop-blur-sm">
+                <div className="w-12 h-12 bg-white/20 rounded-full animate-pulse"></div>
+                <div className="space-y-2">
+                  <div className="h-3 w-24 bg-white/20 rounded animate-pulse"></div>
+                  <div className="h-2 w-20 bg-white/20 rounded animate-pulse"></div>
                 </div>
               </div>
             ) : error ? (
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-red-500/20 rounded-full flex items-center justify-center">
-                  <span className="text-red-300 text-xs">!</span>
+              <div className="flex items-center gap-3 p-3 bg-red-500/20 rounded-xl backdrop-blur-sm">
+                <div className="w-12 h-12 bg-red-500/30 rounded-full flex items-center justify-center">
+                  <span className="text-red-200 text-sm">!</span>
                 </div>
                 <div className="text-xs">
                   <p className="text-red-200">Error loading profile</p>
                   <button 
                     onClick={() => window.location.reload()} 
-                    className="text-white hover:underline"
+                    className="text-white hover:underline font-medium"
                   >
                     Retry
                   </button>
                 </div>
               </div>
             ) : (
-              <div className="flex items-center gap-3">
-                <div className="relative">
-                  <Image
-                    src={adminImg}
-                    width={40}
-                    height={40}
-                    alt="User Profile"
-                    className="rounded-full border-2 border-white/20"
-                  />
-                  {isLoggingOut && (
-                    <div className="absolute inset-0 bg-black/30 rounded-full flex items-center justify-center">
-                      <LuLoader className="w-4 h-4 text-white animate-spin" />
+              <div className="p-3 bg-white/10 rounded-xl backdrop-blur-sm">
+                <div className="flex items-center gap-3">
+                  <div className="relative">
+                    <Image
+                      src={adminImg}
+                      width={48}
+                      height={48}
+                      alt="User Profile"
+                      className="rounded-full border-2 border-white/30"
+                    />
+                    {!isLoggingOut && (
+                      <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-400 border-2 border-white rounded-full"></div>
+                    )}
+                    {isLoggingOut && (
+                      <div className="absolute inset-0 bg-black/30 rounded-full flex items-center justify-center">
+                        <LuLoader className="w-5 h-5 text-white animate-spin" />
+                      </div>
+                    )}
+                  </div>
+                  <div>
+                    <p className="text-sm font-semibold">{user?.username || "User"}</p>
+                    <p className="text-xs opacity-80">{user?.role?.role_name || "Staff"}</p>
+                    <div className="flex items-center gap-1 mt-1">
+                      <div className="w-2 h-2 bg-green-400 rounded-full"></div>
+                      <span className="text-xs opacity-75">Online</span>
                     </div>
-                  )}
-                </div>
-                <div>
-                  <p className="text-sm font-medium">{user?.username || "User"}</p>
-                  <p className="text-xs opacity-75">{user?.role?.role_name || "Staff"}</p>
+                  </div>
                 </div>
               </div>
             )}
           </div>
 
-          {/* Enhanced Navigation */}
-          <div className={`flex-1 overflow-y-auto py-4 transition-opacity ${isLoggingOut ? 'opacity-50 pointer-events-none' : ''}`}>
+          {/* ✅ Enhanced Navigation */}
+          <div className={`flex-1 overflow-y-auto py-6 bg-gray-50/50 transition-opacity ${isLoggingOut ? 'opacity-50 pointer-events-none' : ''}`}>
             {/* Dashboard Section */}
-            <div className="px-4 mb-6">
-              <div className="flex items-center gap-2 mb-3">
-                <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-                <h3 className="text-sm font-semibold text-gray-700 uppercase tracking-wide">Dashboard</h3>
+            <div className="px-6 mb-8">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="p-1.5 bg-blue-100 rounded-lg">
+                  <LuChrome className="w-4 h-4 text-blue-600" />
+                </div>
+                <h3 className="text-sm font-bold text-gray-800 uppercase tracking-wider">Dashboard</h3>
               </div>
-              <div className="space-y-1" onClick={handleNavClick}>
+              <div className="space-y-2" onClick={handleNavClick}>
                 <NavLinks links={dashboardLinks} disabled={isLoggingOut} />
               </div>
             </div>
 
-            <hr className="mx-4 border-gray-200" />
+            <hr className="mx-6 border-gray-200" />
 
             {/* Menu Section */}
-            <div className="px-4 my-6">
-              <div className="flex items-center gap-2 mb-3">
-                <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                <h3 className="text-sm font-semibold text-gray-700 uppercase tracking-wide">Menu</h3>
+            <div className="px-6 my-8">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="p-1.5 bg-green-100 rounded-lg">
+                  <div className="w-4 h-4 bg-green-600 rounded-sm"></div>
+                </div>
+                <h3 className="text-sm font-bold text-gray-800 uppercase tracking-wider">Menu Utama</h3>
               </div>
-              <div className="space-y-1" onClick={handleNavClick}>
+              <div className="space-y-2" onClick={handleNavClick}>
                 <NavLinks links={menuLinks} disabled={isLoggingOut} />
               </div>
             </div>
 
-            <hr className="mx-4 border-gray-200" />
+            <hr className="mx-6 border-gray-200" />
 
             {/* Jadwal Section */}
-            <div className="px-4 my-6">
-              <div className="flex items-center gap-2 mb-3">
-                <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
-                <h3 className="text-sm font-semibold text-gray-700 uppercase tracking-wide">Jadwal</h3>
+            <div className="px-6 my-8">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="p-1.5 bg-purple-100 rounded-lg">
+                  <div className="w-4 h-4 bg-purple-600 rounded-sm"></div>
+                </div>
+                <h3 className="text-sm font-bold text-gray-800 uppercase tracking-wider">Jadwal</h3>
               </div>
-              <div className="space-y-1" onClick={handleNavClick}>
+              <div className="space-y-2" onClick={handleNavClick}>
                 <NavLinks links={jadwalLinks} disabled={isLoggingOut} />
               </div>
             </div>
           </div>
 
-          {/* Enhanced Logout Section */}
-          <div className="p-4 border-t bg-gray-50">
+          {/* ✅ Enhanced Logout Section */}
+          <div className="p-6 border-t bg-gradient-to-r from-gray-50 to-gray-100">
             <button
               onClick={handleLogout}
               disabled={isLoading}
               className={`
-                flex w-full items-center gap-3 p-3 rounded-lg transition-all duration-200 font-medium
+                flex w-full items-center gap-4 p-4 rounded-xl transition-all duration-300 font-semibold text-sm
                 ${isLoggingOut
-                  ? 'text-red-400 bg-red-50 cursor-not-allowed'
-                  : 'text-red-600 hover:text-red-700 hover:bg-red-50'
+                  ? 'text-red-400 bg-red-50 cursor-not-allowed shadow-inner'
+                  : 'text-red-600 hover:text-red-700 bg-white hover:bg-red-50 shadow-lg hover:shadow-xl active:scale-98'
                 }
                 ${isLoading ? 'opacity-70' : ''}
               `}
             >
-              <div className={`p-1 rounded-lg ${isLoggingOut ? 'bg-red-200' : 'bg-red-100'}`}>
+              <div className={`p-2 rounded-lg transition-colors ${isLoggingOut ? 'bg-red-200' : 'bg-red-100'}`}>
                 {isLoggingOut ? (
-                  <LuLoader className="h-4 w-4 animate-spin" />
+                  <LuLoader className="h-5 w-5 animate-spin" />
                 ) : (
-                  <LuPower className="h-4 w-4" />
+                  <LuPower className="h-5 w-5" />
                 )}
               </div>
-              <span>
-                {loadingState === 'logging-out' && 'Logging out...'}
-                {loadingState === 'redirecting' && 'Redirecting...'}
-                {!isLoggingOut && 'Keluar'}
-              </span>
+              <div className="flex-1 text-left">
+                <div className="font-semibold">
+                  {loadingState === 'logging-out' && 'Logging out...'}
+                  {loadingState === 'redirecting' && 'Redirecting...'}
+                  {!isLoggingOut && 'Keluar'}
+                </div>
+                <div className="text-xs opacity-70">
+                  {!isLoggingOut && 'Sign out from dashboard'}
+                </div>
+              </div>
             </button>
 
-            {/* Progress indicator */}
+            {/* ✅ Enhanced Progress indicator */}
             {isLoggingOut && (
-              <div className="mt-2">
-                <div className="w-full bg-red-200 rounded-full h-1 overflow-hidden">
-                  <div className="h-full bg-red-500 rounded-full animate-pulse"></div>
+              <div className="mt-4">
+                <div className="w-full bg-red-200 rounded-full h-2 overflow-hidden">
+                  <div className="h-full bg-gradient-to-r from-red-400 to-red-600 rounded-full animate-pulse transition-all duration-500"></div>
                 </div>
-                <p className="text-xs text-red-600 text-center mt-1">
-                  {loadingState === 'logging-out' ? 'Signing out...' : 'Redirecting...'}
+                <p className="text-xs text-red-600 text-center mt-2 font-medium">
+                  {loadingState === 'logging-out' ? 'Signing out...' : 'Redirecting to login...'}
                 </p>
               </div>
             )}
@@ -490,14 +540,14 @@ export default function SideNav() {
         </div>
       </div>
 
-      {/* Enhanced Overlay with loading state */}
+      {/* ✅ Enhanced Overlay */}
       {isOpen && (
         <div 
           className={`
             fixed inset-0 z-30 md:hidden transition-all duration-300
             ${isLoggingOut 
-              ? 'bg-black/30 backdrop-blur-sm pointer-events-none' 
-              : 'bg-black/50 backdrop-blur-sm'
+              ? 'bg-black/40 backdrop-blur-md pointer-events-none' 
+              : 'bg-black/60 backdrop-blur-sm'
             }
           `}
           onClick={() => !isLoggingOut && setIsOpen(false)}

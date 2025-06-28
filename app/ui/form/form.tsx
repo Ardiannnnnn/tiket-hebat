@@ -6,13 +6,12 @@ import { toast } from "sonner";
 
 import CardPrice from "./cardPrice";
 import FormData from "./formData";
+import SessionTimer from "../sessionTimer";
 import { getSessionById } from "@/service/session";
 import { clearSessionCookie, getCookie, setSessionCookie } from "@/utils/cookies";
 import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogFooter } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import type { SessionData } from "@/types/session";
-
-const SESSION_TIMEOUT = 15 * 60 * 1000; // 15 minutes in milliseconds
 
 export default function Form() {
   const router = useRouter();
@@ -56,33 +55,56 @@ export default function Form() {
     };
 
     validateAndFetchSession();
-
-    // Session timeout
-    const timeoutId = setTimeout(() => {
-      setSessionExpired(true);
-      clearSessionCookie();
-    }, SESSION_TIMEOUT);
-
-    return () => clearTimeout(timeoutId);
   }, [sessionId, bookId, router]);
 
+  const handleSessionExpired = () => {
+    setSessionExpired(true);
+  };
+
   if (loading) {
-    return <div className="flex justify-center items-center min-h-screen">Loading...</div>;
+    return (
+      <div className="flex justify-center items-center min-h-screen">
+        <div className="text-center">
+          <div className="w-8 h-8 border-4 border-Blue border-t-transparent rounded-full animate-spin mx-auto mb-3"></div>
+          <span className="text-gray-600">Memuat data...</span>
+        </div>
+      </div>
+    );
   }
 
   if (!session) {
-    return <div className="flex justify-center items-center min-h-screen">Session tidak ditemukan</div>;
+    return (
+      <div className="flex justify-center items-center min-h-screen">
+        <div className="text-center">
+          <h2 className="text-lg font-semibold text-gray-700 mb-2">Session tidak ditemukan</h2>
+          <p className="text-gray-500">Silakan booking ulang</p>
+        </div>
+      </div>
+    );
   }
 
   return (
     <>
       <main className={`${poppins.className} container mx-auto px-4`}>
         <div className="flex flex-col items-center gap-6 py-8">
-          <header className="flex items-center gap-4">
-            <div className="bg-Blue rounded-full w-10 h-10 flex items-center justify-center">
-              <span className="text-white font-bold text-2xl">2</span>
+          {/* ✅ Header with Timer */}
+          <header className="flex flex-col items-center gap-4">
+            <div className="flex items-center gap-4">
+              <div className="bg-Blue rounded-full w-10 h-10 flex items-center justify-center">
+                <span className="text-white font-bold text-2xl">2</span>
+              </div>
+              <h1 className="text-2xl font-semibold">Isi Data Diri</h1>
             </div>
-            <h1 className="text-2xl font-semibold">Isi Data Diri</h1>
+            
+            {/* ✅ Session Timer */}
+            {session.expires_at && (
+              <SessionTimer 
+                expiresAt={session.expires_at}
+                onExpired={handleSessionExpired}
+                redirectTo={`/book/${bookId}`}
+                className="shadow-sm"
+              />
+            )}
           </header>
 
           <div className="flex flex-col-reverse justify-center md:items-start md:flex-row gap-8 w-full">

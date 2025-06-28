@@ -57,7 +57,7 @@ export default function DetailKapal({ ship }: DetailKapalProps) {
   };
 
   return (
-    <div className={`${poppins.className} min-h-screen bg-gray-50 py-8`}>
+    <div className={`${poppins.className} py-4`}>
       <div className="container mx-auto px-4 max-w-6xl">
         {/* ✅ Header dengan Back Button */}
         <div className="flex items-center justify-between mb-8">

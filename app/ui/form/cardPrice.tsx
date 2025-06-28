@@ -1,5 +1,7 @@
 // app/ui/form/cardPrice.tsx
-import React from "react";
+"use client";
+
+import React, { useEffect, useState } from "react";
 import {
   Card,
   CardContent,
@@ -24,10 +26,24 @@ interface CardPriceProps {
 }
 
 export default function CardPrice({ session }: CardPriceProps) {
+  // ✅ Simple sticky state for positioning only
+  const [isSticky, setIsSticky] = useState(false);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      const scrollTop = window.scrollY;
+      const threshold = 200;
+      setIsSticky(scrollTop > threshold);
+    };
+
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
   const kapal = session.schedule?.ship?.ship_name ?? "Tidak diketahui";
   const keberangkatan = {
-    asal: session.schedule?.route?.departure_harbor?.harbor_name ?? "-",
-    tujuan: session.schedule?.route?.arrival_harbor?.harbor_name ?? "-",
+    asal: session.schedule?.departure_harbor?.harbor_name ?? "-",
+    tujuan: session.schedule?.arrival_harbor?.harbor_name ?? "-",
     jadwal: new Date(
       session.schedule?.departure_datetime ?? ""
     ).toLocaleDateString("id-ID", {
@@ -43,20 +59,49 @@ export default function CardPrice({ session }: CardPriceProps) {
     }),
   };
 
-  const prices = session.prices ?? [];
+  const claimItems = session.claim_items ?? [];
   const tickets = session.tickets ?? [];
 
-  const totalHargaPenumpang = prices
+  console.log("📊 CardPrice data analysis:", {
+    claimItems,
+    hasClaimItems: claimItems.length > 0,
+    claimItemsStructure: claimItems.map((item) => ({
+      class_id: item.class_id,
+      className: item.class.class_name,
+      type: item.class.type,
+      quantity: item.quantity,
+      hasSubtotal: "subtotal" in item,
+    })),
+  });
+
+  const totalHargaPenumpang = claimItems
     .filter((item) => item.class.type === "passenger")
-    .reduce((acc, item) => acc + item.subtotal, 0);
-  const totalHargaKendaraan = prices
+    .reduce((acc, item) => {
+      const subtotal = item.subtotal ?? 0;
+      return acc + subtotal;
+    }, 0);
+
+  const totalHargaKendaraan = claimItems
     .filter((item) => item.class.type === "vehicle")
-    .reduce((acc, item) => acc + item.subtotal, 0);
+    .reduce((acc, item) => {
+      const subtotal = item.subtotal ?? 0;
+      return acc + subtotal;
+    }, 0);
+
+  const getItemPrice = (item: (typeof claimItems)[0]) => {
+    if (item.subtotal && item.quantity > 0) {
+      return item.subtotal / item.quantity;
+    }
+    return 0;
+  };
 
   return (
-    <div>
-      <Card className={cn("text-sm shadow-l py-0 gap-0")}>
-        {/* Enhanced Header */}
+    <div className={cn(
+      // ✅ Only sticky positioning, no visual changes
+      "lg:sticky lg:top-4"
+    )}>
+      <Card className="text-sm shadow-lg py-0 gap-0">
+        {/* ✅ Simple header without transitions */}
         <CardHeader className="flex flex-col sm:flex-row sm:justify-between border-b p-4 sm:p-6 space-y-2 sm:space-y-0">
           <CardTitle className="flex items-center gap-2 font-semibold text-gray-800">
             <MapPin className="w-5 h-5 text-blue-600" />
@@ -73,13 +118,13 @@ export default function CardPrice({ session }: CardPriceProps) {
           <div className="bg-Orange/10 rounded-lg p-4 mb-6">
             <div className="grid grid-cols-1 lg:grid-cols-2">
               {/* Left Column - Route Info */}
-              <div className="space-y-3">
+              <div className="space-y-3 mb-3">
                 <label className="flex items-center gap-2 text-Orange font-medium text-sm">
                   <MapPin className="w-4 h-4" />
                   Rute Keberangkatan
                 </label>
-                <div className="flex items-center justify-start text-base font-semibold">
-                  <span className="text-gray-800 flex-1 text-start">
+                <div className="flex items-center gap-2 justify-start text-base font-semibold">
+                  <span className="text-gray-800 flex-1 text-center text-sm md:text-base md:px-4">
                     {keberangkatan.asal}
                   </span>
                   <div className="flex items-center justify-center">
@@ -87,7 +132,7 @@ export default function CardPrice({ session }: CardPriceProps) {
                       <Ship className="w-4 h-4 text-Orange" />
                     </div>
                   </div>
-                  <span className="text-gray-800 flex-1 text-end">
+                  <span className="text-gray-800 flex-1 text-center text-sm md:text-base">
                     {keberangkatan.tujuan}
                   </span>
                 </div>
@@ -117,195 +162,188 @@ export default function CardPrice({ session }: CardPriceProps) {
             </div>
           </div>
 
+          {/* Show message if no claim items */}
+          {claimItems.length === 0 && (
+            <div className="text-center py-8">
+              <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Users className="w-8 h-8 text-gray-400" />
+              </div>
+              <p className="text-gray-500">Belum ada tiket yang dipilih</p>
+            </div>
+          )}
+
           {/* Ticket Details Section */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* Left Column - Ticket Classes */}
+          {claimItems.length > 0 && (
             <div className="space-y-6">
-              {/* Kelas Tiket Penumpang */}
-              {prices.filter((item) => item.class.type === "passenger").length >
-                0 && (
+              {/* Tiket Penumpang */}
+              {claimItems.filter((item) => item.class.type === "passenger")
+                .length > 0 && (
                 <div>
                   <label className="flex items-center gap-2 text-gray-600 font-medium text-sm mb-3">
                     <Users className="w-4 h-4 text-blue-600" />
-                    Kelas Tiket Penumpang
+                    Tiket Penumpang
                   </label>
-                  <div className="space-y-2">
-                    {prices
+                  <div className="bg-blue-50 border border-blue-100 rounded-lg p-4 space-y-3">
+                    {claimItems
                       .filter((item) => item.class.type === "passenger")
                       .map((tiket, index) => (
-                        <div
-                          key={index}
-                          className="flex items-center justify-between bg-blue-50 border border-blue-100 rounded-lg p-3"
-                        >
-                          <div className="flex items-center gap-3">
-                            <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
-                              <Users className="w-4 h-4 text-blue-600" />
-                            </div>
-                            <div>
-                              <span className="font-semibold text-gray-800 block">
-                                {tiket.class.class_name}
-                              </span>
-                              <span className="text-sm text-gray-500">
-                                Jumlah: {tiket.quantity} orang
-                              </span>
-                            </div>
+                        <div key={index} className="space-y-2">
+                          {/* Kelas dan Harga */}
+                          <div className="flex justify-between items-center">
+                            <span className="font-semibold text-gray-800">
+                              {tiket.class.class_name}
+                            </span>
+                            <span className="font-semibold text-gray-800">
+                              {tiket.subtotal && tiket.quantity > 0
+                                ? `Rp ${getItemPrice(tiket).toLocaleString()}`
+                                : "Rp 0"}
+                            </span>
                           </div>
+                          {/* Jumlah */}
+                          <div className="flex justify-between items-center">
+                            <span className="text-sm text-gray-500">Jumlah</span>
+                            <span className="text-sm text-gray-500">
+                              x{tiket.quantity}
+                            </span>
+                          </div>
+                          {/* Divider if not last item */}
+                          {index <
+                            claimItems.filter((item) => item.class.type === "passenger")
+                              .length - 1 && (
+                            <hr className="border-blue-200" />
+                          )}
                         </div>
                       ))}
                   </div>
                 </div>
               )}
 
-              {/* Kelas Tiket Kendaraan */}
-              {prices.filter((item) => item.class.type === "vehicle").length >
-                0 && (
+              {/* Tiket Kendaraan */}
+              {claimItems.filter((item) => item.class.type === "vehicle")
+                .length > 0 && (
                 <div>
                   <label className="flex items-center gap-2 text-gray-600 font-medium text-sm mb-3">
                     <Car className="w-4 h-4 text-green-600" />
-                    Kelas Tiket Kendaraan
+                    Tiket Kendaraan
                   </label>
-                  <div className="space-y-2">
-                    {prices
+                  <div className="bg-green-50 border border-green-100 rounded-lg p-4 space-y-3">
+                    {claimItems
                       .filter((item) => item.class.type === "vehicle")
                       .map((tiket, index) => (
-                        <div
-                          key={index}
-                          className="flex items-center justify-between bg-green-50 border border-green-100 rounded-lg p-3"
-                        >
-                          <div className="flex items-center gap-3">
-                            <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
-                              <Car className="w-4 h-4 text-green-600" />
-                            </div>
-                            <div>
-                              <span className="font-semibold text-gray-800 block">
-                                {tiket.class.class_name}
-                              </span>
-                              <span className="text-sm text-gray-500">
-                                Jumlah: {tiket.quantity} unit
-                              </span>
-                            </div>
+                        <div key={index} className="space-y-2">
+                          {/* Kelas dan Harga */}
+                          <div className="flex justify-between items-center">
+                            <span className="font-semibold text-gray-800">
+                              {tiket.class.class_name}
+                            </span>
+                            <span className="font-semibold text-gray-800">
+                              {tiket.subtotal && tiket.quantity > 0
+                                ? `Rp ${getItemPrice(tiket).toLocaleString()}`
+                                : "Rp 0"}
+                            </span>
                           </div>
-                        </div>
-                      ))}
-                  </div>
-                </div>
-              )}
-            </div>
-
-            {/* Right Column - Prices */}
-            <div className="space-y-6">
-              {/* Harga Penumpang */}
-              {prices.filter((item) => item.class.type === "passenger").length >
-                0 && (
-                <div>
-                  <label className="flex items-center gap-2 text-gray-600 font-medium text-sm mb-3 lg:justify-end">
-                    <span>Harga Tiket Penumpang</span>
-                  </label>
-                  <div className="space-y-2">
-                    {prices
-                      .filter((item) => item.class.type === "passenger")
-                      .map((tiket, index) => (
-                        <div
-                          key={index}
-                          className="bg-blue-50 border border-blue-100 rounded-lg p-3"
-                        >
-                          <div className="text-right">
-                            <div className="font-bold  text-blue-700">
-                              Rp{tiket.subtotal.toLocaleString()}
-                            </div>
-                            <div className="text-sm text-gray-600">
+                          {/* Jumlah */}
+                          <div className="flex justify-between items-center">
+                            <span className="text-sm text-gray-500">Jumlah</span>
+                            <span className="text-sm text-gray-500">
                               x{tiket.quantity}
-                            </div>
+                            </span>
                           </div>
-                        </div>
-                      ))}
-                  </div>
-                </div>
-              )}
-
-              {/* Harga Kendaraan */}
-              {prices.filter((item) => item.class.type === "vehicle").length >
-                0 && (
-                <div>
-                  <label className="flex items-center gap-2 text-gray-600 font-medium text-sm mb-3 lg:justify-end">
-                    <span>Harga Tiket Kendaraan</span>
-                  </label>
-                  <div className="space-y-2">
-                    {prices
-                      .filter((item) => item.class.type === "vehicle")
-                      .map((tiket, index) => (
-                        <div
-                          key={index}
-                          className="bg-green-50 border border-green-100 rounded-lg p-3"
-                        >
-                          <div className="text-right">
-                            <div className="font-bold text-lg text-green-700">
-                              Rp{tiket.subtotal.toLocaleString()}
-                            </div>
-                            <div className="text-sm text-gray-600">
-                              @ Rp{tiket.class.class_name.toLocaleString()} x{" "}
-                              {tiket.quantity}
-                            </div>
-                          </div>
+                          {/* Divider if not last item */}
+                          {index <
+                            claimItems.filter((item) => item.class.type === "vehicle")
+                              .length - 1 && (
+                            <hr className="border-green-200" />
+                          )}
                         </div>
                       ))}
                   </div>
                 </div>
               )}
             </div>
-          </div>
+          )}
         </CardContent>
 
-        {/* Enhanced Footer */}
-        <CardFooter className="border-t bg-gray-50 rounded-b-lg p-4 sm:p-6">
-          <div className="w-full">
-            {/* Mobile: Stack vertically */}
-            <div className="flex flex-col sm:hidden space-y-3">
-              <div className="flex justify-between items-center">
-                <span className="text-gray-600">Harga Total Tiket:</span>
-                <span className="font-medium">
-                  Rp{totalHargaPenumpang.toLocaleString()}
-                </span>
+        {/* Footer - Only show if there are claim items */}
+        {claimItems.length > 0 && (
+          <CardFooter className="border-t bg-gray-50 rounded-b-lg p-4 sm:p-6">
+            <div className="w-full">
+              {/* Mobile: Stack vertically */}
+              <div className="flex flex-col sm:hidden space-y-3">
+                {totalHargaPenumpang > 0 && (
+                  <div className="flex justify-between items-center">
+                    <span className="text-gray-600">Harga Total Tiket Penumpang:</span>
+                    <span className="font-medium">
+                      Rp{totalHargaPenumpang.toLocaleString()}
+                    </span>
+                  </div>
+                )}
+                {totalHargaKendaraan > 0 && (
+                  <div className="flex justify-between items-center">
+                    <span className="text-gray-600">
+                      Harga Total Kendaraan:
+                    </span>
+                    <span className="font-medium">
+                      Rp{totalHargaKendaraan.toLocaleString()}
+                    </span>
+                  </div>
+                )}
+                <div className="flex justify-between items-center pt-3 border-t border-gray-200">
+                  <span className="font-bold text-sm">Total:</span>
+                  <span className="font-bold text-lg text-blue-600">
+                    {totalHargaPenumpang + totalHargaKendaraan > 0 ? (
+                      `Rp${(
+                        totalHargaPenumpang + totalHargaKendaraan
+                      ).toLocaleString()}`
+                    ) : (
+                      <span className="text-gray-400">
+                        Harga belum tersedia
+                      </span>
+                    )}
+                  </span>
+                </div>
               </div>
-              <div className="flex justify-between items-center">
-                <span className="text-gray-600">Harga Total Kendaraan:</span>
-                <span className="font-medium">
-                  Rp{totalHargaKendaraan.toLocaleString()}
-                </span>
-              </div>
-              <div className="flex justify-between items-center pt-3 border-t border-gray-200">
-                <span className="font-bold text-lg">Total:</span>
-                <span className="font-bold text-lg text-blue-600">
-                  Rp
-                  {(totalHargaPenumpang + totalHargaKendaraan).toLocaleString()}
-                </span>
-              </div>
-            </div>
 
-            {/* Desktop: Side by side */}
-            <div className="hidden sm:flex justify-between">
-              <div className="space-y-2">
-                <p className="text-gray-600">Harga Total Tiket:</p>
-                <p className="text-gray-600">Harga Total Kendaraan:</p>
-                <p className="font-bold text-lg pt-2 border-t border-gray-200">
-                  Total:
-                </p>
-              </div>
-              <div className="space-y-2 text-right">
-                <p className="font-medium">
-                  Rp{totalHargaPenumpang.toLocaleString()}
-                </p>
-                <p className="font-medium">
-                  Rp{totalHargaKendaraan.toLocaleString()}
-                </p>
-                <p className="font-bold text-lg text-blue-600 pt-2 border-t border-gray-200">
-                  Rp
-                  {(totalHargaPenumpang + totalHargaKendaraan).toLocaleString()}
-                </p>
+              {/* Desktop: Side by side */}
+              <div className="hidden sm:flex justify-between">
+                <div className="space-y-2">
+                  {totalHargaPenumpang > 0 && (
+                    <p className="text-gray-600">Harga Total Tiket Penumpang:</p>
+                  )}
+                  {totalHargaKendaraan > 0 && (
+                    <p className="text-gray-600">Harga Total Kendaraan:</p>
+                  )}
+                  <p className="font-bold text-sm pt-2 border-t border-gray-200">
+                    Total:
+                  </p>
+                </div>
+                <div className="space-y-2 text-right">
+                  {totalHargaPenumpang > 0 && (
+                    <p className="font-medium">
+                      Rp{totalHargaPenumpang.toLocaleString()}
+                    </p>
+                  )}
+                  {totalHargaKendaraan > 0 && (
+                    <p className="font-medium">
+                      Rp{totalHargaKendaraan.toLocaleString()}
+                    </p>
+                  )}
+                  <p className="font-bold text-sm text-blue-600 pt-2 border-t border-gray-200">
+                    {totalHargaPenumpang + totalHargaKendaraan > 0 ? (
+                      `Rp${(
+                        totalHargaPenumpang + totalHargaKendaraan
+                      ).toLocaleString()}`
+                    ) : (
+                      <span className="text-gray-400 text-base">
+                        Harga belum tersedia
+                      </span>
+                    )}
+                  </p>
+                </div>
               </div>
             </div>
-          </div>
-        </CardFooter>
+          </CardFooter>
+        )}
       </Card>
     </div>
   );

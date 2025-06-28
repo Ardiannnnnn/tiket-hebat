@@ -75,11 +75,11 @@ export interface TicketForm {
   class_id: number;
   type: string;
   passenger_name: string;
+  passenger_gender: string;
   passenger_age: number;
   address: string;
   id_type: string;
   id_number: string;
   license_plate: string | null;
-  gender: string | null;
   price: number;
 }

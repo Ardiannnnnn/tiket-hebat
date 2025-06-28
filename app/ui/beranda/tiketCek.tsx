@@ -173,16 +173,16 @@ export default function CekTiket() {
         {/* Ticket Card */}
         {bookingData && (
           <div className="max-w-5xl mx-auto">
-            <Card className="overflow-hidden shadow-2xl border-0 bg-white py-0 gap-0">
+            <Card className="overflow-hidden shadow-md rounded-lg py-0 gap-0">
               {/* Header - Blue Theme */}
-              <CardHeader className="bg-gradient-to-r from-Blue to-Blue/90 text-white p-6">
+              <CardHeader className="border rounded-lg p-6">
                 <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
                   <div className="flex items-center gap-4">
                     <div className="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center">
-                      <Ship className="w-8 h-8 text-white" />
+                      <Ship className="w-8 h-8 text-Blue" />
                     </div>
                     <div>
-                      <CardTitle className="text-2xl font-bold">
+                      <CardTitle className="md:text-2xl font-bold text-gray-600">
                         PT ASDP Indonesia Ferry
                       </CardTitle>
                       <p className="text-Blue-100 text-sm mt-1">
@@ -221,7 +221,7 @@ export default function CekTiket() {
                           <p className="text-sm text-Blue/80">
                             Tanggal Keberangkatan
                           </p>
-                          <p className="font-semibold text-gray-900">
+                          <p className="font-semibold text-gray-600">
                             {new Date(
                               bookingData.schedule.departure_datetime
                             ).toLocaleDateString("id-ID", {
@@ -238,7 +238,7 @@ export default function CekTiket() {
                         <User className="w-5 h-5 text-Blue" />
                         <div>
                           <p className="text-sm text-Blue/80">Nama Pemesan</p>
-                          <p className="font-semibold text-gray-900">
+                          <p className="font-semibold text-gray-600">
                             {bookingData.customer_name}
                           </p>
                         </div>
@@ -341,7 +341,7 @@ export default function CekTiket() {
                                     <p className="text-sm text-Blue/80">
                                       Kelas
                                     </p>
-                                    <p className="font-semibold text-gray-900">
+                                    <p className="font-semibold text-gray-600">
                                       {ticket.class.class_name}
                                     </p>
                                   </div>
@@ -349,7 +349,7 @@ export default function CekTiket() {
                                     <p className="text-sm text-Blue/80">
                                       Kursi
                                     </p>
-                                    <p className="font-semibold text-gray-900">
+                                    <p className="font-semibold text-gray-600">
                                       {ticket.seat_number || "Tidak ada"}
                                     </p>
                                   </div>

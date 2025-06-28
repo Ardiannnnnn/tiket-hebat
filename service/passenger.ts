@@ -6,7 +6,7 @@ import { TicketEntryPayload } from "@/types/passenger";
  */
 export const submitPassengerData = async (payload: TicketEntryPayload) => {
   try {
-    const response = await api.post("/session/ticket/data/entry", payload);
+    const response = await api.post("claim/entry", payload);
     console.log("Passenger entry response:", response.data);
     return response.data;
   } catch (error) {

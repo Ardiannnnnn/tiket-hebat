@@ -30,48 +30,50 @@ export function Form() {
       if (res?.status) {
         setSchedules(res.data);
       }
-      // Tambahkan delay 1 detik agar loading terlihat
-      // await new Promise(resolve => setTimeout(resolve, 5000));
       setLoading(false);
     }
     fetchSchedules();
   }, []);
 
+  // ✅ Updated handleChange for cascading selection
   const handleChange = (field: keyof typeof selected, value: string) => {
     setSelected((prev) => {
       const newSelected = { ...prev, [field]: value };
 
       if (field === "asal") {
-        const foundSchedule = schedules.find(
-          (sch) => sch.departure_harbor.harbor_name === value
-        );
-
-        if (foundSchedule) {
-          newSelected.tujuan = foundSchedule.arrival_harbor.harbor_name;
-          newSelected.kapal = foundSchedule.ship.ship_name;
-          newSelected.jadwal = getDateTimeString(foundSchedule.arrival_datetime);
-          newSelected.scheduleid = String(foundSchedule.id);
-        } else {
-          newSelected.tujuan = "";
-          newSelected.kapal = "";
-          newSelected.jadwal = "";
-          newSelected.scheduleid = "";
-        }
+        // ✅ Reset semua field dependent ketika asal berubah
+        newSelected.tujuan = "";
+        newSelected.jadwal = "";
+        newSelected.kapal = "";
+        newSelected.scheduleid = "";
       }
 
-      // Tambahan: jika field jadwal diubah, update kapal otomatis
+      if (field === "tujuan") {
+        // ✅ Reset jadwal dan kapal ketika tujuan berubah
+        newSelected.jadwal = "";
+        newSelected.kapal = "";
+        newSelected.scheduleid = "";
+      }
+
       if (field === "jadwal") {
+        // ✅ Reset kapal ketika jadwal berubah
+        newSelected.kapal = "";
+        newSelected.scheduleid = "";
+      }
+
+      if (field === "kapal") {
+        // ✅ Set scheduleid ketika kapal dipilih
         const foundSchedule = schedules.find(
           (sch) =>
-            getDateTimeString(sch.departure_datetime) === value &&
-            sch.departure_harbor.harbor_name === prev.asal &&
-            sch.arrival_harbor.harbor_name === prev.tujuan
+            sch.departure_harbor.harbor_name === newSelected.asal &&
+            sch.arrival_harbor.harbor_name === newSelected.tujuan &&
+            getDateTimeString(sch.departure_datetime) === newSelected.jadwal &&
+            sch.ship.ship_name === value
         );
+
         if (foundSchedule) {
-          newSelected.kapal = foundSchedule.ship.ship_name;
           newSelected.scheduleid = String(foundSchedule.id);
         } else {
-          newSelected.kapal = "";
           newSelected.scheduleid = "";
         }
       }
@@ -82,31 +84,93 @@ export function Form() {
 
   // Helper untuk mengambil tanggal dan jam dari ISO string
   function getDateTimeString(dateTime: string) {
+  try {
     const date = new Date(dateTime);
-    const tanggal = date.toISOString().split("T")[0];
-    const jam = date.toTimeString().slice(0, 5); // "HH:MM"
-    return `${tanggal} ${jam}`;
+    
+    // ✅ Validasi date object
+    if (isNaN(date.getTime())) {
+      console.warn(`Invalid date: ${dateTime}`);
+      return "Tanggal tidak valid";
+    }
+    
+    // ✅ Array nama hari dalam bahasa Indonesia
+    const namaHari = [
+      "Minggu", "Senin", "Selasa", "Rabu", 
+      "Kamis", "Jumat", "Sabtu"
+    ];
+    
+    // ✅ Array nama bulan dalam bahasa Indonesia
+    const namaBulan = [
+      "Januari", "Februari", "Maret", "April", "Mei", "Juni",
+      "Juli", "Agustus", "September", "Oktober", "November", "Desember"
+    ];
+    
+    // ✅ Ambil komponen tanggal
+    const hari = namaHari[date.getDay()];
+    const tanggal = date.getDate();
+    const bulan = namaBulan[date.getMonth()];
+    const tahun = date.getFullYear();
+    
+    // ✅ Format jam dengan timezone WIB (UTC+7)
+    // Adjust untuk timezone Indonesia jika diperlukan
+    const jam = date.getHours().toString().padStart(2, '0');
+    const menit = date.getMinutes().toString().padStart(2, '0');
+    
+    // ✅ Return format: "Senin, 17 Maret 2023 - 16.00 WIB"
+    return `${hari}, ${tanggal} ${bulan} ${tahun} - ${jam}.${menit} WIB`;
+    
+  } catch (error) {
+    console.error(`Error formatting date: ${dateTime}`, error);
+    return "Format tanggal error";
   }
+}
 
+  // ✅ Options berdasarkan cascading selection
   const asalOptions = Array.from(
     new Set(schedules.map((sch) => sch.departure_harbor.harbor_name))
   );
 
-  const tujuanOptions = Array.from(
-    new Set(schedules.map((sch) => sch.arrival_harbor.harbor_name))
-  );
-
-  const kapalOptions = Array.from(
-    new Set(schedules.map((sch) => sch.ship.ship_name))
-  );
-
-  const jadwalOptions = Array.from(
-    new Set(
-      schedules.map(
-        (sch) => getDateTimeString(sch.departure_datetime)
+  // ✅ Tujuan hanya berdasarkan asal yang dipilih
+  const tujuanOptions = selected.asal
+    ? Array.from(
+        new Set(
+          schedules
+            .filter((sch) => sch.departure_harbor.harbor_name === selected.asal)
+            .map((sch) => sch.arrival_harbor.harbor_name)
+        )
       )
-    )
-  );
+    : [];
+
+  // ✅ Jadwal hanya berdasarkan asal dan tujuan yang dipilih
+  const jadwalOptions = selected.asal && selected.tujuan
+    ? Array.from(
+        new Set(
+          schedules
+            .filter(
+              (sch) =>
+                sch.departure_harbor.harbor_name === selected.asal &&
+                sch.arrival_harbor.harbor_name === selected.tujuan
+            )
+            .map((sch) => getDateTimeString(sch.departure_datetime))
+        )
+      )
+    : [];
+
+  // ✅ Kapal hanya berdasarkan asal, tujuan, dan jadwal yang dipilih
+  const kapalOptions = selected.asal && selected.tujuan && selected.jadwal
+    ? Array.from(
+        new Set(
+          schedules
+            .filter(
+              (sch) =>
+                sch.departure_harbor.harbor_name === selected.asal &&
+                sch.arrival_harbor.harbor_name === selected.tujuan &&
+                getDateTimeString(sch.departure_datetime) === selected.jadwal
+            )
+            .map((sch) => sch.ship.ship_name)
+        )
+      )
+    : [];
 
   const propsExample = [
     {
@@ -117,6 +181,8 @@ export function Form() {
       value: selected.asal,
       onChange: (v: string) => handleChange("asal", v),
       isLoading: loading,
+      disabled: false,
+      placeholder: "Pilih pelabuhan asal",
     },
     {
       title: "Pilih Tujuan",
@@ -126,6 +192,8 @@ export function Form() {
       value: selected.tujuan,
       onChange: (v: string) => handleChange("tujuan", v),
       isLoading: loading,
+      disabled: !selected.asal, // ✅ Disabled jika asal belum dipilih
+      placeholder: selected.asal ? "Pilih pelabuhan tujuan" : "Pilih asal terlebih dahulu",
     },
     {
       title: "Pilih Jadwal",
@@ -135,6 +203,11 @@ export function Form() {
       value: selected.jadwal,
       onChange: (v: string) => handleChange("jadwal", v),
       isLoading: loading,
+      disabled: !selected.asal || !selected.tujuan, // ✅ Disabled jika asal/tujuan belum dipilih
+      placeholder: 
+        !selected.asal ? "Pilih asal terlebih dahulu" :
+        !selected.tujuan ? "Pilih tujuan terlebih dahulu" :
+        "Pilih jadwal keberangkatan",
     },
     {
       title: "Pilih Kapal",
@@ -144,23 +217,40 @@ export function Form() {
       value: selected.kapal,
       onChange: (v: string) => handleChange("kapal", v),
       isLoading: loading,
+      disabled: !selected.asal || !selected.tujuan || !selected.jadwal, // ✅ Disabled jika prerequisite belum lengkap
+      placeholder: 
+        !selected.asal ? "Pilih asal terlebih dahulu" :
+        !selected.tujuan ? "Pilih tujuan terlebih dahulu" :
+        !selected.jadwal ? "Pilih jadwal terlebih dahulu" :
+        "Pilih kapal",
     },
   ];
 
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
-    // Validasi semua field wajib
-    if (
-      !selected.asal ||
-      !selected.tujuan ||
-      !selected.jadwal ||
-      !selected.kapal
-    ) {
-      toast("Silakan memilih jadwal sebelum melanjutkan.");
+    // ✅ Enhanced validation
+    if (!selected.asal) {
+      toast.error("Silakan pilih pelabuhan asal terlebih dahulu.");
+      return;
+    } 
+
+    if (!selected.tujuan) {
+      toast.error("Silakan pilih pelabuhan tujuan.");
       return;
     }
 
+    if (!selected.jadwal) {
+      toast.error("Silakan pilih jadwal keberangkatan.");
+      return;
+    }
+
+    if (!selected.kapal) {
+      toast.error("Silakan pilih kapal.");
+      return;
+    }
+
+    // ✅ Find exact schedule match
     const selectedSchedule = schedules.find(
       (sch) =>
         sch.departure_harbor.harbor_name === selected.asal &&
@@ -170,23 +260,24 @@ export function Form() {
     );
 
     if (!selectedSchedule) {
-      toast("Jadwal yang dipilih tidak ditemukan. Pastikan data sudah benar.");
+      toast.error("Jadwal yang dipilih tidak ditemukan. Silakan coba lagi.");
       return;
     }
 
+    console.log("🚢 Selected schedule:", selectedSchedule);
     router.push(`/book/${selectedSchedule.id}`);
   };
 
   return (
-    <div className="p-6 md:p-8 rounded-lg bg-amber-50 md:w-1/2">
+    <div className="p-6 md:p-8 rounded-lg bg-amber-50 xl:w-1/2">
       <form
         onSubmit={handleSubmit}
-        className="flex flex-col justify-center space-y-2 md:space-y-10"
+        className="flex flex-col justify-center space-y-2 xl:space-y-10"
       >
         <h2 className="text-2xl font-semibold text-Orange text-center">
           Cari Jadwal Kapal
         </h2>
-        <div className="grid md:grid-cols-2 md:gap-4">
+        <div className="grid xl:grid-cols-2 xl:gap-4">
           {propsExample.map((prop) => (
             <SelectInput
               key={prop.id}
@@ -197,14 +288,27 @@ export function Form() {
               value={prop.value}
               onChange={prop.onChange}
               isLoading={prop.isLoading}
+              disabled={prop.disabled}
+              placeholder={prop.placeholder}
             />
           ))}
         </div>
+
+        {/* ✅ Enhanced submit button with validation info */}
         <button
           type="submit"
-          className="bg-Blue text-white rounded-lg p-2.5 hover:bg-teal-600"
+          disabled={!selected.asal || !selected.tujuan || !selected.jadwal || !selected.kapal}
+          className={`rounded-lg p-2.5 transition-colors ${
+            selected.asal && selected.tujuan && selected.jadwal && selected.kapal
+              ? "bg-Blue text-white hover:bg-teal-600"
+              : "bg-gray-300 text-gray-500 cursor-not-allowed"
+          }`}
         >
-          Pilih Jadwal
+          {!selected.asal ? "Pilih Pelabuhan Asal" :
+           !selected.tujuan ? "Pilih Pelabuhan Tujuan" :
+           !selected.jadwal ? "Pilih Jadwal" :
+           !selected.kapal ? "Pilih Kapal" :
+           "Pilih Jadwal"}
         </button>
       </form>
     </div>
