@@ -12,18 +12,13 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useEffect, useState } from "react";
+import { User, Phone, Mail, CreditCard, UserCheck } from "lucide-react";
 import {
-  User,
-  Phone,
-  Mail,
-  CreditCard,
-  UserCheck,
-} from "lucide-react";
-import { 
-  getPemesanIdentityFormat, 
-  validatePemesanIdentityInput, 
-  validatePhoneNumber 
+  getPemesanIdentityFormat,
+  validatePemesanIdentityInput,
+  validatePhoneNumber,
 } from "@/lib/pemesanSchema";
+import { zodResolver } from "@hookform/resolvers/zod";
 
 export default function FormPemesan() {
   const {
@@ -86,7 +81,9 @@ export default function FormPemesan() {
             <div className="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center">
               <User className="w-4 h-4 text-purple-600" />
             </div>
-            <h2 className="text-lg font-semibold text-gray-800">Data Pemesan</h2>
+            <h2 className="text-lg font-semibold text-gray-800">
+              Data Pemesan
+            </h2>
           </div>
         </CardHeader>
 
@@ -116,11 +113,13 @@ export default function FormPemesan() {
                 <span className="text-gray-500">
                   Sesuai identitas (huruf saja)
                 </span>
-                <span className={`${
-                  (watch("nama")?.length || 0) > 40
-                    ? "text-amber-600"
-                    : "text-gray-400"
-                }`}>
+                <span
+                  className={`${
+                    (watch("nama")?.length || 0) > 40
+                      ? "text-amber-600"
+                      : "text-gray-400"
+                  }`}
+                >
                   {watch("nama")?.length || 0}/50
                 </span>
               </div>
@@ -144,12 +143,22 @@ export default function FormPemesan() {
                 id="nohp"
                 className="h-11"
                 placeholder="Contoh: 08123456789"
-                maxLength={15}
+                maxLength={14}
                 inputMode="numeric"
                 {...register("nohp")}
                 onInput={(e) => {
                   const target = e.target as HTMLInputElement;
-                  target.value = target.value.replace(/[^0-9]/g, "");
+                  let value = target.value.replace(/[^0-9]/g, "");
+                  if (value.length > 14) {
+                    value = value.substring(0, 14);
+                  }
+                  target.value = value;
+                }}
+                onChange={(e) => {
+                  const value = e.target.value;
+                  const cleanValue = value.replace(/[^0-9]/g, "").substring(0, 14);
+
+                  setValue("nohp", cleanValue);
                 }}
               />
               {(() => {
@@ -159,13 +168,18 @@ export default function FormPemesan() {
                   <>
                     <div className="flex justify-between text-xs">
                       <span className="text-gray-500">
-                        Dimulai dengan 08 atau 62
+                        Nomor HP aktif (10-14 digit)
                       </span>
-                      <span className={`${
-                        !validation.isValid ? "text-red-500" : 
-                        currentNohp.length >= 10 ? "text-green-600" : "text-gray-400"
-                      }`}>
-                        {currentNohp.length}/15
+                      <span
+                        className={`${
+                          !validation.isValid
+                            ? "text-red-500"
+                            : currentNohp.length >= 10 && currentNohp.length <= 14
+                            ? "text-green-600"
+                            : "text-gray-400"
+                        }`}
+                      >
+                        {currentNohp.length}/14
                       </span>
                     </div>
                     {!validation.isValid && validation.message && (
@@ -196,7 +210,7 @@ export default function FormPemesan() {
                 render={({ field }) => (
                   <Select
                     onValueChange={(value) => {
-                      field.onChange(value);  
+                      field.onChange(value);
                       setValue("jenisID", value);
                     }}
                     value={watch("jenisID") ?? field.value}
@@ -232,13 +246,20 @@ export default function FormPemesan() {
                 const currentJenisID = watch("jenisID");
                 const currentNoID = watch("noID") || "";
                 const format = getPemesanIdentityFormat(currentJenisID);
-                const validation = validatePemesanIdentityInput(currentJenisID, currentNoID);
+                const validation = validatePemesanIdentityInput(
+                  currentJenisID,
+                  currentNoID
+                );
 
                 return (
                   <>
                     <Input
                       id="noID"
-                      className={`h-11 ${!validation.isValid ? "border-red-300 focus:border-red-500" : ""}`}
+                      className={`h-11 ${
+                        !validation.isValid
+                          ? "border-red-300 focus:border-red-500"
+                          : ""
+                      }`}
                       placeholder={format.placeholder}
                       maxLength={format.digits}
                       inputMode="numeric"
@@ -249,16 +270,25 @@ export default function FormPemesan() {
                       }}
                     />
                     <div className="flex justify-between text-xs">
-                      <span className="text-gray-500">{format.description}</span>
-                      <span className={`${
-                        !validation.isValid ? "text-red-500" : 
-                        currentNoID.length === format.digits ? "text-green-600" : "text-gray-400"
-                      }`}>
+                      <span className="text-gray-500">
+                        {format.description}
+                      </span>
+                      <span
+                        className={`${
+                          !validation.isValid
+                            ? "text-red-500"
+                            : currentNoID.length === format.digits
+                            ? "text-green-600"
+                            : "text-gray-400"
+                        }`}
+                      >
                         {currentNoID.length}/{format.digits}
                       </span>
                     </div>
                     {!validation.isValid && validation.message && (
-                      <p className="text-xs text-amber-600">{validation.message}</p>
+                      <p className="text-xs text-amber-600">
+                        {validation.message}
+                      </p>
                     )}
                   </>
                 );
@@ -291,11 +321,13 @@ export default function FormPemesan() {
                 <span className="text-gray-500">
                   Email untuk konfirmasi pemesanan
                 </span>
-                <span className={`${
-                  (watch("email")?.length || 0) > 80
-                    ? "text-amber-600"
-                    : "text-gray-400"
-                }`}>
+                <span
+                  className={`${
+                    (watch("email")?.length || 0) > 80
+                      ? "text-amber-600"
+                      : "text-gray-400"
+                  }`}
+                >
                   {watch("email")?.length || 0}/100
                 </span>
               </div>

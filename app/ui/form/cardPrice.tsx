@@ -23,13 +23,16 @@ import type { SessionData } from "@/types/session";
 
 interface CardPriceProps {
   session: SessionData;
+  isModal?: boolean; // ✅ Add modal prop
 }
 
-export default function CardPrice({ session }: CardPriceProps) {
-  // ✅ Simple sticky state for positioning only
+export default function CardPrice({ session, isModal = false }: CardPriceProps) {
+  // ✅ Simple sticky state for positioning only (disable if modal)
   const [isSticky, setIsSticky] = useState(false);
 
   useEffect(() => {
+    if (isModal) return; // ✅ Skip sticky behavior in modal
+
     const handleScroll = () => {
       const scrollTop = window.scrollY;
       const threshold = 200;
@@ -38,7 +41,7 @@ export default function CardPrice({ session }: CardPriceProps) {
 
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
+  }, [isModal]);
 
   const kapal = session.schedule?.ship?.ship_name ?? "Tidak diketahui";
   const keberangkatan = {
@@ -97,63 +100,116 @@ export default function CardPrice({ session }: CardPriceProps) {
 
   return (
     <div className={cn(
-      // ✅ Only sticky positioning, no visual changes
-      "lg:sticky lg:top-4"
+      // ✅ Conditional sticky positioning - disable if modal
+      !isModal && "lg:sticky lg:top-4"
     )}>
-      <Card className="text-sm shadow-lg py-0 gap-0">
-        {/* ✅ Simple header without transitions */}
-        <CardHeader className="flex flex-col sm:flex-row sm:justify-between border-b p-4 sm:p-6 space-y-2 sm:space-y-0">
+      <Card className={cn(
+        "text-sm py-0 gap-0",
+        isModal ? "shadow-none border-0" : "shadow-lg" // ✅ Conditional styling
+      )}>
+        {/* ✅ Enhanced header for modal */}
+        <CardHeader className={cn(
+          "flex flex-col sm:flex-row sm:justify-between border-b p-4 sm:p-6 space-y-2 sm:space-y-0",
+          isModal && "bg-gradient-to-r from-Blue/10 to-Orange/10 border-Blue/20 rounded-lg"
+        )}>
           <CardTitle className="flex items-center gap-2 font-semibold text-gray-800">
             <MapPin className="w-5 h-5 text-blue-600" />
             Detail Keberangkatan
           </CardTitle>
           <CardTitle className="flex items-center gap-2 text-blue-600">
             <Ship className="w-5 h-5" />
-            {kapal}
+            <span className={cn(
+              isModal && "text-sm md:text-base"
+            )}>{kapal}</span>
           </CardTitle>
         </CardHeader>
 
-        <CardContent className="p-4 sm:p-6">
-          {/* Route and Schedule Section */}
-          <div className="bg-Orange/10 rounded-lg p-4 mb-6">
-            <div className="grid grid-cols-1 lg:grid-cols-2">
-              {/* Left Column - Route Info */}
+        <CardContent className={cn(
+          "p-4 sm:p-6",
+          isModal && "space-y-4"
+        )}>
+          {/* ✅ Enhanced Route and Schedule Section for modal */}
+          <div className={cn(
+            "bg-Orange/10 rounded-lg p-4 mb-6",
+            isModal && "bg-gradient-to-r from-Blue/5 to-Orange/5 border border-Blue/10"
+          )}>
+            <div className={cn(
+              "grid grid-cols-1",
+              isModal ? "lg:grid-cols-1 space-y-4" : "lg:grid-cols-2"
+            )}>
+              {/* Route Info */}
               <div className="space-y-3 mb-3">
                 <label className="flex items-center gap-2 text-Orange font-medium text-sm">
                   <MapPin className="w-4 h-4" />
                   Rute Keberangkatan
                 </label>
                 <div className="flex items-center gap-2 justify-start text-base font-semibold">
-                  <span className="text-gray-800 flex-1 text-center text-sm md:text-base md:px-4">
+                  <span className={cn(
+                    "text-gray-800 flex-1 text-center",
+                    isModal ? "text-sm md:text-lg px-2" : "text-sm md:text-base md:px-4"
+                  )}>
                     {keberangkatan.asal}
                   </span>
-                  <div className="flex items-center justify-center">
-                    <div className="w-8 h-8 bg-Orange/20 rounded-full flex items-center justify-center">
-                      <Ship className="w-4 h-4 text-Orange" />
+                  <div className={cn(
+                    "flex items-center justify-center",
+                    isModal && "mx-2"
+                  )}>
+                    <div className={cn(
+                      "bg-Orange/20 rounded-full flex items-center justify-center",
+                      isModal ? "w-10 h-10" : "w-8 h-8"
+                    )}>
+                      <Ship className={cn(
+                        "text-Orange",
+                        isModal ? "w-5 h-5" : "w-4 h-4"
+                      )} />
                     </div>
                   </div>
-                  <span className="text-gray-800 flex-1 text-center text-sm md:text-base">
+                  <span className={cn(
+                    "text-gray-800 flex-1 text-center",
+                    isModal ? "text-sm md:text-lg px-2" : "text-sm md:text-base"
+                  )}>
                     {keberangkatan.tujuan}
                   </span>
                 </div>
               </div>
 
-              {/* Right Column - Schedule Info */}
-              <div className="space-y-3">
-                <label className="flex items-center gap-2 text-Orange font-medium text-sm lg:justify-end">
+              {/* Schedule Info */}
+              <div className={cn(
+                "space-y-3",
+                isModal ? "" : "lg:text-right"
+              )}>
+                <label className={cn(
+                  "flex items-center gap-2 text-Orange font-medium text-sm",
+                  !isModal && "lg:justify-end"
+                )}>
                   <Calendar className="w-4 h-4" />
                   Jadwal Keberangkatan
                 </label>
-                <div className="space-y-2 lg:text-right">
-                  <div className="flex items-center gap-2 lg:justify-end">
+                <div className={cn(
+                  "space-y-2",
+                  !isModal && "lg:text-right"
+                )}>
+                  <div className={cn(
+                    "flex items-center gap-2",
+                    !isModal && "lg:justify-end"
+                  )}>
                     <Calendar className="w-4 h-4 text-gray-400" />
-                    <span className="font-semibold text-gray-800">
+                    <span className={cn(
+                      "font-semibold text-gray-800",
+                      isModal && "text-sm md:text-base"
+                    )}>
                       {keberangkatan.jadwal}
                     </span>
                   </div>
-                  <div className="flex items-center gap-2 lg:justify-end">
+                  <div className={cn(
+                    "flex items-center gap-2",
+                    !isModal && "lg:justify-end"
+                  )}>
                     <Clock className="w-4 h-4 text-gray-400" />
-                    <span className="font-semibold text-gray-800">
+                    <span className={cn(
+                      "font-semibold text-gray-800",
+                      isModal && "text-sm md:text-base"
+                    )}>
                       {keberangkatan.jam}
                     </span>
                   </div>
@@ -165,10 +221,21 @@ export default function CardPrice({ session }: CardPriceProps) {
           {/* Show message if no claim items */}
           {claimItems.length === 0 && (
             <div className="text-center py-8">
-              <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <Users className="w-8 h-8 text-gray-400" />
+              <div className={cn(
+                "bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4",
+                isModal ? "w-20 h-20" : "w-16 h-16"
+              )}>
+                <Users className={cn(
+                  "text-gray-400",
+                  isModal ? "w-10 h-10" : "w-8 h-8"
+                )} />
               </div>
-              <p className="text-gray-500">Belum ada tiket yang dipilih</p>
+              <p className={cn(
+                "text-gray-500",
+                isModal && "text-base"
+              )}>
+                Belum ada tiket yang dipilih
+              </p>
             </div>
           )}
 
@@ -183,17 +250,26 @@ export default function CardPrice({ session }: CardPriceProps) {
                     <Users className="w-4 h-4 text-blue-600" />
                     Tiket Penumpang
                   </label>
-                  <div className="bg-blue-50 border border-blue-100 rounded-lg p-4 space-y-3">
+                  <div className={cn(
+                    "bg-blue-50 border border-blue-100 rounded-lg p-4 space-y-3",
+                    isModal && "bg-gradient-to-r from-blue-50 to-blue-25"
+                  )}>
                     {claimItems
                       .filter((item) => item.class.type === "passenger")
                       .map((tiket, index) => (
                         <div key={index} className="space-y-2">
                           {/* Kelas dan Harga */}
                           <div className="flex justify-between items-center">
-                            <span className="font-semibold text-gray-800">
+                            <span className={cn(
+                              "font-semibold text-gray-800",
+                              isModal && "text-sm md:text-base"
+                            )}>
                               {tiket.class.class_name}
                             </span>
-                            <span className="font-semibold text-gray-800">
+                            <span className={cn(
+                              "font-semibold text-gray-800",
+                              isModal && "text-sm md:text-base"
+                            )}>
                               {tiket.subtotal && tiket.quantity > 0
                                 ? `Rp ${getItemPrice(tiket).toLocaleString()}`
                                 : "Rp 0"}
@@ -226,17 +302,26 @@ export default function CardPrice({ session }: CardPriceProps) {
                     <Car className="w-4 h-4 text-green-600" />
                     Tiket Kendaraan
                   </label>
-                  <div className="bg-green-50 border border-green-100 rounded-lg p-4 space-y-3">
+                  <div className={cn(
+                    "bg-green-50 border border-green-100 rounded-lg p-4 space-y-3",
+                    isModal && "bg-gradient-to-r from-green-50 to-green-25"
+                  )}>
                     {claimItems
                       .filter((item) => item.class.type === "vehicle")
                       .map((tiket, index) => (
                         <div key={index} className="space-y-2">
                           {/* Kelas dan Harga */}
                           <div className="flex justify-between items-center">
-                            <span className="font-semibold text-gray-800">
+                            <span className={cn(
+                              "font-semibold text-gray-800",
+                              isModal && "text-sm md:text-base"
+                            )}>
                               {tiket.class.class_name}
                             </span>
-                            <span className="font-semibold text-gray-800">
+                            <span className={cn(
+                              "font-semibold text-gray-800",
+                              isModal && "text-sm md:text-base"
+                            )}>
                               {tiket.subtotal && tiket.quantity > 0
                                 ? `Rp ${getItemPrice(tiket).toLocaleString()}`
                                 : "Rp 0"}
@@ -266,14 +351,23 @@ export default function CardPrice({ session }: CardPriceProps) {
 
         {/* Footer - Only show if there are claim items */}
         {claimItems.length > 0 && (
-          <CardFooter className="border-t bg-gray-50 rounded-b-lg p-4 sm:p-6">
+          <CardFooter className={cn(
+            "border-t bg-gray-50 rounded-b-lg p-4 sm:p-6",
+            isModal && "bg-gradient-to-r from-Blue/5 to-Orange/5 border-Blue/10"
+          )}>
             <div className="w-full">
               {/* Mobile: Stack vertically */}
-              <div className="flex flex-col sm:hidden space-y-3">
+              <div className={cn(
+                "flex flex-col space-y-3",
+                !isModal && "sm:hidden"
+              )}>
                 {totalHargaPenumpang > 0 && (
                   <div className="flex justify-between items-center">
                     <span className="text-gray-600">Harga Total Tiket Penumpang:</span>
-                    <span className="font-medium">
+                    <span className={cn(
+                      "font-medium",
+                      isModal && "text-sm md:text-base"
+                    )}>
                       Rp{totalHargaPenumpang.toLocaleString()}
                     </span>
                   </div>
@@ -283,14 +377,23 @@ export default function CardPrice({ session }: CardPriceProps) {
                     <span className="text-gray-600">
                       Harga Total Kendaraan:
                     </span>
-                    <span className="font-medium">
+                    <span className={cn(
+                      "font-medium",
+                      isModal && "text-sm md:text-base"
+                    )}>
                       Rp{totalHargaKendaraan.toLocaleString()}
                     </span>
                   </div>
                 )}
                 <div className="flex justify-between items-center pt-3 border-t border-gray-200">
-                  <span className="font-bold text-sm">Total:</span>
-                  <span className="font-bold text-lg text-blue-600">
+                  <span className={cn(
+                    "font-bold text-sm",
+                    isModal && "text-base"
+                  )}>Total:</span>
+                  <span className={cn(
+                    "font-bold text-lg text-blue-600",
+                    isModal && "text-xl"
+                  )}>
                     {totalHargaPenumpang + totalHargaKendaraan > 0 ? (
                       `Rp${(
                         totalHargaPenumpang + totalHargaKendaraan
@@ -304,43 +407,45 @@ export default function CardPrice({ session }: CardPriceProps) {
                 </div>
               </div>
 
-              {/* Desktop: Side by side */}
-              <div className="hidden sm:flex justify-between">
-                <div className="space-y-2">
-                  {totalHargaPenumpang > 0 && (
-                    <p className="text-gray-600">Harga Total Tiket Penumpang:</p>
-                  )}
-                  {totalHargaKendaraan > 0 && (
-                    <p className="text-gray-600">Harga Total Kendaraan:</p>
-                  )}
-                  <p className="font-bold text-sm pt-2 border-t border-gray-200">
-                    Total:
-                  </p>
-                </div>
-                <div className="space-y-2 text-right">
-                  {totalHargaPenumpang > 0 && (
-                    <p className="font-medium">
-                      Rp{totalHargaPenumpang.toLocaleString()}
-                    </p>
-                  )}
-                  {totalHargaKendaraan > 0 && (
-                    <p className="font-medium">
-                      Rp{totalHargaKendaraan.toLocaleString()}
-                    </p>
-                  )}
-                  <p className="font-bold text-sm text-blue-600 pt-2 border-t border-gray-200">
-                    {totalHargaPenumpang + totalHargaKendaraan > 0 ? (
-                      `Rp${(
-                        totalHargaPenumpang + totalHargaKendaraan
-                      ).toLocaleString()}`
-                    ) : (
-                      <span className="text-gray-400 text-base">
-                        Harga belum tersedia
-                      </span>
+              {/* Desktop: Side by side - Only show if not modal */}
+              {!isModal && (
+                <div className="hidden sm:flex justify-between">
+                  <div className="space-y-2">
+                    {totalHargaPenumpang > 0 && (
+                      <p className="text-gray-600">Harga Total Tiket Penumpang:</p>
                     )}
-                  </p>
+                    {totalHargaKendaraan > 0 && (
+                      <p className="text-gray-600">Harga Total Kendaraan:</p>
+                    )}
+                    <p className="font-bold text-sm pt-2 border-t border-gray-200">
+                      Total:
+                    </p>
+                  </div>
+                  <div className="space-y-2 text-right">
+                    {totalHargaPenumpang > 0 && (
+                      <p className="font-medium">
+                        Rp{totalHargaPenumpang.toLocaleString()}
+                      </p>
+                    )}
+                    {totalHargaKendaraan > 0 && (
+                      <p className="font-medium">
+                        Rp{totalHargaKendaraan.toLocaleString()}
+                      </p>
+                    )}
+                    <p className="font-bold text-sm text-blue-600 pt-2 border-t border-gray-200">
+                      {totalHargaPenumpang + totalHargaKendaraan > 0 ? (
+                        `Rp${(
+                          totalHargaPenumpang + totalHargaKendaraan
+                        ).toLocaleString()}`
+                      ) : (
+                        <span className="text-gray-400 text-base">
+                          Harga belum tersedia
+                        </span>
+                      )}
+                    </p>
+                  </div>
                 </div>
-              </div>
+              )}
             </div>
           </CardFooter>
         )}

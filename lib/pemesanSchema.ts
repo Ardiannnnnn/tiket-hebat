@@ -5,22 +5,19 @@ import { z } from "zod";
 const namaSchema = z
   .string()
   .min(1, { message: "Nama tidak boleh kosong" })
-  .max(50, { message: "Nama maksimal 50 karakter" })
+  .max(32, { message: "Nama maksimal 50 karakter" })
   .refine((val) => val.trim().length > 0, { message: "Nama tidak boleh hanya spasi" })
   .refine((val) => /^[a-zA-Z\s]+$/.test(val), { message: "Nama hanya boleh mengandung huruf dan spasi" });
 
-// ✅ Nomor HP validation
+// ✅ Simplified Nomor HP validation - only number and length
 const nohpSchema = z
   .string()
   .min(1, { message: "Nomor HP tidak boleh kosong" })
   .min(10, { message: "Nomor HP minimal 10 digit" })
-  .max(15, { message: "Nomor HP maksimal 15 digit" })
-  .refine((val) => /^[0-9]+$/.test(val), { message: "Nomor HP hanya boleh angka" })
-  .refine((val) => val.startsWith("08") || val.startsWith("62"), { 
-    message: "Nomor HP harus dimulai dengan 08 atau 62" 
-  });
+  .max(14, { message: "Nomor HP maksimal 14 digit" })
+  .refine((val) => /^[0-9]+$/.test(val), { message: "Nomor HP hanya boleh angka" });
 
-// ✅ Email validation
+// ✅ Simplified Email validation - basic email format only
 const emailSchema = z
   .string()
   .min(1, { message: "Email tidak boleh kosong" })
@@ -38,7 +35,7 @@ const pemesanBaseSchema = z.object({
   noID: z.string().min(1, { message: "Nomor identitas tidak boleh kosong" }),
 });
 
-// ✅ Add cross-field validation for nomor identitas
+// ✅ Add cross-field validation for nomor identitas (keep this validation)
 const pemesanWithValidation = pemesanBaseSchema.refine(
   (data) => {
     const { jenisID, noID } = data;
@@ -162,7 +159,7 @@ export const validatePemesanIdentityInput = (jenisID: string, noID: string) => {
   return { isValid: true, message: "" };
 };
 
-// ✅ Helper function to validate phone number format
+// ✅ Simplified helper function to validate phone number format
 export const validatePhoneNumber = (nohp: string) => {
   if (!nohp) return { isValid: true, message: "" };
   
@@ -171,12 +168,9 @@ export const validatePhoneNumber = (nohp: string) => {
     return { isValid: false, message: "Hanya boleh angka" };
   }
   
-  if (nohp.length > 0 && !nohp.startsWith("08") && !nohp.startsWith("62")) {
-    return { isValid: false, message: "Nomor HP harus dimulai dengan 08 atau 62" };
-  }
-  
-  if (nohp.length > 15) {
-    return { isValid: false, message: "Nomor HP maksimal 15 digit" };
+  // ✅ Change max from 15 to 14 to match schema
+  if (nohp.length > 14) {
+    return { isValid: false, message: "Nomor HP maksimal 14 digit" };
   }
   
   if (nohp.length > 0 && nohp.length < 10) {
