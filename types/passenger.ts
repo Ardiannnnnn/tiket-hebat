@@ -1,15 +1,16 @@
 export interface PassengerEntry {
-  ticket_id: number;
+  class_id: number;
   passenger_name: string;
   passenger_age: number;
   address: string;
+  passenger_gender: string;
   id_type: string;
   id_number: string;
   seat_number?: string;
 }
 
 export interface VehicleEntry {
-  ticket_id: number;
+  class_id: number;
   license_plate: string;
   passenger_name: string;
   passenger_age: number;
@@ -25,6 +26,7 @@ export interface TicketEntryPayload {
   email: string;
   id_type: string;
   id_number: string;
+  payment_method: string;
   ticket_data: TicketEntry[];
 }
 

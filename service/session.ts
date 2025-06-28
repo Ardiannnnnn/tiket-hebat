@@ -4,7 +4,7 @@ import { SessionResponse } from "@/types/session";
 
 export const lockTickets = async (payload: LockTicketPayload) => {
   try {
-    const response = await api.post("/session/ticket/lock", payload);
+    const response = await api.post("/claim/lock", payload);
     console.log("Lock response:", response.data);
     return response.data;
   } catch (error) {
@@ -18,7 +18,7 @@ export const getSessionById = async (
 ): Promise<SessionResponse | null> => {
   try {
     const response = await api.get<SessionResponse>(
-      `/session/uuid/${sessionId}`
+      `/claim/session/${sessionId}`
     );
     return response.data;
   } catch (error) {

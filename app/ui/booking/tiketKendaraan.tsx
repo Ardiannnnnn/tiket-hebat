@@ -37,14 +37,6 @@ const FormSchema = z.object({
   vehicle: z.string().min(1, "Pilih jenis kendaraan"),
 });
 
-const vehicleBonusMap: Record<string, string> = {
-  "Golongan I":
-    "Anda mendapatkan 1 tiket gratis untuk penumpang kelas ekonomi.",
-  "Golongan II":
-    "Anda mendapatkan 5 tiket gratis untuk penumpang kelas ekonomi.",
-  // Tambah lagi jika ada golongan baru
-};
-
 export default function TiketKendaraan({
   setTabValue,
   scheduleid,
@@ -59,23 +51,23 @@ export default function TiketKendaraan({
   const [selectedVehicle, setSelectedVehicle] =
     useState<ClassAvailability | null>(null);
 
- useEffect(() => {
-  const fetchVehicleData = async () => {
-    try {
-      const allClasses = await getQuotaByScheduleId(scheduleid);
-      const vehiclesOnly = allClasses.filter(
-        (item) => item.type === "vehicle"
-      );
-      setVehicleOptions(vehiclesOnly);
-    } catch (error) {
-      console.error("Gagal mengambil data kendaraan:", error);
-    }
-  };
+  useEffect(() => {
+    const fetchVehicleData = async () => {
+      try {
+        const allClasses = await getQuotaByScheduleId(scheduleid);
+        const vehiclesOnly = allClasses.filter(
+          (item) => item.type === "vehicle"
+        );
+        setVehicleOptions(vehiclesOnly);
+      } catch (error) {
+        console.error("Gagal mengambil data kendaraan:", error);
+      }
+    };
 
-  if (scheduleid) {
-    fetchVehicleData();
-  }
-}, [scheduleid]);
+    if (scheduleid) {
+      fetchVehicleData();
+    }
+  }, [scheduleid]);
 
   console.log("Vehicle Options:", vehicleOptions);
 
@@ -88,7 +80,7 @@ export default function TiketKendaraan({
     return map[className] || className; // fallback: pakai className asli kalau tidak ditemukan
   };
 
-  // Saat pilihan berubah
+  // ✅ Simplified handleVehicleChange tanpa bonus notification
   const handleVehicleChange = (value: string) => {
     form.setValue("vehicle", value);
     const selected = vehicleOptions.find(
@@ -97,11 +89,12 @@ export default function TiketKendaraan({
     setSelectedVehicle(selected || null);
     setSelectedVehicleClass(selected || null);
 
-    if (selected?.class_name && vehicleBonusMap[selected.class_name]) {
-      toast.success(vehicleBonusMap[selected.class_name], {
+    // ✅ Optional: Simple selection confirmation
+    if (selected) {
+      toast.success(`${getVehicleName(selected.class_name)} dipilih`, {
         style: {
-          backgroundColor: "",
-          color: "#117a65",
+          backgroundColor: "#f0f9ff",
+          color: "#0369a1",
         },
       });
     }

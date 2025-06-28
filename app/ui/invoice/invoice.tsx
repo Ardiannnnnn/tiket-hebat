@@ -236,10 +236,10 @@ export default function Invoice({
     <div className="">
       <div className="container mx-auto px-4">
         {/* Header Section */}
-        <div className="text-center m-8">
+        <div className="text-center m-6">
           <div className="flex items-center justify-center gap-4 mb-4">
             <div className="w-12 h-12 bg-Blue rounded-full flex items-center justify-center text-white font-bold text-xl">
-              5
+              4
             </div>
             <h1 className="text-2xl font-semibold text-gray-600">
               Bukti Booking

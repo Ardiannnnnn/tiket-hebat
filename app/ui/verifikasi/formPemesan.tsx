@@ -3,7 +3,6 @@
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { cn } from "@/lib/utils";
 import { useFormContext, FieldErrors, Controller } from "react-hook-form";
 import {
   Select,
@@ -18,9 +17,13 @@ import {
   Phone,
   Mail,
   CreditCard,
-  CheckSquare,
   UserCheck,
 } from "lucide-react";
+import { 
+  getPemesanIdentityFormat, 
+  validatePemesanIdentityInput, 
+  validatePhoneNumber 
+} from "@/lib/pemesanSchema";
 
 export default function FormPemesan() {
   const {
@@ -102,8 +105,25 @@ export default function FormPemesan() {
                 id="nama"
                 className="h-11"
                 placeholder="Nama sesuai identitas"
-                {...register("nama", { required: "Nama wajib diisi" })}
+                maxLength={50}
+                {...register("nama")}
+                onInput={(e) => {
+                  const target = e.target as HTMLInputElement;
+                  target.value = target.value.replace(/[^a-zA-Z\s]/g, "");
+                }}
               />
+              <div className="flex justify-between text-xs">
+                <span className="text-gray-500">
+                  Sesuai identitas (huruf saja)
+                </span>
+                <span className={`${
+                  (watch("nama")?.length || 0) > 40
+                    ? "text-amber-600"
+                    : "text-gray-400"
+                }`}>
+                  {watch("nama")?.length || 0}/50
+                </span>
+              </div>
               {fieldErrors.nama && (
                 <p className="text-red-500 text-xs">
                   {fieldErrors.nama.message as string}
@@ -124,8 +144,36 @@ export default function FormPemesan() {
                 id="nohp"
                 className="h-11"
                 placeholder="Contoh: 08123456789"
-                {...register("nohp", { required: "No HP wajib diisi" })}
+                maxLength={15}
+                inputMode="numeric"
+                {...register("nohp")}
+                onInput={(e) => {
+                  const target = e.target as HTMLInputElement;
+                  target.value = target.value.replace(/[^0-9]/g, "");
+                }}
               />
+              {(() => {
+                const currentNohp = watch("nohp") || "";
+                const validation = validatePhoneNumber(currentNohp);
+                return (
+                  <>
+                    <div className="flex justify-between text-xs">
+                      <span className="text-gray-500">
+                        Dimulai dengan 08 atau 62
+                      </span>
+                      <span className={`${
+                        !validation.isValid ? "text-red-500" : 
+                        currentNohp.length >= 10 ? "text-green-600" : "text-gray-400"
+                      }`}>
+                        {currentNohp.length}/15
+                      </span>
+                    </div>
+                    {!validation.isValid && validation.message && (
+                      <p className="text-xs text-amber-600">{validation.message}</p>
+                    )}
+                  </>
+                );
+              })()}
               {fieldErrors.nohp && (
                 <p className="text-red-500 text-xs">
                   {fieldErrors.nohp.message as string}
@@ -145,7 +193,6 @@ export default function FormPemesan() {
               <Controller
                 name="jenisID"
                 control={control}
-                rules={{ required: "Jenis identitas wajib dipilih" }}
                 render={({ field }) => (
                   <Select
                     onValueChange={(value) => {
@@ -181,12 +228,41 @@ export default function FormPemesan() {
                 <CreditCard className="w-4 h-4" />
                 Nomor Identitas
               </Label>
-              <Input
-                id="noID"
-                className="h-11"
-                placeholder="Nomor identitas"
-                {...register("noID", { required: "Nomor identitas wajib diisi" })}
-              />
+              {(() => {
+                const currentJenisID = watch("jenisID");
+                const currentNoID = watch("noID") || "";
+                const format = getPemesanIdentityFormat(currentJenisID);
+                const validation = validatePemesanIdentityInput(currentJenisID, currentNoID);
+
+                return (
+                  <>
+                    <Input
+                      id="noID"
+                      className={`h-11 ${!validation.isValid ? "border-red-300 focus:border-red-500" : ""}`}
+                      placeholder={format.placeholder}
+                      maxLength={format.digits}
+                      inputMode="numeric"
+                      {...register("noID")}
+                      onInput={(e) => {
+                        const target = e.target as HTMLInputElement;
+                        target.value = target.value.replace(/[^0-9]/g, "");
+                      }}
+                    />
+                    <div className="flex justify-between text-xs">
+                      <span className="text-gray-500">{format.description}</span>
+                      <span className={`${
+                        !validation.isValid ? "text-red-500" : 
+                        currentNoID.length === format.digits ? "text-green-600" : "text-gray-400"
+                      }`}>
+                        {currentNoID.length}/{format.digits}
+                      </span>
+                    </div>
+                    {!validation.isValid && validation.message && (
+                      <p className="text-xs text-amber-600">{validation.message}</p>
+                    )}
+                  </>
+                );
+              })()}
               {fieldErrors.noID && (
                 <p className="text-red-500 text-xs">
                   {fieldErrors.noID.message as string}
@@ -208,14 +284,21 @@ export default function FormPemesan() {
                 type="email"
                 className="h-11"
                 placeholder="contoh@email.com"
-                {...register("email", {
-                  required: "Email wajib diisi",
-                  pattern: {
-                    value: /^\S+@\S+$/i,
-                    message: "Format email tidak valid",
-                  },
-                })}
+                maxLength={100}
+                {...register("email")}
               />
+              <div className="flex justify-between text-xs">
+                <span className="text-gray-500">
+                  Email untuk konfirmasi pemesanan
+                </span>
+                <span className={`${
+                  (watch("email")?.length || 0) > 80
+                    ? "text-amber-600"
+                    : "text-gray-400"
+                }`}>
+                  {watch("email")?.length || 0}/100
+                </span>
+              </div>
               {fieldErrors.email && (
                 <p className="text-red-500 text-xs">
                   {fieldErrors.email.message as string}
