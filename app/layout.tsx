@@ -3,10 +3,14 @@ import Providers from "./providers";
 
 export const metadata = {
   title: "Tiket Hebat",
+  description: "Platform tiket online terbaik",
   icons: {
-    icon: "/KMP-Aceh-Hebat-1.jpg", // atau .png, .svg sesuai file kamu
+    icon: [
+      { url: '/ship.svg', type: 'image/svg+xml' }, // pakai svg
+    ],
   },
 };
+
 
 export default function RootLayout({
   children,
@@ -15,6 +19,9 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
+       <head>
+        <link rel="icon" type="image/svg+xml" href="/ship.svg" />
+      </head>
       <body>
         <Providers>{children}</Providers>
       </body>
