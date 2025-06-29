@@ -242,7 +242,7 @@ export default function TiketPenumpang({
       try {
         const lockedData = await lockTickets(payload);
         const sessionId = lockedData.data.session_id;
-        setSessionCookie(sessionId);
+        sessionStorage.setItem("session_id", sessionId);
         router.push(`/book/${scheduleid}/form?session_id=${sessionId}`);
       } catch (error) {
         console.error("❌ Gagal mengunci tiket:", error);
@@ -363,7 +363,7 @@ export default function TiketPenumpang({
           <Button
             type="button"
             onClick={() => setTabValue("kendaraan")}
-            className="bg-Orange text-white"
+            className="bg-Orange hover:bg-amber-600 text-white"
           >
             Sebelumnya
           </Button>
@@ -387,7 +387,7 @@ export default function TiketPenumpang({
             <AlertDialogCancel>Batal</AlertDialogCancel>
             <AlertDialogAction
               onClick={dialogAction}
-              className="bg-Blue :hover:bg-teal-600 text-white"
+              className="bg-Blue hover:bg-teal-600 text-white"
             >
               Lanjutkan
             </AlertDialogAction>

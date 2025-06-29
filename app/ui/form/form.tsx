@@ -9,11 +9,6 @@ import FormData from "./formData";
 import SessionTimer from "../sessionTimer";
 import { getSessionById } from "@/service/session";
 import {
-  clearSessionCookie,
-  getCookie,
-  setSessionCookie,
-} from "@/utils/cookies";
-import {
   AlertDialog,
   AlertDialogContent,
   AlertDialogHeader,
@@ -33,70 +28,128 @@ export default function Form() {
   const router = useRouter();
   const params = useParams();
   const searchParams = useSearchParams();
-  const sessionId = searchParams?.get("session_id");
   const bookId = params?.id;
 
-  const [session, setSession] = useState<SessionData | null>(null);
+  // ✅ Get session ID dari multiple sources dengan fallback
+  const sessionIdFromQuery = searchParams?.get("session_id");
+  const sessionIdFromStorage =
+    typeof window !== "undefined" ? sessionStorage.getItem("session_id") : null;
+  const finalSessionId = sessionIdFromQuery || sessionIdFromStorage;
+
   const [loading, setLoading] = useState(true);
   const [sessionExpired, setSessionExpired] = useState(false);
-  const [showDetailSheet, setShowDetailSheet] = useState(false); // ✅ Sheet state
+  const [showDetailSheet, setShowDetailSheet] = useState(false);
+  const [session, setSession] = useState<SessionData | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
-  // Validate session and fetch data
+  // ✅ Fetch session data using getSessionById
   useEffect(() => {
-    const validateAndFetchSession = async () => {
-      if (!sessionId) {
-        toast.error("Session ID tidak ditemukan");
-        router.push(`/`);
-        return;
-      }
-
-      const cookie = getCookie("session_id");
-
-      if (!cookie) {
-        setSessionCookie(sessionId);
-      } else if (cookie !== sessionId) {
-        toast.error("Sesi Anda telah berakhir");
-        router.push(`/`);
+    const fetchSessionData = async () => {
+      if (!finalSessionId) {
+        console.error("❌ Session ID tidak ditemukan");
+        setError("Session ID tidak ditemukan. Silakan booking ulang.");
+        setLoading(false);
         return;
       }
 
       try {
-        const res = await getSessionById(sessionId);
-        setSession(res?.data ?? null);
-      } catch (error) {
-        console.error("Failed to fetch session:", error);
-        toast.error("Gagal memuat data sesi");
+        console.log("🔍 Fetching session data with ID:", finalSessionId);
+        setLoading(true);
+
+        const response = await getSessionById(finalSessionId);
+
+        if (response?.status && response.data) {
+          console.log("✅ Session data berhasil dimuat:", response.data);
+          setSession(response.data);
+          setError(null);
+
+          // ✅ Update sessionStorage with latest session_id if from query
+          if (sessionIdFromQuery && !sessionIdFromStorage) {
+            sessionStorage.setItem("session_id", finalSessionId);
+          }
+        } else {
+          throw new Error(response?.message || "Gagal mengambil data session");
+        }
+      } catch (error: any) {
+        console.error("❌ Error fetching session:", error);
+
+        if (
+          error.message?.includes("Session expired") ||
+          error.message?.includes("tidak ditemukan")
+        ) {
+          setSessionExpired(true);
+          setError("Session telah berakhir atau tidak valid");
+        } else {
+          setError("Terjadi kesalahan saat memuat data session");
+          toast.error("Gagal memuat data session");
+        }
+        setSession(null);
       } finally {
         setLoading(false);
       }
     };
 
-    validateAndFetchSession();
-  }, [sessionId, bookId, router]);
+    fetchSessionData();
+  }, [finalSessionId, sessionIdFromQuery, sessionIdFromStorage]);
+
+  // ✅ Handle session expiration
+  useEffect(() => {
+    if (session?.expires_at) {
+      const expirationTime = new Date(session.expires_at).getTime();
+      const now = Date.now();
+
+      if (expirationTime <= now) {
+        console.warn("⏰ Session sudah expired");
+        setSessionExpired(true);
+      }
+    }
+  }, [session]);
 
   const handleSessionExpired = () => {
     setSessionExpired(true);
+    // ✅ Clear session storage saat expired
+    sessionStorage.removeItem("session_id");
+    sessionStorage.removeItem("dataPenumpang");
+    // Redirect after 2 seconds
+    setTimeout(() => {
+      router.push(`/book/${bookId}`);
+    }, 2000);
   };
 
+  // ✅ Loading state
   if (loading) {
     return (
       <div className="flex justify-center items-center min-h-screen">
         <div className="text-center">
           <div className="w-8 h-8 border-4 border-Blue border-t-transparent rounded-full animate-spin mx-auto mb-3"></div>
-          <span className="text-gray-600">Memuat data...</span>
+          <span className="text-gray-600">Memuat data session...</span>
         </div>
       </div>
     );
   }
 
-  if (!session) {
+  // ✅ Error state
+  if (error || !session) {
     return (
       <div className="flex justify-center items-center min-h-screen">
-        <div className="text-center">
+        <div className="text-center max-w-md mx-auto p-6">
+          <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <Ship className="w-8 h-8 text-red-600" />
+          </div>
           <h2 className="text-lg font-semibold text-gray-700 mb-2">
-            Session tidak ditemukan
+            {error || "Session tidak ditemukan"}
           </h2>
-          <p className="text-gray-500">Silakan booking ulang</p>
+          <p className="text-gray-500 mb-4">
+            {sessionExpired
+              ? "Session pemesanan Anda telah berakhir. Silakan mulai booking ulang."
+              : "Terjadi kesalahan dalam memuat data session. Silakan coba lagi."}
+          </p>
+          <Button
+            onClick={() => router.push(`/book/${bookId}`)}
+            className="bg-Blue hover:bg-Blue/90 text-white"
+          >
+            Kembali ke Booking
+          </Button>
         </div>
       </div>
     );
@@ -119,7 +172,9 @@ export default function Form() {
               <div className="bg-Blue rounded-full w-10 h-10 flex items-center justify-center">
                 <span className="text-white font-bold text-2xl">2</span>
               </div>
-              <h1 className="text-2xl font-semibold">Isi Data Diri</h1>
+              <div>
+                <h1 className="text-2xl font-semibold">Isi Data Diri</h1>
+              </div>
             </div>
 
             {/* ✅ Session Timer */}
@@ -144,7 +199,7 @@ export default function Form() {
                   <div className="flex items-center gap-3">
                     <Ship className="text-Blue" />
                     <span className="font-medium text-gray-900">
-                      Klik Disini Detail Keberangkatan
+                      Klik Untuk Detail Keberangkatan
                     </span>
                   </div>
                   <div className="flex items-center gap-2">
@@ -167,7 +222,9 @@ export default function Form() {
           </div>
 
           <div className="flex flex-col-reverse justify-center md:items-start md:flex-row gap-8 w-full">
+            {/* ✅ Pass session data sebagai props ke FormData */}
             <FormData session={session} />
+
             {/* ✅ Hide CardPrice on mobile, show only on desktop */}
             <div className="hidden md:block">
               <CardPrice session={session} />
@@ -176,20 +233,25 @@ export default function Form() {
         </div>
       </main>
 
+      {/* ✅ Session Expired Dialog */}
       <AlertDialog open={sessionExpired}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <h2 className="text-lg font-semibold">
-              Maaf, sesi anda telah berakhir
+              Maaf, sesi Anda telah berakhir
             </h2>
             <p className="text-gray-500">
-              Silakan booking ulang untuk melanjutkan pemesanan tiket.
+              Session pemesanan telah habis waktu. Silakan booking ulang untuk
+              melanjutkan pemesanan tiket.
             </p>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <Button
               className="bg-Blue hover:bg-Blue/90"
               onClick={() => {
+                // ✅ Clear session storage saat expired
+                sessionStorage.removeItem("session_id");
+                sessionStorage.removeItem("dataPenumpang");
                 setSessionExpired(false);
                 router.push(`/book/${bookId}`);
               }}

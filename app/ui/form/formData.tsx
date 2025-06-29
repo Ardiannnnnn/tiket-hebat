@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/select";
 import { Label } from "@radix-ui/react-label";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { useForm, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
@@ -40,6 +40,22 @@ interface FormPenumpangProps {
   session: SessionData;
 }
 
+// ✅ Define proper types for ticket data
+interface TicketInfo {
+  class_id: number;
+  class_name: string;
+  original_item: {
+    class_id: number;
+    quantity: number;
+    class: {
+      class_name: string;
+      type: "passenger" | "vehicle";
+    };
+  };
+  form_index: number;
+  quantity_index: number;
+}
+
 const STORAGE_KEY = "dataPenumpang";
 
 export default function FormPenumpang({ session }: FormPenumpangProps) {
@@ -48,28 +64,19 @@ export default function FormPenumpang({ session }: FormPenumpangProps) {
   const id = params?.id as string;
   const searchParams = useSearchParams();
   const sessionId = searchParams?.get("session_id");
+  const sessionIdFromStorage = sessionStorage.getItem('session_id');
 
-  // ✅ Generate expanded tickets based on quantity
-  const generateExpandedTickets = () => {
-    const passengerTickets: Array<{
-      class_id: number;
-      class_name: string;
-      original_item: any;
-      form_index: number;
-      quantity_index: number;
-    }> = [];
-
-    const vehicleTickets: Array<{
-      class_id: number;
-      class_name: string;
-      original_item: any;
-      form_index: number;
-      quantity_index: number;
-    }> = [];
+  // ✅ Generate expanded tickets with proper types using session prop
+  const generateExpandedTickets = (): {
+    passengerTickets: TicketInfo[];
+    vehicleTickets: TicketInfo[];
+  } => {
+    const passengerTickets: TicketInfo[] = [];
+    const vehicleTickets: TicketInfo[] = [];
 
     session.claim_items.forEach((item) => {
       for (let i = 0; i < item.quantity; i++) {
-        const ticketData = {
+        const ticketData: TicketInfo = {
           class_id: item.class_id,
           class_name: item.class.class_name,
           original_item: item,
@@ -77,7 +84,7 @@ export default function FormPenumpang({ session }: FormPenumpangProps) {
             item.class.type === "passenger"
               ? passengerTickets.length
               : vehicleTickets.length,
-          quantity_index: i + 1, // 1-based index for display
+          quantity_index: i + 1,
         };
 
         if (item.class.type === "passenger") {
@@ -91,24 +98,11 @@ export default function FormPenumpang({ session }: FormPenumpangProps) {
     return { passengerTickets, vehicleTickets };
   };
 
-  const { passengerTickets, vehicleTickets } = generateExpandedTickets();
-
-  console.log("🎫 Expanded tickets:", {
-    passengerTickets: passengerTickets.map((t) => ({
-      class_name: t.class_name,
-      class_id: t.class_id,
-      quantity_index: t.quantity_index,
-      form_index: t.form_index,
-    })),
-    vehicleTickets: vehicleTickets.map((t) => ({
-      class_name: t.class_name,
-      class_id: t.class_id,
-      quantity_index: t.quantity_index,
-      form_index: t.form_index,
-    })),
-    totalPassengerForms: passengerTickets.length,
-    totalVehicleForms: vehicleTickets.length,
-  });
+  // ✅ Memoize tickets to prevent regeneration
+  const { passengerTickets, vehicleTickets } = useMemo(
+    () => generateExpandedTickets(),
+    [session.claim_items] // Only depend on claim_items
+  );
 
   const [initialized, setInitialized] = useState(false);
 
@@ -138,116 +132,133 @@ export default function FormPenumpang({ session }: FormPenumpangProps) {
     name: "kendaraan",
   });
 
-  // ✅ Initialize form data based on expanded tickets
+  // ✅ Initialize form data with proper dependency array
   useEffect(() => {
-    const saved = sessionStorage.getItem(STORAGE_KEY);
-    if (saved) {
-      try {
-        const parsed = JSON.parse(saved);
-        if (
-          parsed.penumpang?.length === passengerTickets.length &&
-          parsed.kendaraan?.length === vehicleTickets.length
-        ) {
-          const formattedPenumpang = parsed.penumpang.map((p: any) => ({
-            nama: p.nama || "",
-            jenis_kelamin: p.jenis_kelamin || "pria",
-            jenis_id: p.jenis_id || "nik",
-            nomor_identitas: p.nomor_identitas || "",
-            usia: String(p.usia || ""),
-            alamat: p.alamat || "",
-            ticket_id: p.ticket_id,
-            class_name: p.class_name,
-            class_id: p.class_id,
-          }));
+    let isMounted = true; // Prevent state updates if component unmounted
+    
+    const initializeForm = () => {
+      const saved = sessionStorage.getItem(STORAGE_KEY);
+      
+      if (saved) {
+        try {
+          const parsed = JSON.parse(saved);
+          if (
+            parsed.penumpang?.length === passengerTickets.length &&
+            parsed.kendaraan?.length === vehicleTickets.length
+          ) {
+            // ✅ Format existing data with proper types
+            const formattedPenumpang = parsed.penumpang.map((p: any, index: number) => ({
+              nama: p.nama || "",
+              jenis_kelamin: (p.jenis_kelamin === "wanita" ? "wanita" : "pria") as "pria" | "wanita",
+              jenis_id: (p.jenis_id || "nik") as "nik" | "sim" | "paspor",
+              nomor_identitas: p.nomor_identitas || "",
+              usia: String(p.usia || ""),
+              alamat: p.alamat || "",
+              ticket_id: `passenger_${passengerTickets[index]?.class_id}_${passengerTickets[index]?.quantity_index}`,
+              class_name: passengerTickets[index]?.class_name || "",
+              class_id: passengerTickets[index]?.class_id || 0,
+            }));
 
-          const formattedKendaraan = parsed.kendaraan.map((k: any) => ({
-            nomor_polisi: k.nomor_polisi || "",
-            nama: k.nama || "",
-            alamat: k.alamat || "",
-            usia: String(k.usia || ""),
-            ticket_id: k.ticket_id,
-            class_name: k.class_name,
-            class_id: k.class_id,
-          }));
+            const formattedKendaraan = parsed.kendaraan.map((k: any, index: number) => ({
+              nomor_polisi: k.nomor_polisi || "",
+              nama: k.nama || "",
+              alamat: k.alamat || "",
+              usia: String(k.usia || ""),
+              ticket_id: `vehicle_${vehicleTickets[index]?.class_id}_${vehicleTickets[index]?.quantity_index}`,
+              class_name: vehicleTickets[index]?.class_name || "",
+              class_id: vehicleTickets[index]?.class_id || 0,
+            }));
 
-          replacePassenger(formattedPenumpang);
-          replaceKendaraan(formattedKendaraan);
-          reset({
-            penumpang: formattedPenumpang,
-            kendaraan: formattedKendaraan,
-          });
-          setInitialized(true);
-          return;
+            console.log("🔄 Restoring saved data:", {
+              formattedPenumpang: formattedPenumpang.length,
+              formattedKendaraan: formattedKendaraan.length,
+            });
+
+            if (isMounted) {
+              replacePassenger(formattedPenumpang);
+              replaceKendaraan(formattedKendaraan);
+              reset({
+                penumpang: formattedPenumpang,
+                kendaraan: formattedKendaraan,
+              });
+              setInitialized(true);
+            }
+            return;
+          }
+        } catch (error) {
+          console.error("❌ Error parsing saved data:", error);
+          // Continue to create new form if parsing fails
         }
-      } catch (error) {
-        console.warn("Failed to parse saved data:", error);
       }
+
+      // ✅ Create new form with proper types
+      const defaultPenumpang = passengerTickets.map((ticket) => ({
+        nama: "",
+        jenis_kelamin: "pria" as const,
+        jenis_id: "nik" as const,
+        nomor_identitas: "",
+        usia: "",
+        alamat: "",
+        ticket_id: `passenger_${ticket.class_id}_${ticket.quantity_index}`,
+        class_name: ticket.class_name,
+        class_id: ticket.class_id,
+      }));
+
+      const defaultKendaraan = vehicleTickets.map((ticket) => ({
+        nomor_polisi: "",
+        nama: "",
+        alamat: "",
+        usia: "",
+        ticket_id: `vehicle_${ticket.class_id}_${ticket.quantity_index}`,
+        class_name: ticket.class_name,
+        class_id: ticket.class_id,
+      }));
+
+      console.log("🔧 Initializing forms:", {
+        defaultPenumpang: defaultPenumpang.length,
+        defaultKendaraan: defaultKendaraan.length,
+      });
+
+      if (isMounted) {
+        replacePassenger(defaultPenumpang);
+        replaceKendaraan(defaultKendaraan);
+        reset({
+          penumpang: defaultPenumpang,
+          kendaraan: defaultKendaraan,
+        });
+        setInitialized(true);
+      }
+    };
+
+    // ✅ Only initialize if we have tickets and not already initialized
+    if ((passengerTickets.length > 0 || vehicleTickets.length > 0) && !initialized) {
+      initializeForm();
     }
 
-    // ✅ Default values based on expanded tickets
-    const defaultPenumpang = passengerTickets.map((ticket) => ({
-      nama: "",
-      jenis_kelamin: "pria" as const,
-      jenis_id: "nik" as const,
-      nomor_identitas: "",
-      usia: "",
-      alamat: "",
-      ticket_id: `passenger_${ticket.class_id}_${ticket.quantity_index}`,
-      class_name: ticket.class_name,
-      class_id: ticket.class_id,
-    }));
-
-    const defaultKendaraan = vehicleTickets.map((ticket) => ({
-      nomor_polisi: "",
-      nama: "",
-      alamat: "",
-      usia: "",
-      ticket_id: `vehicle_${ticket.class_id}_${ticket.quantity_index}`,
-      class_name: ticket.class_name,
-      class_id: ticket.class_id,
-    }));
-
-    console.log("🔧 Initializing forms:", {
-      defaultPenumpang: defaultPenumpang.length,
-      defaultKendaraan: defaultKendaraan.length,
-      penumpangStructure: defaultPenumpang.map((p) => ({
-        ticket_id: p.ticket_id,
-        class_name: p.class_name,
-        class_id: p.class_id,
-      })),
-      kendaraanStructure: defaultKendaraan.map((k) => ({
-        ticket_id: k.ticket_id,
-        class_name: k.class_name,
-        class_id: k.class_id,
-      })),
-    });
-
-    replacePassenger(defaultPenumpang);
-    replaceKendaraan(defaultKendaraan);
-    reset({
-      penumpang: defaultPenumpang,
-      kendaraan: defaultKendaraan,
-    });
-
-    setInitialized(true);
+    return () => {
+      isMounted = false; // Cleanup
+    };
   }, [
-    passengerTickets.length,
-    vehicleTickets.length,
-    reset,
-    replacePassenger,
-    replaceKendaraan,
+    passengerTickets.length, // Only length, not the array itself
+    vehicleTickets.length,   // Only length, not the array itself
+    initialized,             // Track initialization state
   ]);
 
-  // Save form data to session storage
+  // ✅ Separate effect for saving form data (debounced)
+  const watchedData = watch();
   useEffect(() => {
     if (initialized) {
-      const formData = {
-        penumpang: watch("penumpang"),
-        kendaraan: watch("kendaraan"),
-      };
-      sessionStorage.setItem(STORAGE_KEY, JSON.stringify(formData));
+      const timeoutId = setTimeout(() => {
+        const formData = {
+          penumpang: watchedData.penumpang,
+          kendaraan: watchedData.kendaraan,
+        };
+        sessionStorage.setItem(STORAGE_KEY, JSON.stringify(formData));
+      }, 500); // Debounce saves by 500ms
+
+      return () => clearTimeout(timeoutId);
     }
-  }, [watch("penumpang"), watch("kendaraan"), initialized, watch]);
+  }, [watchedData, initialized]);
 
   const onSubmit = async (data: PenumpangFormData) => {
     if (passengerTickets.length === 0 && vehicleTickets.length === 0) {
@@ -264,26 +275,32 @@ export default function FormPenumpang({ session }: FormPenumpangProps) {
         submissionData
       );
 
-      // ✅ Add class information with proper mapping
+      // ✅ Add class information with proper mapping and type safety
       const penumpangDenganKelas = submissionData.penumpang?.map(
-        (item, index: number) => ({
-          ...item,
-          kelas: passengerTickets[index]?.class_name || "Tidak diketahui",
-          class_id: passengerTickets[index]?.class_id,
-          original_class_id: passengerTickets[index]?.original_item.class_id,
-          quantity_index: passengerTickets[index]?.quantity_index,
-        })
-      );
+        (item, index: number) => {
+          const ticketInfo = passengerTickets[index];
+          return {
+            ...item,
+            kelas: ticketInfo?.class_name || "Tidak diketahui",
+            class_id: ticketInfo?.class_id || 0,
+            original_class_id: ticketInfo?.original_item?.class_id || 0,
+            quantity_index: ticketInfo?.quantity_index || 1,
+          };
+        }
+      ) || [];
 
       const kendaraanDenganKelas = submissionData.kendaraan?.map(
-        (item, index: number) => ({
-          ...item,
-          kelas: vehicleTickets[index]?.class_name || "Tidak diketahui",
-          class_id: vehicleTickets[index]?.class_id,
-          original_class_id: vehicleTickets[index]?.original_item.class_id,
-          quantity_index: vehicleTickets[index]?.quantity_index,
-        })
-      );
+        (item, index: number) => {
+          const ticketInfo = vehicleTickets[index];
+          return {
+            ...item,
+            kelas: ticketInfo?.class_name || "Tidak diketahui",
+            class_id: ticketInfo?.class_id || 0,
+            original_class_id: ticketInfo?.original_item?.class_id || 0,
+            quantity_index: ticketInfo?.quantity_index || 1,
+          };
+        }
+      ) || [];
 
       const savedData = {
         penumpang: penumpangDenganKelas,
@@ -293,7 +310,7 @@ export default function FormPenumpang({ session }: FormPenumpangProps) {
       sessionStorage.setItem(STORAGE_KEY, JSON.stringify(savedData));
       console.log("✅ Data saved successfully:", savedData);
 
-      const finalSessionId = sessionId || session.session_id;
+      const finalSessionId = sessionId || sessionIdFromStorage || session.session_id;
 
       if (!finalSessionId) {
         toast.error("Session ID tidak ditemukan. Silakan booking ulang.");
@@ -356,7 +373,7 @@ export default function FormPenumpang({ session }: FormPenumpangProps) {
                     </h3>
                     <p className="text-sm text-gray-600">
                       {ticketInfo?.class_name}
-                      {ticketInfo?.original_item.quantity > 1 && (
+                      {ticketInfo && ticketInfo.original_item.quantity > 1 && (
                         <span className="ml-2 px-2 py-0.5 bg-green-100 text-green-700 rounded-full text-xs">
                           {ticketInfo.quantity_index} dari{" "}
                           {ticketInfo.original_item.quantity}
@@ -384,7 +401,6 @@ export default function FormPenumpang({ session }: FormPenumpangProps) {
               </div>
 
               <CardContent className="p-6">
-                {/* ✅ Update vehicle grid juga untuk konsistensi */}
                 <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
                   {/* Nomor Polisi */}
                   <div className="space-y-2">
@@ -399,12 +415,12 @@ export default function FormPenumpang({ session }: FormPenumpangProps) {
                       {...register(`kendaraan.${index}.nomor_polisi`)}
                       onInput={(e) => {
                         const target = e.target as HTMLInputElement;
-                        target.value = target.value.replace(/[^A-Z0-9\s]/g, "");
+                        target.value = target.value.toUpperCase().replace(/[^A-Z0-9\s]/g, "");
                       }}
                     />
                     {errors.kendaraan?.[index]?.nomor_polisi && (
                       <p className="text-xs text-red-500">
-                        {errors.kendaraan[index].nomor_polisi?.message}
+                        {errors.kendaraan[index]?.nomor_polisi?.message}
                       </p>
                     )}
                   </div>
@@ -417,7 +433,7 @@ export default function FormPenumpang({ session }: FormPenumpangProps) {
                     </Label>
                     <Input
                       className="h-11 bg-gray-50 text-gray-500 text-sm"
-                      value={ticketInfo?.class_name}
+                      value={ticketInfo?.class_name || ""}
                       readOnly
                     />
                   </div>
@@ -430,7 +446,7 @@ export default function FormPenumpang({ session }: FormPenumpangProps) {
                     </Label>
                     <Input
                       className="h-11 placeholder:text-sm text-sm"
-                      placeholder="Nama sesuai STNK "
+                      placeholder="Nama sesuai STNK"
                       maxLength={24}
                       {...register(`kendaraan.${index}.nama`)}
                       onInput={(e) => {
@@ -454,7 +470,7 @@ export default function FormPenumpang({ session }: FormPenumpangProps) {
                     </div>
                     {errors.kendaraan?.[index]?.nama && (
                       <p className="text-xs text-red-500">
-                        {errors.kendaraan[index].nama?.message}
+                        {errors.kendaraan[index]?.nama?.message}
                       </p>
                     )}
                   </div>
@@ -479,12 +495,12 @@ export default function FormPenumpang({ session }: FormPenumpangProps) {
                     <p className="text-xs text-gray-500">Contoh: 35 (tahun)</p>
                     {errors.kendaraan?.[index]?.usia && (
                       <p className="text-xs text-red-500">
-                        {errors.kendaraan[index].usia?.message}
+                        {errors.kendaraan[index]?.usia?.message}
                       </p>
                     )}
                   </div>
 
-                  {/* Alamat - Kendaraan */}
+                  {/* Alamat Kendaraan */}
                   <div className="space-y-2 xl:col-span-2">
                     <Label className="flex items-center gap-2 text-gray-700 text-sm">
                       <MapPin className="w-4 h-4" />
@@ -493,7 +509,7 @@ export default function FormPenumpang({ session }: FormPenumpangProps) {
                     <Input
                       className="h-11 placeholder:text-sm text-sm"
                       placeholder="Alamat pemilik kendaraan"
-                      maxLength={100} // ✅ Update maxLength from 20 to 100
+                      maxLength={100}
                       {...register(`kendaraan.${index}.alamat`)}
                     />
                     <div className="flex justify-between text-xs">
@@ -502,18 +518,17 @@ export default function FormPenumpang({ session }: FormPenumpangProps) {
                       </span>
                       <span
                         className={`${
-                          (watch(`kendaraan.${index}.alamat`)?.length || 0) > 80 // ✅ Warning at 80 chars
+                          (watch(`kendaraan.${index}.alamat`)?.length || 0) > 80
                             ? "text-amber-600"
                             : "text-gray-400"
                         }`}
                       >
-                        {watch(`kendaraan.${index}.alamat`)?.length || 0}/100{" "}
-                        {/* ✅ Update counter */}
+                        {watch(`kendaraan.${index}.alamat`)?.length || 0}/100
                       </span>
                     </div>
                     {errors.kendaraan?.[index]?.alamat && (
                       <p className="text-xs text-red-500">
-                        {errors.kendaraan[index].alamat?.message}
+                        {errors.kendaraan[index]?.alamat?.message}
                       </p>
                     )}
                   </div>
@@ -539,7 +554,7 @@ export default function FormPenumpang({ session }: FormPenumpangProps) {
                     </h3>
                     <p className="text-sm text-gray-600">
                       {ticketInfo?.class_name}
-                      {ticketInfo?.original_item.quantity > 1 && (
+                      {ticketInfo && ticketInfo.original_item.quantity > 1 && (
                         <span className="ml-2 px-2 py-0.5 bg-blue-100 text-blue-700 rounded-full text-xs">
                           {ticketInfo.quantity_index} dari{" "}
                           {ticketInfo.original_item.quantity}
@@ -551,7 +566,6 @@ export default function FormPenumpang({ session }: FormPenumpangProps) {
               </CardHeader>
 
               <CardContent className="p-6">
-                {/* ✅ Update grid: grid-cols-1 default, xl:grid-cols-3 untuk extra large screens */}
                 <div className="grid grid-cols-1 xl:grid-cols-3 gap-4">
                   {/* Jenis Kelamin */}
                   <div className="space-y-2">
@@ -578,13 +592,12 @@ export default function FormPenumpang({ session }: FormPenumpangProps) {
                     </Select>
                     {errors.penumpang?.[index]?.jenis_kelamin && (
                       <p className="text-xs text-red-500">
-                        {errors.penumpang[index].jenis_kelamin?.message}
+                        {errors.penumpang[index]?.jenis_kelamin?.message}
                       </p>
                     )}
                   </div>
 
                   {/* Nama Lengkap */}
-                  {/* ✅ Remove md:col-span-2, let it be single column on small screens */}
                   <div className="space-y-2 xl:col-span-2">
                     <Label className="flex items-center gap-2 text-gray-700 text-sm">
                       <User className="w-4 h-4" />
@@ -616,7 +629,7 @@ export default function FormPenumpang({ session }: FormPenumpangProps) {
                     </div>
                     {errors.penumpang?.[index]?.nama && (
                       <p className="text-xs text-red-500">
-                        {errors.penumpang[index].nama?.message}
+                        {errors.penumpang[index]?.nama?.message}
                       </p>
                     )}
                   </div>
@@ -647,7 +660,7 @@ export default function FormPenumpang({ session }: FormPenumpangProps) {
                     </Select>
                     {errors.penumpang?.[index]?.jenis_id && (
                       <p className="text-xs text-red-500">
-                        {errors.penumpang[index].jenis_id?.message}
+                        {errors.penumpang[index]?.jenis_id?.message}
                       </p>
                     )}
                   </div>
@@ -716,7 +729,7 @@ export default function FormPenumpang({ session }: FormPenumpangProps) {
                     })()}
                     {errors.penumpang?.[index]?.nomor_identitas && (
                       <p className="text-xs text-red-500">
-                        {errors.penumpang[index].nomor_identitas?.message}
+                        {errors.penumpang[index]?.nomor_identitas?.message}
                       </p>
                     )}
                   </div>
@@ -741,11 +754,12 @@ export default function FormPenumpang({ session }: FormPenumpangProps) {
                     <p className="text-xs text-gray-500">Contoh: 25 (tahun)</p>
                     {errors.penumpang?.[index]?.usia && (
                       <p className="text-xs text-red-500">
-                        {errors.penumpang[index].usia?.message}
+                        {errors.penumpang[index]?.usia?.message}
                       </p>
                     )}
                   </div>
 
+                  {/* Alamat */}
                   <div className="space-y-2 xl:col-span-3">
                     <Label className="flex items-center gap-2 text-gray-700 text-sm">
                       <MapPin className="w-4 h-4" />
@@ -754,7 +768,7 @@ export default function FormPenumpang({ session }: FormPenumpangProps) {
                     <Input
                       className="h-11 placeholder:text-sm text-sm"
                       placeholder="Alamat lengkap tempat tinggal"
-                      maxLength={100} // ✅ Add maxLength for consistency
+                      maxLength={100}
                       {...register(`penumpang.${index}.alamat`)}
                     />
                     <div className="flex justify-between text-xs">
@@ -764,18 +778,17 @@ export default function FormPenumpang({ session }: FormPenumpangProps) {
                       </span>
                       <span
                         className={`${
-                          (watch(`penumpang.${index}.alamat`)?.length || 0) > 80 // ✅ Add character counter
+                          (watch(`penumpang.${index}.alamat`)?.length || 0) > 80
                             ? "text-amber-600"
                             : "text-gray-400"
                         }`}
                       >
-                        {watch(`penumpang.${index}.alamat`)?.length || 0}/100{" "}
-                        {/* ✅ Add counter display */}
+                        {watch(`penumpang.${index}.alamat`)?.length || 0}/100
                       </span>
                     </div>
                     {errors.penumpang?.[index]?.alamat && (
                       <p className="text-xs text-red-500">
-                        {errors.penumpang[index].alamat?.message}
+                        {errors.penumpang[index]?.alamat?.message}
                       </p>
                     )}
                   </div>
