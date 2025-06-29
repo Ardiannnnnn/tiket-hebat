@@ -14,12 +14,7 @@ import { poppins } from "../fonts";
 import { useEffect, useState } from "react";
 import { useForm, FormProvider } from "react-hook-form";
 import FormPemesan from "./formPemesan";
-import {
-  Users,
-  Car,
-  Eye,
-  User,
-} from "lucide-react";
+import { Users, Car, Eye, User } from "lucide-react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { pemesanSchema, type PemesanFormData } from "@/lib/pemesanSchema";
 
@@ -300,17 +295,19 @@ export default function Data({
       {kendaraanList.length > 0 && (
         <Card className="shadow-md py-0 gap-0">
           <CardHeader className="border-b p-4 sm:p-6">
-            <CardTitle className="flex items-center gap-3">
-              <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
-                <Car className="w-4 h-4 text-green-600" />
+            <CardTitle className="flex items-center gap-3 justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
+                  <Car className="w-4 h-4 text-green-600" />
+                </div>
+                <span>Data Kendaraan</span>
               </div>
-              <span>Data Kendaraan</span>
               <span className="text-sm font-normal text-gray-500">
-                ({kendaraanList.length} kendaraan)
+                ( {kendaraanList.length} item )
               </span>
             </CardTitle>
           </CardHeader>
-          <CardContent className="p-4 sm:p-6">
+          <CardContent className="p-4 sm:p-6 py-0">
             <div className="overflow-x-auto">
               <Table>
                 <TableBody>
@@ -350,17 +347,19 @@ export default function Data({
       {penumpangList.length > 0 && (
         <Card className="shadow-md py-0 gap-0">
           <CardHeader className="border-b p-4 sm:p-6">
-            <CardTitle className="flex items-center gap-3">
-              <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
-                <Users className="w-4 h-4 text-blue-600" />
+            <CardTitle className="flex items-center justify-between ">
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
+                  <Users className="w-4 h-4 text-blue-600" />
+                </div>
+                <span>Data Penumpang</span>
               </div>
-              <span>Data Penumpang</span>
               <span className="text-sm font-normal text-gray-500">
-                ({penumpangList.length} penumpang)
+                ( {penumpangList.length} item )
               </span>
             </CardTitle>
           </CardHeader>
-          <CardContent className="p-4 sm:p-6">
+          <CardContent className="p-4 sm:p-6 py-0">
             <div className="overflow-x-auto">
               <Table>
                 <TableBody>

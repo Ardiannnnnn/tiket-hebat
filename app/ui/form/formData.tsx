@@ -388,12 +388,12 @@ export default function FormPenumpang({ session }: FormPenumpangProps) {
                 <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
                   {/* Nomor Polisi */}
                   <div className="space-y-2">
-                    <Label className="flex items-center gap-2 text-gray-700 font-medium">
+                    <Label className="flex items-center gap-2 text-gray-700 text-sm">
                       <CreditCard className="w-4 h-4" />
                       Nomor Polisi
                     </Label>
                     <Input
-                      className="h-11"
+                      className="h-11 placeholder:text-sm text-sm"
                       placeholder="Contoh: B 1234 XYZ"
                       maxLength={15}
                       {...register(`kendaraan.${index}.nomor_polisi`)}
@@ -411,12 +411,12 @@ export default function FormPenumpang({ session }: FormPenumpangProps) {
 
                   {/* Golongan Kendaraan */}
                   <div className="space-y-2">
-                    <Label className="flex items-center gap-2 text-gray-700 font-medium">
+                    <Label className="flex items-center gap-2 text-gray-700 text-sm">
                       <Car className="w-4 h-4" />
                       Golongan Kendaraan
                     </Label>
                     <Input
-                      className="h-11 bg-gray-50"
+                      className="h-11 bg-gray-50 text-gray-500 text-sm"
                       value={ticketInfo?.class_name}
                       readOnly
                     />
@@ -424,13 +424,13 @@ export default function FormPenumpang({ session }: FormPenumpangProps) {
 
                   {/* Nama Pemilik */}
                   <div className="space-y-2">
-                    <Label className="flex items-center gap-2 text-gray-700 font-medium">
+                    <Label className="flex items-center gap-2 text-gray-700 text-sm">
                       <User className="w-4 h-4" />
                       Nama Pemilik
                     </Label>
                     <Input
-                      className="h-11"
-                      placeholder="Nama sesuai STNK"
+                      className="h-11 placeholder:text-sm text-sm"
+                      placeholder="Nama sesuai STNK "
                       maxLength={24}
                       {...register(`kendaraan.${index}.nama`)}
                       onInput={(e) => {
@@ -461,12 +461,12 @@ export default function FormPenumpang({ session }: FormPenumpangProps) {
 
                   {/* Usia Pemilik */}
                   <div className="space-y-2">
-                    <Label className="flex items-center gap-2 text-gray-700 font-medium">
+                    <Label className="flex items-center gap-2 text-gray-700 text-sm">
                       <Calendar className="w-4 h-4" />
                       Usia Pemilik
                     </Label>
                     <Input
-                      className="h-11"
+                      className="h-11 placeholder:text-sm text-sm"
                       type="text"
                       inputMode="numeric"
                       placeholder="Masukkan usia pemilik"
@@ -486,12 +486,12 @@ export default function FormPenumpang({ session }: FormPenumpangProps) {
 
                   {/* Alamat - Kendaraan */}
                   <div className="space-y-2 xl:col-span-2">
-                    <Label className="flex items-center gap-2 text-gray-700 font-medium">
+                    <Label className="flex items-center gap-2 text-gray-700 text-sm">
                       <MapPin className="w-4 h-4" />
                       Alamat
                     </Label>
                     <Input
-                      className="h-11"
+                      className="h-11 placeholder:text-sm text-sm"
                       placeholder="Alamat pemilik kendaraan"
                       maxLength={100} // ✅ Update maxLength from 20 to 100
                       {...register(`kendaraan.${index}.alamat`)}
@@ -555,7 +555,7 @@ export default function FormPenumpang({ session }: FormPenumpangProps) {
                 <div className="grid grid-cols-1 xl:grid-cols-3 gap-4">
                   {/* Jenis Kelamin */}
                   <div className="space-y-2">
-                    <Label className="flex items-center gap-2 text-gray-700 font-medium">
+                    <Label className="flex items-center gap-2 text-gray-700 text-sm">
                       <User className="w-4 h-4" />
                       Jenis Kelamin
                     </Label>
@@ -586,12 +586,12 @@ export default function FormPenumpang({ session }: FormPenumpangProps) {
                   {/* Nama Lengkap */}
                   {/* ✅ Remove md:col-span-2, let it be single column on small screens */}
                   <div className="space-y-2 xl:col-span-2">
-                    <Label className="flex items-center gap-2 text-gray-700 font-medium">
+                    <Label className="flex items-center gap-2 text-gray-700 text-sm">
                       <User className="w-4 h-4" />
                       Nama Lengkap
                     </Label>
                     <Input
-                      className="h-11"
+                      className="h-11 placeholder:text-sm text-sm"
                       placeholder="Nama sesuai identitas"
                       maxLength={24}
                       {...register(`penumpang.${index}.nama`)}
@@ -623,7 +623,7 @@ export default function FormPenumpang({ session }: FormPenumpangProps) {
 
                   {/* Jenis ID */}
                   <div className="space-y-2">
-                    <Label className="flex items-center gap-2 text-gray-700 font-medium">
+                    <Label className="flex items-center gap-2 text-gray-700 text-sm">
                       <CreditCard className="w-4 h-4" />
                       Jenis Identitas
                     </Label>
@@ -654,7 +654,7 @@ export default function FormPenumpang({ session }: FormPenumpangProps) {
 
                   {/* Nomor Identitas */}
                   <div className="space-y-2">
-                    <Label className="flex items-center gap-2 text-gray-700 font-medium">
+                    <Label className="flex items-center gap-2 text-gray-700 text-sm">
                       <CreditCard className="w-4 h-4" />
                       Nomor Identitas
                     </Label>
@@ -673,7 +673,7 @@ export default function FormPenumpang({ session }: FormPenumpangProps) {
                       return (
                         <>
                           <Input
-                            className={`h-11 ${
+                            className={`h-11 placeholder:text-sm text-sm ${
                               !validation.isValid
                                 ? "border-red-300 focus:border-red-500"
                                 : ""
@@ -723,12 +723,12 @@ export default function FormPenumpang({ session }: FormPenumpangProps) {
 
                   {/* Usia */}
                   <div className="space-y-2">
-                    <Label className="flex items-center gap-2 text-gray-700 font-medium">
+                    <Label className="flex items-center gap-2 text-gray-700 text-sm">
                       <Calendar className="w-4 h-4" />
                       Usia
                     </Label>
                     <Input
-                      className="h-11"
+                      className="h-11 placeholder:text-sm text-sm"
                       type="text"
                       inputMode="numeric"
                       placeholder="Masukkan usia"
@@ -747,12 +747,12 @@ export default function FormPenumpang({ session }: FormPenumpangProps) {
                   </div>
 
                   <div className="space-y-2 xl:col-span-3">
-                    <Label className="flex items-center gap-2 text-gray-700 font-medium">
+                    <Label className="flex items-center gap-2 text-gray-700 text-sm">
                       <MapPin className="w-4 h-4" />
                       Alamat
                     </Label>
                     <Input
-                      className="h-11"
+                      className="h-11 placeholder:text-sm text-sm"
                       placeholder="Alamat lengkap tempat tinggal"
                       maxLength={100} // ✅ Add maxLength for consistency
                       {...register(`penumpang.${index}.alamat`)}
