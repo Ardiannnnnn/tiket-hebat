@@ -43,17 +43,11 @@ interface Vehicle {
 
 // ✅ Simplified DataProps - Remove submit props
 interface DataProps {
-  sessionId: string;
-  selectedPayment: string;
   onFormValidationChange: (isValid: boolean, formData: any) => void;
-  isProcessing: boolean;
 }
 
 export default function Data({
-  sessionId,
-  selectedPayment,
   onFormValidationChange,
-  isProcessing,
 }: DataProps) {
   const [penumpangList, setPenumpangList] = useState<Passenger[]>([]);
   const [kendaraanList, setKendaraanList] = useState<Vehicle[]>([]);

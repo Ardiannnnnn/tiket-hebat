@@ -41,7 +41,7 @@ export const getSessionById = async (
     });
 
     const response = await api.get<SessionResponse>(
-      `/claim/session/${sessionId}`,
+      `/claim/${sessionId}`,
       config
     );
 

@@ -1,27 +1,19 @@
 // app/(user)/(beranda)/book/[id]/verifikasi/page.tsx
 "use client";
 
-import { useEffect, useState, useCallback } from "react"; // ✅ Add useCallback
+import { useEffect, useState, useCallback } from "react";
 import Data from "@/app/ui/verifikasi/data";
 import TotalBayar from "./totalBayar";
-import PaymentSelection from "./pembayaran"; // ✅ Import PaymentSelection
+import PaymentSelection from "./pembayaran";
 import SessionTimer from "../sessionTimer";
-import { getCookie } from "@/utils/cookies";
 import { getSessionById } from "@/service/session";
-import { submitPassengerData } from "@/service/passenger"; // ✅ Import submit service
+import { submitPassengerData } from "@/service/passenger";
 import type { SessionData } from "@/types/session";
-import { PassengerEntry, TicketEntryPayload } from "@/types/passenger"; // ✅ Import types
-import { ClaimSessionResponse } from "@/types/responBook"; // ✅ Import response type
-import { AxiosResponse } from "axios"; // ✅ Import axios type
-import { useRouter, useParams } from "next/navigation";
+import { PassengerEntry, TicketEntryPayload } from "@/types/passenger";
+import { ClaimSessionResponse } from "@/types/responBook";
+import { AxiosResponse } from "axios";
+import { useRouter, useParams, useSearchParams } from "next/navigation"; // ✅ Add useSearchParams
 import { toast } from "sonner";
-import { Button } from "@/components/ui/button";
-import {
-  Sheet,
-  SheetContent,
-  SheetTitle,
-  SheetTrigger,
-} from "@/components/ui/sheet";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -46,14 +38,20 @@ import {
 export default function VerifikasiPage() {
   const router = useRouter();
   const params = useParams();
+  const searchParams = useSearchParams(); // ✅ Add useSearchParams hook
   const bookId = params?.id;
 
+  // ✅ Extract session ID dari query parameter + sessionStorage
+  const sessionIdFromQuery = searchParams?.get("session_id");
+  const sessionIdFromStorage =
+    typeof window !== "undefined" ? sessionStorage.getItem("session_id") : null;
+  const finalSessionId = sessionIdFromQuery || sessionIdFromStorage;
+
   const [session, setSession] = useState<SessionData | null>(null);
-  const [sessionId, setSessionId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [sessionExpired, setSessionExpired] = useState(false);
-  const [selectedPayment, setSelectedPayment] = useState<string>(""); // ✅ Payment state di verifikasi
+  const [selectedPayment, setSelectedPayment] = useState<string>("");
 
   // ✅ Add submit states
   const [openConfirm, setOpenConfirm] = useState(false);
@@ -68,49 +66,57 @@ export default function VerifikasiPage() {
   const [penumpangList, setPenumpangList] = useState<any[]>([]);
   const [kendaraanList, setKendaraanList] = useState<any[]>([]);
 
-  // ✅ Get session data from cookie (same as form.tsx)
+  // ✅ Fetch session data using getSessionById
   useEffect(() => {
     const fetchSessionData = async () => {
+      if (!finalSessionId) {
+        console.error("❌ Session ID tidak ditemukan");
+        setError("Session tidak ditemukan. Silakan booking ulang.");
+        setLoading(false);
+        return;
+      }
+
       try {
-        console.log("🔍 Fetching session data for verifikasi...");
+        console.log("🔍 Fetching session data with ID:", finalSessionId);
+        setLoading(true);
 
-        // ✅ Get session ID from cookie
-        const cookieSessionId = getCookie("session_id");
+        const response = await getSessionById(finalSessionId);
 
-        if (!cookieSessionId) {
-          console.log("❌ No session ID found in cookie");
-          setError("Session tidak ditemukan. Silakan booking ulang.");
-          toast.error("Session tidak ditemukan. Silakan booking ulang.");
-          return;
+        if (response?.status && response?.data) {
+          console.log("✅ Session data berhasil dimuat:", response?.data);
+          setSession(response?.data);
+          setError(null);
+
+          // ✅ Update sessionStorage with latest session_id if from query
+          if (sessionIdFromQuery && !sessionIdFromStorage) {
+            sessionStorage.setItem("session_id", finalSessionId);
+          }
+        } else {
+          throw new Error(response?.message || "Gagal mengambil data session");
         }
-
-        console.log("🍪 Session ID from cookie:", cookieSessionId);
-        setSessionId(cookieSessionId);
-
-        // ✅ Fetch session data
-        const response = await getSessionById(cookieSessionId);
-
-        console.log("📡 Session response:", response);
-
-        if (!response?.data) {
-          throw new Error("No session data received");
-        }
-
-        setSession(response.data);
-        console.log("✅ Session data loaded for verifikasi:", response.data);
       } catch (error: any) {
-        console.error("❌ Failed to fetch session:", error);
-        setError(error.message || "Gagal memuat data session");
-        toast.error("Gagal memuat data session. Silakan coba lagi.");
+        console.error("❌ Error fetching session:", error);
+
+        if (
+          error.message?.includes("Session expired") ||
+          error.message?.includes("tidak ditemukan")
+        ) {
+          setSessionExpired(true);
+          setError("Session telah berakhir atau tidak valid");
+        } else {
+          setError("Terjadi kesalahan saat memuat data session");
+          toast.error("Gagal memuat data session");
+        }
+        setSession(null);
       } finally {
         setLoading(false);
       }
     };
 
     fetchSessionData();
-  }, []);
+  }, [finalSessionId, sessionIdFromQuery, sessionIdFromStorage]);
 
-  // ✅ Load passenger/vehicle data on mount
+  // ✅ Load passenger and vehicle data from sessionStorage
   useEffect(() => {
     const stored = sessionStorage.getItem("dataPenumpang");
     if (stored) {
@@ -143,14 +149,35 @@ export default function VerifikasiPage() {
 
         setPenumpangList(transformedPenumpang);
         setKendaraanList(transformedKendaraan);
+
+        console.log("📋 Data penumpang dan kendaraan dimuat:", {
+          penumpang: transformedPenumpang.length,
+          kendaraan: transformedKendaraan.length,
+        });
       } catch (err) {
-        console.error("Gagal parsing data penumpang:", err);
+        console.error("❌ Gagal parsing data penumpang:", err);
       }
     }
   }, []);
 
+  // ✅ Handle session expiration
+  useEffect(() => {
+    if (session?.expires_at) {
+      const expirationTime = new Date(session.expires_at).getTime();
+      const now = Date.now();
+
+      if (expirationTime <= now) {
+        console.warn("⏰ Session sudah expired");
+        setSessionExpired(true);
+      }
+    }
+  }, [session]);
+
   const handleSessionExpired = () => {
     setSessionExpired(true);
+    // ✅ Clear session storage saat expired
+    sessionStorage.removeItem("session_id");
+    sessionStorage.removeItem("dataPenumpang");
     // Redirect after 2 seconds
     setTimeout(() => {
       router.push(`/book/${bookId}`);
@@ -160,12 +187,12 @@ export default function VerifikasiPage() {
   // ✅ Handle form validation update from Data component
   const handleFormValidationChange = useCallback(
     (isValid: boolean, formData: any) => {
-      console.log("📋 Form validation changed:", { isValid, formData }); // ✅ Add logging
+      console.log("📋 Form validation changed:", { isValid, formData });
       setIsPemesanDataValid(isValid);
       setPemesanData(formData);
     },
     []
-  ); // ✅ Empty dependency array
+  );
 
   // ✅ Handle submit trigger from Data component
   const handleSubmitTrigger = useCallback(() => {
@@ -183,14 +210,14 @@ export default function VerifikasiPage() {
 
     console.log("✅ All validations passed, opening confirmation");
     setOpenConfirm(true);
-  }, [isPemesanDataValid, selectedPayment]); // ✅ Only depend on what's needed
+  }, [isPemesanDataValid, selectedPayment]);
 
   // ✅ Submit handler
   const handleSubmitAndRedirect = async () => {
     setOpenConfirm(false);
     setIsProcessing(true);
 
-    if (!sessionId) {
+    if (!finalSessionId) {
       toast.error("Session ID tidak ditemukan.");
       setIsProcessing(false);
       return;
@@ -227,7 +254,7 @@ export default function VerifikasiPage() {
       const ticketData = [...passengerData, ...vehicleData];
 
       const bookingPayload: TicketEntryPayload = {
-        session_id: sessionId,
+        session_id: finalSessionId,
         customer_name: pemesanData.nama,
         payment_method: selectedPayment,
         phone_number: pemesanData.nohp,
@@ -242,7 +269,7 @@ export default function VerifikasiPage() {
       setProcessingStep("creating-invoice");
 
       const orderResponse: AxiosResponse<ClaimSessionResponse> =
-        await submitPassengerData(bookingPayload);
+        await submitPassengerData(finalSessionId, bookingPayload);
 
       const referenceNumber = orderResponse.data.order_id;
 
@@ -257,6 +284,10 @@ export default function VerifikasiPage() {
       toast.success("Pesanan dan invoice berhasil dibuat!");
 
       await new Promise((resolve) => setTimeout(resolve, 1000));
+
+      // ✅ Clear session storage setelah sukses
+      sessionStorage.removeItem("session_id");
+      sessionStorage.removeItem("dataPenumpang");
 
       const invoiceUrl = `/invoice/${referenceNumber}`;
       console.log("🔗 Redirecting to:", invoiceUrl);
@@ -278,7 +309,7 @@ export default function VerifikasiPage() {
       } else if (err.message?.includes("network")) {
         toast.error("Koneksi bermasalah. Periksa internet Anda dan coba lagi.");
       } else {
-        toast.error("Gagal memproses pesanan. Silakan coba lagi.");
+        toast.error("Terjadi kesalahan saat memproses pesanan.");
       }
     } finally {
       setIsProcessing(false);
@@ -406,31 +437,32 @@ export default function VerifikasiPage() {
         <div className="text-center">
           <div className="w-12 h-12 border-4 border-Blue border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
           <p className="text-gray-600">Memuat data verifikasi...</p>
-          <p className="text-sm text-gray-500">Mengambil data pemesanan Anda</p>
         </div>
       </div>
     );
   }
 
   // ✅ Error state
-  if (error || !session || !sessionId) {
+  if (error || !session) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
+        <div className="text-center max-w-md mx-auto p-6">
           <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
             <span className="text-2xl">❌</span>
           </div>
           <h2 className="text-lg font-semibold text-gray-700 mb-2">
-            Gagal Memuat Data
+            {error || "Session tidak ditemukan"}
           </h2>
           <p className="text-gray-500 mb-4">
-            {error || "Data session tidak ditemukan"}
+            {sessionExpired
+              ? "Session pemesanan Anda telah berakhir. Silakan mulai booking ulang."
+              : "Terjadi kesalahan dalam memuat data session. Silakan coba lagi."}
           </p>
           <button
-            onClick={() => router.back()}
+            onClick={() => router.push(`/book/${bookId}`)}
             className="bg-Blue text-white px-6 py-2 rounded-lg hover:bg-Blue/90 transition-colors"
           >
-            Kembali
+            Kembali ke Booking
           </button>
         </div>
       </div>
@@ -471,9 +503,6 @@ export default function VerifikasiPage() {
                 <h1 className="text-xl font-semibold text-gray-900">
                   Verifikasi & Pembayaran
                 </h1>
-                <p className="text-sm text-gray-600">
-                  Periksa data dan pilih metode pembayaran
-                </p>
               </div>
             </div>
 
@@ -505,13 +534,11 @@ export default function VerifikasiPage() {
             <div className="xl:col-span-2 space-y-6">
               {/* ✅ Data Component */}
               <Data
-                sessionId={sessionId}
-                selectedPayment={selectedPayment}
                 onFormValidationChange={handleFormValidationChange}
-                isProcessing={isProcessing}
+                // ✅ Pass session ID as prop
               />
 
-              {/* ✅ Payment Selection Component - Enhanced with session prop */}
+              {/* ✅ Payment Selection Component */}
               <PaymentSelection
                 selectedPayment={selectedPayment}
                 onPaymentChange={setSelectedPayment}
@@ -519,7 +546,7 @@ export default function VerifikasiPage() {
                 onSubmitTrigger={handleSubmitTrigger}
                 isProcessing={isProcessing}
                 isPemesanDataValid={isPemesanDataValid}
-                session={session} // ✅ Pass session for mobile sheet
+                session={session}
               />
             </div>
           </div>
