@@ -139,12 +139,12 @@ export default function Form() {
               <SheetTrigger asChild>
                 <Button
                   variant="outline"
-                  className="w-full h-12 flex items-center justify-between bg-white border-2 border-Blue/20 hover:bg-Blue/5 transition-all shadow-sm"
+                  className="w-full h-12 flex items-center justify-between bg-white border-2 border-Blue hover:bg-teal-600 transition-all shadow-sm"
                 >
                   <div className="flex items-center gap-3">
-                    <Ship className="w-5 h-5 text-Blue" />
+                    <Ship className="text-Blue" />
                     <span className="font-medium text-gray-900">
-                      Detail Keberangkatan
+                      Klik Disini Detail Keberangkatan
                     </span>
                   </div>
                   <div className="flex items-center gap-2">

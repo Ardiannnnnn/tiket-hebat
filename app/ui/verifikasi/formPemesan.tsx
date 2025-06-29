@@ -93,14 +93,14 @@ export default function FormPemesan() {
             <div className="space-y-2">
               <Label
                 htmlFor="nama"
-                className="flex items-center gap-2 text-gray-700 font-medium"
+                className="flex items-center gap-2 text-gray-700 text-sm"
               >
                 <User className="w-4 h-4" />
                 Nama Lengkap
               </Label>
               <Input
                 id="nama"
-                className="h-11"
+                className="h-11 placeholder:text-sm text-sm"
                 placeholder="Nama sesuai identitas"
                 maxLength={50}
                 {...register("nama")}
@@ -141,7 +141,7 @@ export default function FormPemesan() {
               </Label>
               <Input
                 id="nohp"
-                className="h-11"
+                className="h-11 placeholder:text-sm text-sm"
                 placeholder="Contoh: 08123456789"
                 maxLength={14}
                 inputMode="numeric"
@@ -255,7 +255,7 @@ export default function FormPemesan() {
                   <>
                     <Input
                       id="noID"
-                      className={`h-11 ${
+                      className={`h-11 placeholder:text-sm text-sm ${
                         !validation.isValid
                           ? "border-red-300 focus:border-red-500"
                           : ""
@@ -312,7 +312,7 @@ export default function FormPemesan() {
               <Input
                 id="email"
                 type="email"
-                className="h-11"
+                className="h-11 placeholder:text-sm text-sm"
                 placeholder="contoh@email.com"
                 maxLength={100}
                 {...register("email")}

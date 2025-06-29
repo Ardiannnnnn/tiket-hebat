@@ -35,6 +35,7 @@ import {
   Hash,
   Copy,
   Ticket,
+  Loader2,
 } from "lucide-react";
 
 function getTimeFromDateTime(dateTime: string): string {
@@ -344,10 +345,7 @@ export default function Invoice({
                               )}
                             </p>
                             <p className="font-medium text-gray-700 mt-1">
-                              {
-                                booking.schedule.departure_harbor
-                                  .harbor_name
-                              }
+                              {booking.schedule.departure_harbor.harbor_name}
                             </p>
                           </div>
 
@@ -372,10 +370,7 @@ export default function Invoice({
                               )}
                             </p>
                             <p className="font-medium text-gray-700 mt-1">
-                              {
-                                booking.schedule.arrival_harbor
-                                  .harbor_name
-                              }
+                              {booking.schedule.arrival_harbor.harbor_name}
                             </p>
                           </div>
                         </div>
@@ -522,16 +517,87 @@ export default function Invoice({
 
             {/* Payment & Instructions Sidebar */}
             <div className="space-y-6">
-              {/* Payment Method Card */}
-              <Card className="overflow-hidden border-2 border-Blue/30">
-                <CardHeader className="bg-Blue/10 border-b border-Blue/20 p-4">
-                  <CardTitle className="text-lg text-Blue flex items-center gap-2">
-                    <QrCode className="w-5 h-5" />
-                    Metode Pembayaran
+              {/* ✅ Enhanced Payment Method Card */}
+              <Card
+                className={cn(
+                  "overflow-hidden border-2",
+                  paymentData?.status === "PAID"
+                    ? "border-green-300 bg-green-50/50"
+                    : "border-Blue/30"
+                )}
+              >
+                <CardHeader
+                  className={cn(
+                    "border-b p-4",
+                    paymentData?.status === "PAID"
+                      ? "bg-green-100 border-green-200"
+                      : "bg-Blue/10 border-Blue/20"
+                  )}
+                >
+                  <CardTitle
+                    className={cn(
+                      "text-lg flex items-center gap-2",
+                      paymentData?.status === "PAID"
+                        ? "text-green-700"
+                        : "text-Blue"
+                    )}
+                  >
+                    {paymentData?.status === "PAID" ? (
+                      <>
+                        <CheckCircle className="w-5 h-5" />
+                        Pembayaran Selesai
+                      </>
+                    ) : (
+                      <>
+                        <QrCode className="w-5 h-5" />
+                        Metode Pembayaran
+                      </>
+                    )}
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="p-6">
                   {(() => {
+                    // ✅ Prioritas pertama: Cek status PAID
+                    if (paymentData?.status === "PAID") {
+                      return (
+                        <div className="text-center space-y-4">
+                          {/* ✅ Success Icon and Message */}
+                          <div className="bg-green-50 rounded-lg p-6 border border-green-200">
+                            <div className="flex flex-col items-center gap-4">
+                              <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center">
+                                <CheckCircle className="w-8 h-8 text-green-600" />
+                              </div>
+                              <div>
+                                <h3 className="font-semibold text-green-800 text-lg mb-1">
+                                  Pembayaran Berhasil
+                                </h3>
+                                <p className="text-sm text-green-600">
+                                  Transaksi telah dikonfirmasi dan tiket Anda
+                                  siap digunakan
+                                </p>
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* ✅ Payment Confirmation Details */}
+                          <div className="bg-white rounded-lg p-4 border border-green-200 space-y-3">
+                            <div className="flex items-center justify-between">
+                              <span className="text-sm text-gray-600">
+                                Status:
+                              </span>
+                              <div className="flex items-center gap-2">
+                                <CheckCircle className="w-4 h-4 text-green-600" />
+                                <span className="font-medium text-green-700">
+                                  Lunas
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    }
+
+                    // ✅ Status belum bayar - tampilkan metode pembayaran
                     const isQRPayment = paymentData?.qr_url;
                     const isVAPayment =
                       paymentData?.pay_code && !paymentData?.qr_url;
@@ -542,7 +608,7 @@ export default function Invoice({
 
                     if (isQRPayment && paymentData?.qr_url) {
                       return (
-                        <div className="text-center">
+                        <div className="text-center space-y-4"> 
                           <div className="bg-white p-4 rounded-lg border-2 border-Blue/20 mb-4">
                             <Image
                               width={200}
@@ -552,9 +618,29 @@ export default function Invoice({
                               alt="QR Code untuk Pembayaran"
                             />
                           </div>
-                          <p className="text-sm text-gray-600">
+                          <p className="text-sm text-gray-600 mb-4">
                             Scan dengan aplikasi mobile banking atau e-wallet
                           </p>
+
+                          {/* ✅ Refresh Status Button */}
+                          <Button
+                            onClick={handleManualRefresh}
+                            disabled={isRefreshing}
+                            className="w-full bg-Blue hover:bg-Blue/90 text-white"
+                            size="sm"
+                          >
+                            {isRefreshing ? (
+                              <>
+                                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                                Memperbarui Status...
+                              </>
+                            ) : (
+                              <>
+                                <Timer className="w-4 h-4 mr-2" />
+                                Perbarui Status Pembayaran
+                              </>
+                            )}
+                          </Button>
                         </div>
                       );
                     } else if (isVAPayment) {
@@ -571,19 +657,43 @@ export default function Invoice({
                               {paymentData.pay_code}
                             </p>
                           </div>
-                          <Button
-                            onClick={() => {
-                              navigator.clipboard.writeText(
-                                paymentData.pay_code
-                              );
-                              toast.success("Nomor Virtual Account disalin!");
-                            }}
-                            className="w-full bg-Orange hover:bg-Orange/90 text-white"
-                            size="sm"
-                          >
-                            <Copy className="w-4 h-4 mr-2" />
-                            Salin Nomor
-                          </Button>
+
+                          <div className="space-y-2">
+                            <Button
+                              onClick={() => {
+                                navigator.clipboard.writeText(
+                                  paymentData.pay_code
+                                );
+                                toast.success("Nomor Virtual Account disalin!");
+                              }}
+                              className="w-full bg-Orange hover:bg-Orange/90 text-white"
+                              size="sm"
+                            >
+                              <Copy className="w-4 h-4 mr-2" />
+                              Salin Nomor
+                            </Button>
+
+                            {/* ✅ Refresh Status Button */}
+                            <Button
+                              onClick={handleManualRefresh}
+                              disabled={isRefreshing}
+                              variant="outline"
+                              className="w-full border-Blue text-Blue hover:bg-Blue/5"
+                              size="sm"
+                            >
+                              {isRefreshing ? (
+                                <>
+                                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                                  Memperbarui Status...
+                                </>
+                              ) : (
+                                <>
+                                  <Timer className="w-4 h-4 mr-2" />
+                                  Perbarui Status Pembayaran
+                                </>
+                              )}
+                            </Button>
+                          </div>
                         </div>
                       );
                     } else if (isRedirectPayment) {
@@ -600,19 +710,44 @@ export default function Invoice({
                               Klik tombol di bawah untuk melanjutkan pembayaran
                             </p>
                           </div>
-                          <Button
-                            onClick={() => {
-                              window.open(paymentData.pay_url, "_blank");
-                            }}
-                            className="w-full bg-gradient-to-r from-Orange to-Orange/90 hover:from-Orange/90 hover:to-Orange text-white"
-                            size="lg"
-                          >
-                            <CreditCard className="w-4 h-4 mr-2" />
-                            Lanjutkan Pembayaran
-                          </Button>
-                          <p className="text-xs text-gray-500">
-                            Anda akan diarahkan ke halaman pembayaran Tripay
-                          </p>
+
+                          <div className="space-y-2">
+                            <Button
+                              onClick={() => {
+                                window.open(paymentData.pay_url, "_blank");
+                              }}
+                              className="w-full bg-gradient-to-r from-Orange to-Orange/90 hover:from-Orange/90 hover:to-Orange text-white"
+                              size="lg"
+                            >
+                              <CreditCard className="w-4 h-4 mr-2" />
+                              Lanjutkan Pembayaran
+                            </Button>
+
+                            <p className="text-xs text-gray-500 mb-2">
+                              Anda akan diarahkan ke halaman pembayaran
+                            </p>
+
+                            {/* ✅ Refresh Status Button */}
+                            <Button
+                              onClick={handleManualRefresh}
+                              disabled={isRefreshing}
+                              variant="outline"
+                              className="w-full border-Orange text-Orange hover:bg-Orange/5"
+                              size="sm"
+                            >
+                              {isRefreshing ? (
+                                <>
+                                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                                  Memperbarui Status...
+                                </>
+                              ) : (
+                                <>
+                                  <Timer className="w-4 h-4 mr-2" />
+                                  Perbarui Status Pembayaran
+                                </>
+                              )}
+                            </Button>
+                          </div>
                         </div>
                       );
                     } else {
@@ -626,43 +761,119 @@ export default function Invoice({
                   })()}
                 </CardContent>
               </Card>
-              {/* Bottom Notice */}
-              <div className="mt-8 text-center text-sm bg-gradient-to-r from-Blue/20 to-Orange/20 rounded-lg p-4">
-                <p className="text-Blue font-medium">
-                  Simpan invoice ini sebagai bukti pembayaran
-                </p>
-                <p className="text-Orange font-medium">
-                  Tunjukkan saat check-in di pelabuhan
-                </p>
-              </div>
-            </div>
-            {/* Instructions Card */}
-            <Card className="overflow-hidden shadow-lg border-2 border-Orange/30 xl:col-span-3 py-0 gap-0 mb-4">
-              <CardHeader className="bg-Orange/10 border-b border-Orange/20 p-4 ">
-                <CardTitle className="text-lg text-Orange flex items-center gap-2">
-                  <AlertCircle className="w-5 h-5" />
-                  Panduan Pembayaran
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="p-4">
-                <div className="space-y-4">
-                  {paymentData?.instructions.map((instruction, index) => (
-                    <div key={index}>
-                      <h4 className="font-semibold text-gray-600 mb-2">
-                        {instruction.title}
-                      </h4>
-                      <ol className="list-decimal pl-5 space-y-1">
-                        {instruction.steps.map((step, stepIndex) => (
-                          <li key={stepIndex} className="text-sm text-gray-600">
-                            {step}
-                          </li>
-                        ))}
-                      </ol>
+
+              {/* ✅ Enhanced Status Notice */}
+              {paymentData?.status === "PAID" ? (
+                // Success Notice for Paid Status
+                <div className="bg-gradient-to-r from-green-50 to-green-100 rounded-lg p-4 border border-green-200">
+                  <div className="text-center">
+                    <div className="flex items-center justify-center gap-2 mb-2">
+                      <CheckCircle className="w-5 h-5 text-green-600" />
+                      <p className="font-semibold text-green-800">
+                        Transaksi Berhasil
+                      </p>
                     </div>
-                  ))}
+                    <p className="text-sm text-green-700">
+                      Invoice ini adalah bukti pembayaran resmi yang sah.
+                    </p>
+                    <p className="text-xs text-green-600 mt-1">
+                      Simpan dan tunjukkan saat check-in di pelabuhan.
+                    </p>
+                  </div>
                 </div>
-              </CardContent>
-            </Card>
+              ) : (
+                // Pending Payment Notice
+                <div className="bg-gradient-to-r from-Blue/20 to-Orange/20 rounded-lg p-4">
+                  <div className="text-center text-sm">
+                    <div className="flex items-center justify-center gap-2 mb-2">
+                      <Timer className="w-4 h-4 text-Orange" />
+                      <p className="font-medium text-Blue">
+                        Menunggu Pembayaran
+                      </p>
+                    </div>
+                    <p className="text-Blue font-medium">
+                      Selesaikan pembayaran untuk mengaktifkan tiket
+                    </p>
+                    <p className="text-Orange font-medium">
+                      Waktu tersisa: {countdown}
+                    </p>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* ✅ Instructions Card - Hide when paid */}
+            {paymentData?.status !== "PAID" && (
+              <Card className="overflow-hidden shadow-lg border-2 border-Orange/30 xl:col-span-3 py-0 gap-0 mb-4">
+                <CardHeader className="bg-Orange/10 border-b border-Orange/20 p-4">
+                  <CardTitle className="text-lg text-Orange flex items-center gap-2">
+                    <AlertCircle className="w-5 h-5" />
+                    Panduan Pembayaran
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="p-4">
+                  <div className="space-y-4">
+                    {paymentData?.instructions.map((instruction, index) => (
+                      <div key={index}>
+                        <h4 className="font-semibold text-gray-600 mb-2">
+                          {instruction.title}
+                        </h4>
+                        <ol className="list-decimal pl-5 space-y-1">
+                          {instruction.steps.map((step, stepIndex) => (
+                            <li
+                              key={stepIndex}
+                              className="text-sm text-gray-600"
+                            >
+                              {step}
+                            </li>
+                          ))}
+                        </ol>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* ✅ Travel Tips for Paid Status */}
+            {paymentData?.status === "PAID" && (
+              <Card className="overflow-hidden shadow-lg border-2 border-green-300 xl:col-span-3 py-0 gap-0 mb-4">
+                <CardHeader className="bg-green-100 border-b border-green-200 p-4">
+                  <CardTitle className="text-lg text-green-700 flex items-center gap-2">
+                    <Ship className="w-5 h-5" />
+                    Tips Perjalanan
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="p-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-3">
+                      <h4 className="font-semibold text-gray-700 flex items-center gap-2">
+                        <Clock className="w-4 h-4 text-blue-600" />
+                        Sebelum Keberangkatan
+                      </h4>
+                      <ul className="text-sm text-gray-600 space-y-1 list-disc pl-5">
+                        <li>Datang 30-60 menit sebelum jadwal</li>
+                        <li>Bawa dokumen identitas yang valid</li>
+                        <li>Siapkan bukti pembayaran ini</li>
+                        <li>Cek kondisi cuaca dan gelombang</li>
+                      </ul>
+                    </div>
+                    <div className="space-y-3">
+                      <h4 className="font-semibold text-gray-700 flex items-center gap-2">
+                        <User className="w-4 h-4 text-green-600" />
+                        Saat Check-in
+                      </h4>
+                      <ul className="text-sm text-gray-600 space-y-1 list-disc pl-5">
+                        <li>Tunjukkan invoice dan identitas</li>
+                        <li>Konfirmasi data penumpang/kendaraan</li>
+                        <li>Ikuti arahan petugas pelabuhan</li>
+                        <li>Simpan tiket fisik jika diberikan</li>
+                      </ul>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
           </div>
         </div>
       </div>

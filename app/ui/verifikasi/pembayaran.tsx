@@ -102,7 +102,7 @@ export default function PaymentSelection({
               <div className="flex items-center gap-3">
                 <Receipt className="w-5 h-5 text-Blue" />
                 <span className="font-medium text-gray-900">
-                  Lihat Ringkasan Pemesanan
+                  Klik Disini Ringkasan Pembayaran
                 </span>
               </div>
               <div className="flex items-center gap-2">

@@ -1,7 +1,7 @@
 // app/(user)/(beranda)/book/[id]/verifikasi/page.tsx
 "use client";
 
-import { useEffect, useState, useCallback } from "react"; // ✅ Add useCallback
+import { useEffect, useState, useCallback, useRef } from "react"; // ✅ Add useRef
 import Data from "@/app/ui/verifikasi/data";
 import TotalBayar from "./totalBayar";
 import PaymentSelection from "./pembayaran"; // ✅ Import PaymentSelection
@@ -55,6 +55,11 @@ export default function VerifikasiPage() {
   const [sessionExpired, setSessionExpired] = useState(false);
   const [selectedPayment, setSelectedPayment] = useState<string>(""); // ✅ Payment state di verifikasi
 
+  // ✅ Add all missing refs
+  const sessionTimeRef = useRef<Date | null>(null);
+  const isValidatingRef = useRef(false);
+  const pageLoadedRef = useRef(false); // ✅ Add this missing ref
+
   // ✅ Add submit states
   const [openConfirm, setOpenConfirm] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
@@ -68,11 +73,43 @@ export default function VerifikasiPage() {
   const [penumpangList, setPenumpangList] = useState<any[]>([]);
   const [kendaraanList, setKendaraanList] = useState<any[]>([]);
 
-  // ✅ Get session data from cookie (same as form.tsx)
+  // ✅ Enhanced session validation helper
+  const isSessionStillValid = useCallback((expiresAt: string): boolean => {
+    try {
+      const expireTime = new Date(expiresAt);
+      const currentTime = new Date();
+      const timeLeft = expireTime.getTime() - currentTime.getTime();
+      
+      // ✅ Add 30 second buffer to account for network delays
+      const bufferTime = 30 * 1000; // 30 seconds
+      
+      console.log("⏰ Session validation:", {
+        expireTime: expireTime.toISOString(),
+        currentTime: currentTime.toISOString(),
+        timeLeft: timeLeft,
+        timeLeftMinutes: Math.floor(timeLeft / 60000),
+        isValid: timeLeft > bufferTime
+      });
+      
+      return timeLeft > bufferTime;
+    } catch (error) {
+      console.error("❌ Error validating session time:", error);
+      return false;
+    }
+  }, []);
+
+  // ✅ Enhanced session fetch with validation + scroll control
   useEffect(() => {
     const fetchSessionData = async () => {
+      // ✅ Prevent multiple simultaneous validations
+      if (isValidatingRef.current) {
+        console.log("🔄 Session validation already in progress...");
+        return;
+      }
+
       try {
         console.log("🔍 Fetching session data for verifikasi...");
+        isValidatingRef.current = true;
 
         // ✅ Get session ID from cookie
         const cookieSessionId = getCookie("session_id");
@@ -80,15 +117,32 @@ export default function VerifikasiPage() {
         if (!cookieSessionId) {
           console.log("❌ No session ID found in cookie");
           setError("Session tidak ditemukan. Silakan booking ulang.");
-          toast.error("Session tidak ditemukan. Silakan booking ulang.");
           return;
         }
 
         console.log("🍪 Session ID from cookie:", cookieSessionId);
         setSessionId(cookieSessionId);
 
-        // ✅ Fetch session data
-        const response = await getSessionById(cookieSessionId);
+        // ✅ Check if we have cached session time for quick validation
+        if (sessionTimeRef.current) {
+          const isStillValid = isSessionStillValid(sessionTimeRef.current.toISOString());
+          if (!isStillValid) {
+            console.log("⏰ Session expired based on cached time");
+            setSessionExpired(true);
+            return;
+          }
+        }
+
+        // ✅ Fetch session data with timeout
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 10000);
+
+        const response = await getSessionById(cookieSessionId, {
+          signal: controller.signal,
+          timeout: 8000 // ✅ Add timeout parameter
+        });
+
+        clearTimeout(timeoutId);
 
         console.log("📡 Session response:", response);
 
@@ -96,19 +150,157 @@ export default function VerifikasiPage() {
           throw new Error("No session data received");
         }
 
+        // ✅ Validate session expiry time
+        if (response.data.expires_at) {
+          sessionTimeRef.current = new Date(response.data.expires_at);
+          
+          const isStillValid = isSessionStillValid(response.data.expires_at);
+          if (!isStillValid) {
+            console.log("⏰ Session expired according to server time");
+            setSessionExpired(true);
+            return;
+          }
+        }
+
         setSession(response.data);
+        setError(null);
         console.log("✅ Session data loaded for verifikasi:", response.data);
+
       } catch (error: any) {
         console.error("❌ Failed to fetch session:", error);
-        setError(error.message || "Gagal memuat data session");
-        toast.error("Gagal memuat data session. Silakan coba lagi.");
+
+        // ✅ Enhanced error handling
+        if (error.name === 'AbortError') {
+          console.log("⏱️ Request timed out");
+          setError("Koneksi timeout. Silakan coba lagi.");
+        } else if (error.response?.status === 404 || error.response?.status === 410) {
+          console.log("⏰ Session expired or not found");
+          setSessionExpired(true);
+          return;
+        } else if (error.response?.status === 422) {
+          console.log("⏰ Session invalid or expired");
+          setSessionExpired(true);
+          return;
+        } else if (error.message?.includes('network') || error.code === 'NETWORK_ERROR') {
+          setError("Masalah koneksi. Periksa internet dan coba lagi.");
+        } else {
+          setError(error.message || "Gagal memuat data session");
+        }
+
+        // ✅ Don't show error toast on session expired - user will be redirected
+        if (!sessionExpired) {
+          toast.error("Gagal memuat data session. Silakan coba lagi.");
+        }
       } finally {
         setLoading(false);
+        isValidatingRef.current = false;
+        pageLoadedRef.current = true; // ✅ Mark page as loaded
       }
     };
 
     fetchSessionData();
+  }, [isSessionStillValid]);
+
+  // ✅ Add scroll to top effect after loading
+  useEffect(() => {
+    if (!loading && pageLoadedRef.current) {
+      // ✅ Scroll to top after content is loaded
+      setTimeout(() => {
+        window.scrollTo({
+          top: 0,
+          left: 0,
+          behavior: 'smooth'
+        });
+      }, 100); // Small delay to ensure content is rendered
+    }
+  }, [loading]);
+
+  // ✅ Prevent scroll restoration on mount
+  useEffect(() => {
+    // ✅ Disable scroll restoration for this page
+    if ('scrollRestoration' in history) {
+      history.scrollRestoration = 'manual';
+    }
+
+    // ✅ Force scroll to top on mount
+    window.scrollTo(0, 0);
+
+    // ✅ Cleanup - restore scroll behavior
+    return () => {
+      if ('scrollRestoration' in history) {
+        history.scrollRestoration = 'auto';
+      }
+    };
   }, []);
+
+  // ✅ Enhanced session expired handler
+  const handleSessionExpired = useCallback(() => {
+    console.log("⏰ Session expired - redirecting...");
+    setSessionExpired(true);
+    
+    // ✅ Clear session data
+    sessionTimeRef.current = null;
+    pageLoadedRef.current = false; // ✅ Reset page loaded state
+    
+    // ✅ Clear any error states
+    setError(null);
+    
+    // ✅ Show toast notification
+    toast.error("Sesi telah berakhir. Mengarahkan ke halaman booking...");
+    
+    // Redirect after 2 seconds
+    setTimeout(() => {
+      router.push(`/book/${bookId}`);
+    }, 2000);
+  }, [router, bookId]);
+
+  // ✅ Add refresh handler for manual retry
+  const handleRetryLoadSession = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    pageLoadedRef.current = false; // ✅ Reset page loaded state
+    
+    // ✅ Wait a bit before retrying
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    
+    // ✅ Trigger session fetch again
+    const cookieSessionId = getCookie("session_id");
+    if (cookieSessionId) {
+      try {
+        const response = await getSessionById(cookieSessionId, { 
+          timeout: 5000 // 5 second timeout for retry
+        });
+        
+        if (response?.data) {
+          if (response.data.expires_at) {
+            const isStillValid = isSessionStillValid(response.data.expires_at);
+            if (!isStillValid) {
+              setSessionExpired(true);
+              return;
+            }
+            sessionTimeRef.current = new Date(response.data.expires_at);
+          }
+          setSession(response.data);
+          setError(null);
+          pageLoadedRef.current = true; // ✅ Mark as loaded after retry success
+          toast.success("Data session berhasil dimuat!");
+        } else {
+          setError("Data session tidak ditemukan");
+        }
+      } catch (error: any) {
+        if (error.response?.status === 404 || error.response?.status === 410 || error.response?.status === 422) {
+          setSessionExpired(true);
+        } else {
+          setError(error.message || "Gagal memuat data session");
+          toast.error("Gagal memuat data session. Coba lagi.");
+        }
+      }
+    } else {
+      setError("Session tidak ditemukan di browser");
+    }
+    
+    setLoading(false);
+  }, [isSessionStillValid]);
 
   // ✅ Load passenger/vehicle data on mount
   useEffect(() => {
@@ -148,14 +340,6 @@ export default function VerifikasiPage() {
       }
     }
   }, []);
-
-  const handleSessionExpired = () => {
-    setSessionExpired(true);
-    // Redirect after 2 seconds
-    setTimeout(() => {
-      router.push(`/book/${bookId}`);
-    }, 2000);
-  };
 
   // ✅ Handle form validation update from Data component
   const handleFormValidationChange = useCallback(
@@ -416,42 +600,90 @@ export default function VerifikasiPage() {
   if (error || !session || !sessionId) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
+        <div className="text-center max-w-md mx-auto p-6">
           <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
             <span className="text-2xl">❌</span>
           </div>
           <h2 className="text-lg font-semibold text-gray-700 mb-2">
             Gagal Memuat Data
           </h2>
-          <p className="text-gray-500 mb-4">
+          <p className="text-gray-500 mb-6">
             {error || "Data session tidak ditemukan"}
           </p>
-          <button
-            onClick={() => router.back()}
-            className="bg-Blue text-white px-6 py-2 rounded-lg hover:bg-Blue/90 transition-colors"
-          >
-            Kembali
-          </button>
+          
+          {/* ✅ Enhanced action buttons */}
+          <div className="space-y-3">
+            <button
+              onClick={handleRetryLoadSession}
+              disabled={loading}
+              className="w-full bg-Blue text-white px-6 py-3 rounded-lg hover:bg-Blue/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+            >
+              {loading ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  Mencoba lagi...
+                </>
+              ) : (
+                <>
+                  <Clock className="w-4 h-4" />
+                  Coba Lagi
+                </>
+              )}
+            </button>
+            
+            <button
+              onClick={() => router.push(`/book/${bookId}`)}
+              className="w-full bg-gray-500 text-white px-6 py-3 rounded-lg hover:bg-gray-600 transition-colors"
+            >
+              Kembali ke Booking
+            </button>
+          </div>
+          
+          {/* ✅ Help text */}
+          <div className="mt-6 p-4 bg-amber-50 rounded-lg border border-amber-200">
+            <div className="flex items-start gap-2 text-left">
+              <AlertTriangle className="w-4 h-4 text-amber-600 mt-0.5 flex-shrink-0" />
+              <div className="text-xs text-amber-700">
+                <p className="font-medium mb-1">Tips mengatasi masalah:</p>
+                <ul className="space-y-1">
+                  <li>• Pastikan koneksi internet stabil</li>
+                  <li>• Jika sesi berakhir, ulangi proses booking</li>
+                  <li>• Hindari refresh halaman berulang kali</li>
+                </ul>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     );
   }
 
-  // ✅ Session expired state
+  // ✅ Enhanced session expired state
   if (sessionExpired) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
+        <div className="text-center max-w-md mx-auto p-6">
           <div className="w-16 h-16 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-4">
             <span className="text-2xl">⏰</span>
           </div>
           <h2 className="text-lg font-semibold text-gray-700 mb-2">
-            Session Berakhir
+            Sesi Telah Berakhir
           </h2>
           <p className="text-gray-500 mb-4">
+            Waktu sesi booking Anda telah habis.
+          </p>
+          <p className="text-sm text-gray-400 mb-6">
             Mengarahkan kembali ke halaman booking...
           </p>
-          <div className="w-8 h-8 border-4 border-orange-500 border-t-transparent rounded-full animate-spin mx-auto"></div>
+          <div className="w-8 h-8 border-4 border-orange-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          
+          {/* ✅ Manual redirect button */}
+          <button
+            onClick={() => router.push(`/book/${bookId}`)}
+            className="text-sm text-Blue hover:text-Blue/80 underline"
+          >
+            Langsung ke halaman booking
+          </button>
         </div>
       </div>
     );
@@ -459,8 +691,8 @@ export default function VerifikasiPage() {
 
   return (
     <div className="min-h-screen">
-      {/* ✅ Header section */}
-      <div className="">
+      {/* ✅ Header section - Add scroll anchor */}
+      <div id="page-top" className="">
         <div className="container mx-auto px-4 py-6">
           <div className="flex flex-col md:flex-row items-center justify-center gap-4">
             <div className="flex flex-col sm:flex-row items-center gap-4">
@@ -478,7 +710,7 @@ export default function VerifikasiPage() {
             </div>
 
             {/* ✅ Session Timer */}
-            {session.expires_at && (
+            {session?.expires_at && ( // ✅ Add optional chaining
               <SessionTimer
                 expiresAt={session.expires_at}
                 onExpired={handleSessionExpired}
@@ -511,7 +743,7 @@ export default function VerifikasiPage() {
                 isProcessing={isProcessing}
               />
 
-              {/* ✅ Payment Selection Component - Enhanced with session prop */}
+              {/* ✅ Payment Selection Component */}
               <PaymentSelection
                 selectedPayment={selectedPayment}
                 onPaymentChange={setSelectedPayment}
@@ -519,7 +751,7 @@ export default function VerifikasiPage() {
                 onSubmitTrigger={handleSubmitTrigger}
                 isProcessing={isProcessing}
                 isPemesanDataValid={isPemesanDataValid}
-                session={session} // ✅ Pass session for mobile sheet
+                session={session}
               />
             </div>
           </div>

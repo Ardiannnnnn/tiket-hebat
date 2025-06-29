@@ -112,7 +112,7 @@ export default function Footer() {
               {/* WhatsApp Button */}
               <div className="pt-2">
                 <a
-                  href="https://wa.me/6282227778899?text=Halo, saya butuh bantuan dengan TiketHebat"
+                  href="https://wa.me/6282237834717?text=Halo, saya butuh bantuan dengan TiketHebat"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="inline-flex items-center gap-2 bg-green-500 hover:bg-green-600 px-4 py-2 rounded-lg transition-colors text-sm font-medium shadow-lg"
