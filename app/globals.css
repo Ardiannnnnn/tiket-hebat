@@ -154,3 +154,44 @@ body {
   animation: spin 1s linear infinite;
 }
 
+/* app/globals.css */
+
+/* ✅ Autofill detection animations for Chrome */
+@keyframes onAutoFillStart {
+  from { opacity: 0.99; }
+  to { opacity: 1; }
+}
+
+@keyframes onAutoFillCancel {
+  from { opacity: 1; }
+  to { opacity: 0.99; }
+}
+
+/* ✅ Detect autofill in Chrome */
+input:-webkit-autofill {
+  animation-duration: 0.001s;
+  animation-name: onAutoFillStart;
+  transition: background-color 50000s ease-in-out 0s;
+}
+
+input:not(:-webkit-autofill) {
+  animation-duration: 0.001s;
+  animation-name: onAutoFillCancel;
+}
+
+/* ✅ Safari autofill styling */
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
+input:-webkit-autofill:active {
+  -webkit-box-shadow: 0 0 0 30px white inset !important;
+  -webkit-text-fill-color: #1f2937 !important;
+  transition: background-color 5000s ease-in-out 0s;
+}
+
+/* ✅ Ensure autofilled inputs are visible */
+input[data-autofill-check]:-webkit-autofill {
+  border: 2px solid #3b82f6 !important;
+  background-color: #eff6ff !important;
+}
+

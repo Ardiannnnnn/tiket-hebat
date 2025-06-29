@@ -303,7 +303,7 @@ export default function Data({
                 <span>Data Kendaraan</span>
               </div>
               <span className="text-sm font-normal text-gray-500">
-                ( {kendaraanList.length} item )
+                ( {kendaraanList.length} item)
               </span>
             </CardTitle>
           </CardHeader>
