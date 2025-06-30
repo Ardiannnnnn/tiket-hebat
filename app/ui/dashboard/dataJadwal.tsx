@@ -270,7 +270,7 @@ export default function DataJadwal() {
         </div>
       </div>
 
-      {/* ✅ Summary card */}
+      ✅ Summary card
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
         <div className="bg-white p-4 rounded-lg border">
           <h3 className="text-sm font-medium text-gray-600">Total Jadwal</h3>

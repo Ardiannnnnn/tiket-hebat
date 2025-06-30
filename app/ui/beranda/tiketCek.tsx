@@ -147,7 +147,7 @@ export default function CekTiket() {
             <Ticket className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
             <Input
               type="text"
-              placeholder="Masukkan Nomor Tiket"
+              placeholder="Masukkan Nomor Order Pesanan Anda"
               className="pl-10 h-12 text-lg border-2 border-gray-200 focus:border-Orange focus:ring-Orange"
               value={orderId}
               onChange={(e) => setOrderId(e.target.value)}
@@ -183,7 +183,7 @@ export default function CekTiket() {
                     </div>
                     <div>
                       <CardTitle className="md:text-2xl font-bold text-gray-600">
-                        PT ASDP Indonesia Ferry
+                        Tiket Hebat
                       </CardTitle>
                       <p className="text-Blue-100 text-sm mt-1">
                         Tiket Elektronik Resmi
@@ -191,7 +191,6 @@ export default function CekTiket() {
                     </div>
                   </div>
                   <div className="flex items-center gap-4">
-                    <Image src={asdp} className="w-20 h-auto" alt="ASDP Logo" />
                     <Badge
                       className={cn(
                         "px-3 py-1 text-sm font-medium border",
