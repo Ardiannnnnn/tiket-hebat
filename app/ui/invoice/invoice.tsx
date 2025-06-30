@@ -262,7 +262,7 @@ export default function Invoice({
                       </div>
                       <div>
                         <CardTitle className="text-lg font-bold text-gray-600">
-                          PT ASDP Indonesia Ferry
+                          Tiket Hebat
                         </CardTitle>
                         <p className="text-Blue-100 text-sm">
                           Invoice Pembayaran Resmi
@@ -270,11 +270,6 @@ export default function Invoice({
                       </div>
                     </div>
                     <div className="flex items-center gap-4">
-                      <Image
-                        src={asdp}
-                        className="w-20 h-auto"
-                        alt="ASDP Logo"
-                      />
                       <Badge
                         className={cn(
                           "px-3 py-1 text-sm font-medium border",
@@ -608,7 +603,7 @@ export default function Invoice({
 
                     if (isQRPayment && paymentData?.qr_url) {
                       return (
-                        <div className="text-center space-y-4"> 
+                        <div className="text-center space-y-4">
                           <div className="bg-white p-4 rounded-lg border-2 border-Blue/20 mb-4">
                             <Image
                               width={200}

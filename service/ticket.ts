@@ -12,7 +12,7 @@ export const getTickets = async (
 ): Promise<TicketResponse> => {
   try {
     const response = await api.get<TicketResponse>(
-      `/ticket/schedule/${scheduleId}?page=${page}&limit=${limit}`
+      `/tickets/schedule/${scheduleId}?page=${page}&limit=${limit}`
     );
     return response.data;
   } catch (error) {
