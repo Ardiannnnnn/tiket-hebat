@@ -71,7 +71,7 @@ export const schemas: Record<string, z.ZodObject<any>> = {
       .string()
       .transform((val) => parseInt(val))
       .refine((val) => !isNaN(val), "class_id harus berupa angka"),
-    quota: z
+    capacity: z
       .string()
       .transform((val) => parseInt(val))
       .refine((val) => !isNaN(val) && val > 0, "kapasitas harus lebih dari 0"),

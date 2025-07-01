@@ -4,19 +4,24 @@ export interface ClassData {
   type: 'passenger' | 'vehicle';
 }
 
-export interface ShipData {
+export interface ScheduleData {
   id: number;
   ship_name: string;
-  ship_type: string;
+  departure_harbor: string;
+  arrival_harbor: string;
+  departure_datetime: string; // ISO string format
+  arrival_datetime: string;   // ISO string format
 }
 
+// ✅ Updated Manifest interface sesuai response API
 export interface Manifest {
   id: number;
-  class: ClassData;
-  ship: ShipData;
   schedule_id: number;
-  quota: number;
+  class: ClassData;
+  schedule: ScheduleData;
   price: number;
+  quota: number;
+  Capacity: number; // ✅ Note: Capital 'C' sesuai response
   created_at: string;
   updated_at: string;
 }
@@ -38,4 +43,36 @@ export interface ManifestResponse {
   message: string;
   data: Manifest[];
   meta: Meta;
+}
+
+// ✅ Enhanced FlattenedManifest untuk UI display
+export interface FlattenedManifest {
+  id: number;
+  schedule_id: number;
+  class_name: string;
+  type: string;
+  quota: number;
+  capacity: number; // ✅ lowercase untuk consistency di UI
+  price: number;
+  class_id: number;
+  // ✅ Schedule display fields
+  schedule_info: string;
+  ship_name: string;
+  route: string;
+  departure_date: string;
+  departure_time: string;
+  arrival_date: string;
+  arrival_time: string;
+  full_schedule_text: string;
+  // ✅ Additional computed fields
+  quota_percentage: number;
+  status: 'available' | 'low' | 'full';
+}
+
+// ✅ Create payload interface
+export interface CreateKapasitasPayload {
+  schedule_id: number;
+  class_id: number;
+  capacity: number; // ✅ lowercase untuk request
+  price: number;
 }

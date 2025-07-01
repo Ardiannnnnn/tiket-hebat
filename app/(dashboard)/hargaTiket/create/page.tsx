@@ -38,7 +38,7 @@ export default function CreatePage() {
         // Transform manifest data for select options
         const manifestOptions = manifestRes.data.map((manifest) => ({
           value: manifest.id,
-          label: `${manifest.ship.ship_name} - ${manifest.class.class_name}`,
+          label: `${manifest.schedule.ship_name} - ${manifest.class.class_name}`,
         }));
 
         setRoutes(routeOptions);

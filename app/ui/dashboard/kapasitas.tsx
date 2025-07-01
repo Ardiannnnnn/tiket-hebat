@@ -13,7 +13,7 @@ import { Manifest, Meta } from "@/types/kapasitas";
 // ✅ Interface untuk data yang diflat
 interface FlattenedManifest {
   id: number;
-  schedule_id: number;
+  schedule_id: string;
   class_name: string;
   type: string;
   quota: number;
@@ -22,16 +22,28 @@ interface FlattenedManifest {
 }
 
 // ✅ Update flattenData function
+// ✅ Enhanced flattenData function dengan null safety dan formatting
 const flattenData = (data: Manifest[]): FlattenedManifest[] => {
-  return data.map((item) => ({
-    id: item.id,
-    schedule_id: item.schedule_id,
-    class_name: item.class.class_name,
-    type: item.class.type,
-    quota: item.quota,
-    price: item.price,
-    class_id: item.class.id,
-  }));
+  return data.map((item) => {
+    // ✅ Extract schedule data dengan null safety
+    const schedule = item.schedule;
+    const departureHarbor = schedule?.departure_harbor || "Pelabuhan Asal";
+    const arrivalHarbor = schedule?.arrival_harbor || "Pelabuhan Tujuan";
+    const shipName = schedule?.ship_name || "Kapal Tidak Diketahui";
+    
+    // ✅ Format schedule info dengan ship name
+    const scheduleInfo = `${departureHarbor} → ${arrivalHarbor}`;
+    
+    return {
+      id: item.id,
+      schedule_id: scheduleInfo, // ✅ More informative schedule display
+      class_name: item.class.class_name,
+      type: item.class.type,
+      quota: item.quota,
+      price: item.price,
+      class_id: item.class.id,
+    };
+  });
 };
 
 // ✅ Format price function
@@ -69,7 +81,7 @@ export default function ManifestPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [meta, setMeta] = useState<Meta | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
-  const [pageSize] = useState(10);
+  const [pageSize] = useState(100);
   const [debouncedSearch, setDebouncedSearch] = useState("");
 
   // ✅ Update columns definition
