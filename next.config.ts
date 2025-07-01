@@ -6,7 +6,7 @@ const nextConfig: NextConfig = {
     return [
       {
         source: "/api/v1/:path*",
-        destination: "https://tikethebat.gentleglacier-f20ff377.southeastasia.azurecontainerapps.io/api/v1/:path*",
+        destination: "https://api.tikethebat.live/api/v1/:path*",
       },
     ];
   },

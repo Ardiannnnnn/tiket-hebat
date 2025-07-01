@@ -88,7 +88,7 @@ export const createFieldConfigs: Record<string, FieldConfig[]> = {
     { name: "class_name", label: "Nama Kelas", type: "text", required: true },
     { name: "class_alias", label: "Alias", type: "text", required: true },
     { name: "type", label: "Tipe", type: "select", required: true, options: [
-      { label: "Kendaraan", value: "vihicle" },
+      { label: "Kendaraan", value: "vehicle" },
       { label: "Penumpang", value: "passenger" },
     ] },
   ],
@@ -108,7 +108,7 @@ export const createFieldConfigs: Record<string, FieldConfig[]> = {
       name:"class_id", label: "Kelas", type: "select", required: true, options:[]
     },
     {
-      name:"quota", label:"Kapasitas", type:"text", required:true
+      name:"capacity", label:"Kapasitas", type:"text", required:true
     },
     {
       name:"price", label:"Harga", type:"text", required:true

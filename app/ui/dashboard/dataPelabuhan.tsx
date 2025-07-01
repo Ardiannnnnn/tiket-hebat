@@ -53,8 +53,8 @@ function TableSkeleton() {
 
 function StatusBadge({ value }: { value: string }) {
   const statusClass = clsx("text-white text-xs px-2 py-1 rounded-md w-fit", {
-    "bg-green-500": value === "ACTIVE",
-    "bg-red-500": value === "INACTIVE",
+    "bg-green-500": value === "active",
+    "bg-red-500": value === "inactive",
   });
   return <span className={statusClass}>{value}</span>;
 }

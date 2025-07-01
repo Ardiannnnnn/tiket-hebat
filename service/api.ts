@@ -1,7 +1,7 @@
 // service/api.ts
 import axios from "axios";
 
-const TUNNEL_URL = "https://tikethebat.gentleglacier-f20ff377.southeastasia.azurecontainerapps.io";
+const TUNNEL_URL = "https://api.tikethebat.live";
 
 export const api = axios.create({
   baseURL: `${TUNNEL_URL}/api/v1`,
