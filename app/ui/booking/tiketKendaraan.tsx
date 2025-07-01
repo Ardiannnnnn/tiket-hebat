@@ -73,8 +73,8 @@ export default function TiketKendaraan({
 
   const getVehicleName = (className: string): string => {
     const map: Record<string, string> = {
-      "Golongan I": "Motor",
-      "Golongan II": "Mobil",
+      "Golongan II": "Motor",
+      "Golongan III": "Mobil",
       // Tambahkan mapping lain jika ada
     };
     return map[className] || className; // fallback: pakai className asli kalau tidak ditemukan
