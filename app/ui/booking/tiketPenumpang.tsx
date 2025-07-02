@@ -32,13 +32,13 @@ import {
 } from "@/components/ui/alert-dialog";
 import { getQuotaByScheduleId } from "@/service/quota";
 
+// ✅ Simplified schema - remove children
 const FormSchema = z.object({
   passengers: z.array(
     z.object({
       classId: z.number(),
       className: z.string(),
-      adults: z.number().min(0),
-      children: z.number().min(0),
+      quantity: z.number().min(0).max(5), // ✅ Rename adults to quantity
     })
   ),
 });
@@ -93,13 +93,13 @@ export default function TiketPenumpang({
 
         setClasses(availability);
 
+        // ✅ Simplified default passengers setup
         const defaultPassengers = availability
           .filter((cls) => cls.type === "passenger") // ✅ Filter hanya passenger
           .map((cls: ClassAvailability) => ({
             classId: cls.class_id,
             className: cls.class_name,
-            adults: 0,
-            children: 0,
+            quantity: 0, // ✅ Single field for passenger count
           }));
 
         console.log("👥 Default passengers setup:", defaultPassengers);
@@ -116,47 +116,45 @@ export default function TiketPenumpang({
     }
   }, [scheduleid, selectedVehicleClass, form]);
 
-  // Helper function untuk menghitung total tiket yang sudah dipilih
+  // ✅ Simplified helper function untuk menghitung total tiket
   const getTotalTickets = () => {
     const passengers = form.getValues("passengers");
-    return passengers.reduce(
-      (total, p) => total + (p.adults || 0) + (p.children || 0),
-      0
-    );
+    return passengers.reduce((total, p) => total + (p.quantity || 0), 0);
   };
 
-  const increase = (index: number, type: "adults" | "children") => {
+  // ✅ Simplified increase function
+  const increase = (index: number) => {
     const totalTickets = getTotalTickets();
 
-    // Batasi maksimal 5 tiket total (termasuk bonus)
+    // Batasi maksimal 5 tiket total
     if (totalTickets >= 5) {
       toast.error("Maksimal 5 tiket penumpang yang dapat dipesan.");
       return;
     }
 
-    const value = form.getValues(`passengers.${index}.${type}`);
-    form.setValue(`passengers.${index}.${type}`, value + 1);
+    const value = form.getValues(`passengers.${index}.quantity`);
+    form.setValue(`passengers.${index}.quantity`, value + 1);
   };
 
-  const decrease = (index: number, type: "adults" | "children") => {
-    const value = form.getValues(`passengers.${index}.${type}`);
+  // ✅ Simplified decrease function
+  const decrease = (index: number) => {
+    const value = form.getValues(`passengers.${index}.quantity`);
     if (value > 0) {
-      form.setValue(`passengers.${index}.${type}`, value - 1);
+      form.setValue(`passengers.${index}.quantity`, value - 1);
     }
   };
 
-  const isIncreaseDisabled = (index: number, type: "adults" | "children") => {
+  // ✅ Simplified validation functions
+  const isIncreaseDisabled = (index: number) => {
     const passengers = form.getValues("passengers");
+    const currentValue = passengers[index]?.quantity || 0;
+
     // Hitung total jika field ini dinaikkan 1
     const simulatedTotal = passengers.reduce((total, p, i) => {
       if (i === index) {
-        return (
-          total +
-          (p.adults + (type === "adults" ? 1 : 0)) +
-          (p.children + (type === "children" ? 1 : 0))
-        );
+        return total + currentValue + 1;
       }
-      return total + (p.adults || 0) + (p.children || 0);
+      return total + (p.quantity || 0);
     }, 0);
 
     // Cek kapasitas kelas
@@ -168,13 +166,14 @@ export default function TiketPenumpang({
       return true;
     }
 
-    // Disable jika penambahan akan melebihi 5 tiket
-    return simulatedTotal > 5;
+    // Disable jika penambahan akan melebihi 5 tiket atau kapasitas kelas
+    return (
+      simulatedTotal > 5 || currentValue >= matchingClass.available_capacity
+    );
   };
 
-  const isDecreaseDisabled = (index: number, type: "adults" | "children") => {
-    const value = form.getValues(`passengers.${index}.${type}`);
-    // Hanya disable jika nilai sudah 0
+  const isDecreaseDisabled = (index: number) => {
+    const value = form.getValues(`passengers.${index}.quantity`);
     return value <= 0;
   };
 
@@ -195,11 +194,12 @@ export default function TiketPenumpang({
       return;
     }
 
+    // ✅ Simplified passenger items mapping
     const passengerItems: LockTicketItem[] = data.passengers
-      .filter((p) => p.adults + p.children > 0)
+      .filter((p) => p.quantity > 0)
       .map((p) => ({
         class_id: p.classId,
-        quantity: p.adults + p.children,
+        quantity: p.quantity,
         type: "passenger",
       }));
 
@@ -251,14 +251,14 @@ export default function TiketPenumpang({
     });
     setOpenDialog(true);
   };
+
   return (
     <Form {...form}>
       <form className="space-y-6" onSubmit={form.handleSubmit(onSubmit)}>
         {classes
           .filter((item) => item.type === "passenger")
           .map((cls, index) => {
-            const adultsId = `adults-${cls.class_id}`;
-            const childrenId = `children-${cls.class_id}`;
+            const quantityId = `quantity-${cls.class_id}`;
             const passengers = form.getValues("passengers");
             const currentPassenger = passengers[index];
 
@@ -266,7 +266,7 @@ export default function TiketPenumpang({
               <Card key={cls.class_id}>
                 <CardContent className="p-4 space-y-6">
                   <div className="text-center">
-                    <p className="text-lg">{cls.class_name}</p>
+                    <p className="text-lg font-medium">{cls.class_name}</p>
                     <p className="text-gray-500">
                       Sisa Tiket: {cls.available_capacity}
                     </p>
@@ -275,81 +275,48 @@ export default function TiketPenumpang({
                     </p>
                   </div>
 
-                  <div className="flex justify-center gap-10">
+                  {/* ✅ Single field for passenger quantity */}
+                  <div className="flex justify-center">
                     <FormField
                       control={form.control}
-                      name={`passengers.${index}.adults`}
+                      name={`passengers.${index}.quantity`}
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel
-                            htmlFor={adultsId}
-                            className="flex justify-center"
+                            htmlFor={quantityId}
+                            className="flex justify-center text-base font-medium"
                           >
-                            Dewasa
+                            Jumlah Penumpang
                           </FormLabel>
-                          <div className="flex items-center gap-1.5">
+                          <div className="flex items-center gap-3">
                             <Button
                               type="button"
                               variant="outline"
-                              onClick={() => decrease(index, "adults")}
-                              disabled={isDecreaseDisabled(index, "adults")}
+                              size="sm"
+                              className="h-10 w-10 rounded-full"
+                              onClick={() => decrease(index)}
+                              disabled={isDecreaseDisabled(index)}
                             >
                               -
                             </Button>
                             <Input
-                              id={adultsId}
-                              className="w-10 text-center"
+                              id={quantityId}
+                              className="w-16 text-center text-lg font-medium"
                               {...field}
                               readOnly
                             />
                             <Button
                               type="button"
                               variant="outline"
-                              onClick={() => increase(index, "adults")}
-                              disabled={isIncreaseDisabled(index, "adults")}
+                              size="sm"
+                              className="h-10 w-10 rounded-full"
+                              onClick={() => increase(index)}
+                              disabled={isIncreaseDisabled(index)}
                             >
                               +
                             </Button>
                           </div>
-                        </FormItem>
-                      )}
-                    />
-
-                    <FormField
-                      control={form.control}
-                      name={`passengers.${index}.children`}
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel
-                            htmlFor={childrenId}
-                            className="flex justify-center"
-                          >
-                            Anak-Anak
-                          </FormLabel>
-                          <div className="flex items-center gap-1.5">
-                            <Button
-                              type="button"
-                              variant="outline"
-                              onClick={() => decrease(index, "children")}
-                              disabled={isDecreaseDisabled(index, "children")}
-                            >
-                              -
-                            </Button>
-                            <Input
-                              id={childrenId}
-                              className="w-10 text-center"
-                              {...field}
-                              readOnly
-                            />
-                            <Button
-                              type="button"
-                              variant="outline"
-                              onClick={() => increase(index, "children")}
-                              disabled={isIncreaseDisabled(index, "children")}
-                            >
-                              +
-                            </Button>
-                          </div>
+                          <FormMessage />
                         </FormItem>
                       )}
                     />

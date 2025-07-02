@@ -178,7 +178,7 @@ export default function PaymentSelection({
                             value={ch.code}
                             className="p-3 cursor-pointer hover:bg-Blue/5"
                           >
-                            <div className="flex items-center justify-between w-full">
+                            <div className="flex items-center justify-between w-full gap-2">
                               <span className="font-medium">{ch.name}</span>
                               <img
                                 src={ch.icon_url}
@@ -214,7 +214,7 @@ export default function PaymentSelection({
                             value={ch.code}
                             className="p-3 cursor-pointer hover:bg-Orange/5"
                           >
-                            <div className="flex items-center justify-between w-full">
+                            <div className="flex items-center justify-between w-full gap-2">
                               <span className="font-medium">{ch.name}</span>
                               <img
                                 src={ch.icon_url}
