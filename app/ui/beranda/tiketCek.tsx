@@ -17,7 +17,6 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import Image from "next/image";
-import asdp from "@/public/image/asdp.png";
 import { cn } from "@/lib/utils";
 import { getPaymentTransactionDetail } from "@/service/payment";
 import { PaymentTransactionDetail } from "@/types/paymentDetail";
@@ -34,7 +33,34 @@ import {
   CheckCircle,
   AlertCircle,
   Hash,
+  RefreshCw,
+  Download,
+  HelpCircle,
+  BookOpen,
+  ChevronRight,
+  Share2,
 } from "lucide-react";
+
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 export default function CekTiket() {
   const [orderId, setOrderId] = useState("");
@@ -44,6 +70,8 @@ export default function CekTiket() {
   const [paymentData, setPaymentData] =
     useState<PaymentTransactionDetail | null>(null);
   const [countdown, setCountdown] = useState<string>("");
+  const [showRefundDialog, setShowRefundDialog] = useState(false);
+  const [showPaymentGuide, setShowPaymentGuide] = useState(false);
 
   const handleCekTiket = async () => {
     if (!orderId) return;
@@ -124,6 +152,36 @@ export default function CekTiket() {
       default:
         return <AlertCircle className="w-4 h-4" />;
     }
+  };
+
+  const handleRefundConfirm = () => {
+    setShowRefundDialog(false);
+
+    // ✅ Add null check for bookingData and order_id
+    if (!bookingData?.order_id) {
+      toast.error("Data booking tidak ditemukan");
+      return;
+    }
+
+    // ✅ Copy booking number to clipboard for easy access
+    navigator.clipboard
+      .writeText(bookingData.order_id) // Now TypeScript knows it's not undefined
+      .then(() => {
+        toast.success(
+          "Anda akan diarahkan ke form! Siap untuk mengisi formulir."
+        );
+      })
+      .catch(() => {
+        toast.info("Jangan lupa catat nomor booking: " + bookingData.order_id);
+      });
+
+    // ✅ Open Google Form in new tab
+    setTimeout(() => {
+      window.open(
+        "https://docs.google.com/forms/d/e/1FAIpQLScDU0MmMh-DTVHcCy8yhm1Hk2O0gHipK891EYpuVctVFrjp9w/viewform?usp=dialog",
+        "_blank"
+      );
+    }, 500); // Small delay to show toast first
   };
 
   return (
@@ -303,10 +361,7 @@ export default function CekTiket() {
                               )}
                             </p>
                             <p className="font-medium text-gray-700 text-sm md:text-base leading-tight">
-                              {
-                                bookingData.schedule.arrival_harbor
-                                  .harbor_name
-                              }
+                              {bookingData.schedule.arrival_harbor.harbor_name}
                             </p>
                           </div>
                         </div>
@@ -539,6 +594,312 @@ export default function CekTiket() {
               </CardContent>
             </Card>
 
+            {/* ✅ Enhanced Action Buttons Section */}
+            <div className="mt-6 space-y-4">
+              {/* ✅ Primary Action Buttons */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 max-w-lg mx-auto">
+                {/* ✅ Refund Button */}
+                <AlertDialog
+                  open={showRefundDialog}
+                  onOpenChange={setShowRefundDialog}
+                >
+                  <AlertDialogTrigger asChild>
+                    <Button
+                      variant="outline"
+                      size="lg"
+                      className="border-red-200 text-red-600 hover:bg-red-50 hover:border-red-300 hover:text-red-700"
+                    >
+                      <RefreshCw className="w-4 h-4 mr-2" />
+                      Ajukan Refund
+                    </Button>
+                  </AlertDialogTrigger>
+                </AlertDialog>
+
+                {/* ✅ Payment Guide Button - Show only when payment is pending */}
+                {paymentData?.status !== "PAID" && (
+                  <Dialog
+                    open={showPaymentGuide}
+                    onOpenChange={setShowPaymentGuide}
+                  >
+                    <DialogTrigger asChild>
+                      <Button
+                        variant="outline"
+                        size="lg"
+                        className="border-Orange/30 text-Orange hover:bg-Orange/5 hover:border-Orange/50"
+                      >
+                        <BookOpen className="w-4 h-4 mr-2" />
+                        Panduan Pembayaran
+                        <ChevronRight className="w-4 h-4 ml-auto" />
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent className="sm:max-w-[700px] max-h-[80vh] overflow-y-auto">
+                      <DialogHeader>
+                        <DialogTitle className="flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-full bg-Orange/20 flex items-center justify-center">
+                            <BookOpen className="w-5 h-5 text-Orange" />
+                          </div>
+                          <div>
+                            <p className="text-xl text-Orange">
+                              Panduan Pembayaran
+                            </p>
+                            <p className="text-sm text-gray-500 font-normal">
+                              Langkah mudah untuk menyelesaikan pembayaran
+                            </p>
+                          </div>
+                        </DialogTitle>
+                      </DialogHeader>
+
+                      <div className="space-y-6 mt-4">
+                        {/* ✅ Payment Method Info */}
+
+                        {/* ✅ Payment Instructions based on method */}
+                        <div className="space-y-4">
+                          {paymentData?.qr_url ? (
+                            // QR Code Instructions
+                            <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+                              <div className="bg-gray-50 px-4 py-3 border-b border-gray-200">
+                                <div className="flex items-center gap-2">
+                                  <div className="w-6 h-6 bg-Orange/20 rounded-full flex items-center justify-center text-xs font-medium text-Orange">
+                                    1
+                                  </div>
+                                  <h4 className="font-semibold text-gray-800">
+                                    Pembayaran via QR Code
+                                  </h4>
+                                </div>
+                              </div>
+                              <div className="p-4">
+                                <ol className="space-y-2">
+                                  <li className="flex items-start gap-3">
+                                    <span className="flex-shrink-0 w-5 h-5 bg-Orange/10 rounded-full flex items-center justify-center text-xs font-medium text-Orange mt-0.5">
+                                      1
+                                    </span>
+                                    <span className="text-sm text-gray-700 leading-relaxed">
+                                      Buka aplikasi mobile banking atau e-wallet
+                                      Anda
+                                    </span>
+                                  </li>
+                                  <li className="flex items-start gap-3">
+                                    <span className="flex-shrink-0 w-5 h-5 bg-Orange/10 rounded-full flex items-center justify-center text-xs font-medium text-Orange mt-0.5">
+                                      2
+                                    </span>
+                                    <span className="text-sm text-gray-700 leading-relaxed">
+                                      Pilih menu "Scan QR Code" atau "Bayar
+                                      dengan QR"
+                                    </span>
+                                  </li>
+                                  <li className="flex items-start gap-3">
+                                    <span className="flex-shrink-0 w-5 h-5 bg-Orange/10 rounded-full flex items-center justify-center text-xs font-medium text-Orange mt-0.5">
+                                      3
+                                    </span>
+                                    <span className="text-sm text-gray-700 leading-relaxed">
+                                      Scan QR Code yang tersedia di tiket Anda
+                                    </span>
+                                  </li>
+
+                                  <li className="flex items-start gap-3">
+                                    <span className="flex-shrink-0 w-5 h-5 bg-Orange/10 rounded-full flex items-center justify-center text-xs font-medium text-Orange mt-0.5">
+                                      4
+                                    </span>
+                                    <span className="text-sm text-gray-700 leading-relaxed">
+                                      Konfirmasi pembayaran dan simpan bukti
+                                      transaksi
+                                    </span>
+                                  </li>
+                                </ol>
+                              </div>
+                            </div>
+                          ) : paymentData?.pay_code ? (
+                            // Virtual Account Instructions
+                            <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+                              <div className="bg-gray-50 px-4 py-3 border-b border-gray-200">
+                                <div className="flex items-center gap-2">
+                                  <div className="w-6 h-6 bg-Orange/20 rounded-full flex items-center justify-center text-xs font-medium text-Orange">
+                                    1
+                                  </div>
+                                  <h4 className="font-semibold text-gray-800">
+                                    Pembayaran via Virtual Account
+                                  </h4>
+                                </div>
+                              </div>
+                              <div className="p-4">
+                                <div className="bg-blue-50 rounded-lg p-3 mb-4 border border-blue-200">
+                                  <div className="text-center">
+                                    <p className="text-sm text-blue-700 mb-1">
+                                      Nomor Virtual Account:
+                                    </p>
+                                    <p className="font-mono font-bold text-lg text-blue-800">
+                                      {paymentData.pay_code}
+                                    </p>
+                                  </div>
+                                </div>
+                                <ol className="space-y-2">
+                                  <li className="flex items-start gap-3">
+                                    <span className="flex-shrink-0 w-5 h-5 bg-Orange/10 rounded-full flex items-center justify-center text-xs font-medium text-Orange mt-0.5">
+                                      1
+                                    </span>
+                                    <span className="text-sm text-gray-700 leading-relaxed">
+                                      Buka aplikasi mobile banking atau ATM
+                                    </span>
+                                  </li>
+                                  <li className="flex items-start gap-3">
+                                    <span className="flex-shrink-0 w-5 h-5 bg-Orange/10 rounded-full flex items-center justify-center text-xs font-medium text-Orange mt-0.5">
+                                      2
+                                    </span>
+                                    <span className="text-sm text-gray-700 leading-relaxed">
+                                      Pilih menu "Transfer" atau "Bayar"
+                                    </span>
+                                  </li>
+                                  <li className="flex items-start gap-3">
+                                    <span className="flex-shrink-0 w-5 h-5 bg-Orange/10 rounded-full flex items-center justify-center text-xs font-medium text-Orange mt-0.5">
+                                      3
+                                    </span>
+                                    <span className="text-sm text-gray-700 leading-relaxed">
+                                      Masukkan nomor Virtual Account:{" "}
+                                      <strong>{paymentData.pay_code}</strong>
+                                    </span>
+                                  </li>
+
+                                  <li className="flex items-start gap-3">
+                                    <span className="flex-shrink-0 w-5 h-5 bg-Orange/10 rounded-full flex items-center justify-center text-xs font-medium text-Orange mt-0.5">
+                                      4
+                                    </span>
+                                    <span className="text-sm text-gray-700 leading-relaxed">
+                                      Konfirmasi dan selesaikan transaksi
+                                    </span>
+                                  </li>
+                                </ol>
+                              </div>
+                            </div>
+                          ) : paymentData?.pay_url ? (
+                            // Payment Link Instructions
+                            <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+                              <div className="bg-gray-50 px-4 py-3 border-b border-gray-200">
+                                <div className="flex items-center gap-2">
+                                  <div className="w-6 h-6 bg-Orange/20 rounded-full flex items-center justify-center text-xs font-medium text-Orange">
+                                    1
+                                  </div>
+                                  <h4 className="font-semibold text-gray-800">
+                                    Pembayaran via Payment Link
+                                  </h4>
+                                </div>
+                              </div>
+                              <div className="p-4">
+                                <ol className="space-y-2">
+                                  <li className="flex items-start gap-3">
+                                    <span className="flex-shrink-0 w-5 h-5 bg-Orange/10 rounded-full flex items-center justify-center text-xs font-medium text-Orange mt-0.5">
+                                      1
+                                    </span>
+                                    <span className="text-sm text-gray-700 leading-relaxed">
+                                      Klik tombol "Bayar" pada QR Code section
+                                      di atas
+                                    </span>
+                                  </li>
+                                  <li className="flex items-start gap-3">
+                                    <span className="flex-shrink-0 w-5 h-5 bg-Orange/10 rounded-full flex items-center justify-center text-xs font-medium text-Orange mt-0.5">
+                                      2
+                                    </span>
+                                    <span className="text-sm text-gray-700 leading-relaxed">
+                                      Anda akan diarahkan ke halaman pembayaran
+                                    </span>
+                                  </li>
+                                  <li className="flex items-start gap-3">
+                                    <span className="flex-shrink-0 w-5 h-5 bg-Orange/10 rounded-full flex items-center justify-center text-xs font-medium text-Orange mt-0.5">
+                                      3
+                                    </span>
+                                    <span className="text-sm text-gray-700 leading-relaxed">
+                                      Pilih metode pembayaran yang tersedia
+                                    </span>
+                                  </li>
+                                  <li className="flex items-start gap-3">
+                                    <span className="flex-shrink-0 w-5 h-5 bg-Orange/10 rounded-full flex items-center justify-center text-xs font-medium text-Orange mt-0.5">
+                                      4
+                                    </span>
+                                    <span className="text-sm text-gray-700 leading-relaxed">
+                                      Ikuti instruksi untuk menyelesaikan
+                                      pembayaran
+                                    </span>
+                                  </li>
+                                </ol>
+                              </div>
+                            </div>
+                          ) : (
+                            <div className="bg-gray-50 rounded-lg p-4 border border-gray-200 text-center">
+                              <p className="text-gray-500">
+                                Panduan pembayaran akan tersedia setelah metode
+                                pembayaran dipilih
+                              </p>
+                            </div>
+                          )}
+                        </div>
+
+                        {/* ✅ Important Notes */}
+                        <div className="bg-amber-50 rounded-lg p-4 border border-amber-200">
+                          <div className="flex items-start gap-3">
+                            <AlertCircle className="w-5 h-5 text-amber-600 mt-0.5" />
+                            <div>
+                              <h4 className="font-semibold text-amber-800 mb-2">
+                                Catatan Penting:
+                              </h4>
+                              <ul className="text-sm text-amber-700 space-y-1 list-disc pl-4">
+                                <li>
+                                  Pastikan nominal pembayaran sesuai dengan yang
+                                  tertera
+                                </li>
+                                <li>
+                                  Simpan bukti pembayaran untuk keperluan
+                                  konfirmasi
+                                </li>
+                                <li>
+                                  Pembayaran akan otomatis terkonfirmasi dalam
+                                  1-5 menit
+                                </li>
+                                <li>
+                                  Waktu pembayaran tersisa:{" "}
+                                  <strong>{countdown}</strong>
+                                </li>
+                                <li>
+                                  Hubungi customer service jika ada kendala
+                                </li>
+                              </ul>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* ✅ Customer Service Info */}
+                        <div className="bg-blue-50 rounded-lg p-4 border border-blue-200">
+                          <div className="flex items-start gap-3">
+                            <HelpCircle className="w-5 h-5 text-blue-600 mt-0.5" />
+                            <div>
+                              <h4 className="font-semibold text-blue-800 mb-2">
+                                Butuh Bantuan?
+                              </h4>
+                              <div className="text-sm text-blue-700 space-y-1">
+                                <p>
+                                  Email:{" "}
+                                  <span className="font-medium">
+                                    TiketHebat2@gmail.com
+                                  </span>
+                                </p>
+                                <p>
+                                  WhatsApp:{" "}
+                                  <span className="font-medium">
+                                    +62 812-3456-7890
+                                  </span>
+                                </p>
+                                <p>Jam Operasional: 08:00 - 22:00 WIB</p>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </DialogContent>
+                  </Dialog>
+                )}
+              </div>
+
+              {/* ✅ Secondary Action Buttons */}
+            </div>
+
             {/* Additional Info - Blue/Orange gradient */}
             <div className="mt-6 text-center text-sm bg-gradient-to-r from-Blue/20 to-Orange/20 rounded-lg p-4">
               <p className="text-Blue font-medium">
@@ -550,6 +911,89 @@ export default function CekTiket() {
             </div>
           </div>
         )}
+
+        {/* Refund Dialog - Hidden by default */}
+        <AlertDialog open={showRefundDialog} onOpenChange={setShowRefundDialog}>
+          <AlertDialogContent className="sm:max-w-[500px]">
+            <AlertDialogHeader>
+              <AlertDialogTitle className="flex items-center gap-3">
+                <div className="w-12 h-12 rounded-full bg-red-100 flex items-center justify-center">
+                  <RefreshCw className="w-6 h-6 text-red-600" />
+                </div>
+                <div>
+                  <p className="text-xl">Konfirmasi Pengajuan Refund</p>
+                  {bookingData && (
+                    <p className="text-sm text-gray-500 font-normal">
+                      Booking #{bookingData.order_id}
+                    </p>
+                  )}
+                </div>
+              </AlertDialogTitle>
+              <AlertDialogDescription className="text-gray-600 leading-relaxed space-y-4">
+                <div className="bg-amber-50 p-4 rounded-lg border border-amber-200">
+                  <div className="flex items-start gap-3">
+                    <AlertCircle className="w-5 h-5 text-amber-600 mt-0.5" />
+                    <div>
+                      <p className="font-medium text-amber-800 mb-2">
+                        Sebelum melanjutkan, pastikan Anda memahami:
+                      </p>
+                      <ul className="text-sm text-amber-700 space-y-1 list-disc pl-4">
+                        <li>
+                          Refund hanya dapat diajukan maksimal 24 jam sebelum
+                          keberangkatan
+                        </li>
+
+                        <li>Proses refund membutuhkan waktu 3-7 hari kerja</li>
+                        <li>Tiket akan dibatalkan setelah refund disetujui</li>
+                      </ul>
+                    </div>
+                  </div>
+                </div>
+
+                {/* ✅ Updated description for Google Form */}
+                <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
+                  <div className="flex items-start gap-3">
+                    <HelpCircle className="w-5 h-5 text-blue-600 mt-0.5" />
+                    <div>
+                      <p className="font-medium text-blue-800 mb-2">
+                        Proses Pengajuan Refund:
+                      </p>
+                      <div className="text-sm text-blue-700 space-y-1">
+                        <p>
+                          • Anda akan diarahkan ke formulir pengajuan refund
+                        </p>
+                        <p>• Isi data dengan lengkap dan benar</p>
+                        <p>
+                          • Tim customer service akan memproses dalam 1x24 jam
+                        </p>
+                        <p>• Konfirmasi akan dikirim via email atau WhatsApp</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {bookingData && (
+                  <p className="text-center text-sm text-gray-600 bg-gray-50 p-3 rounded-lg">
+                    <strong>Nomor Booking Anda: {bookingData.order_id}</strong>
+                    <br />
+                    Pastikan menyimpan nomor ini untuk pengajuan refund.
+                  </p>
+                )}
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter className="gap-3 sm:justify-center">
+              <AlertDialogCancel className="bg-gray-100 hover:bg-gray-200 text-gray-800 border-gray-300">
+                Batal
+              </AlertDialogCancel>
+              <AlertDialogAction
+                onClick={handleRefundConfirm}
+                className="bg-red-600 hover:bg-red-700 text-white"
+              >
+                Lanjutkan ke Formulir Refund
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
     </div>
   );
