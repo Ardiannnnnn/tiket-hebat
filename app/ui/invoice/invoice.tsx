@@ -19,7 +19,7 @@ import { getBookingById } from "@/service/invoice";
 import { getPaymentTransactionDetail } from "@/service/payment";
 import { PaymentTransactionDetail } from "@/types/paymentDetail";
 import { Button } from "@/components/ui/button";
-import { toast } from "sonner";
+import { toast, Toaster } from "sonner";
 import {
   Ship,
   Calendar,
@@ -42,6 +42,7 @@ import {
   HelpCircle,
   BookOpen,
   ChevronRight,
+  Mail, // ✅ Add this import
 } from "lucide-react";
 import Link from "next/link";
 import {
@@ -71,6 +72,14 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"; // ✅ Add this import
+import { Input } from "@/components/ui/input"; // ✅ Add this import
+
+// ✅ Add import for refund service
+import {
+  verifyRefundEligibility,
+  RefundVerificationRequest,
+} from "@/service/refund";
 
 function getTimeFromDateTime(dateTime: string): string {
   const date = new Date(dateTime);
@@ -106,6 +115,20 @@ export default function Invoice({
   const [showRefundDialog, setShowRefundDialog] = useState(false);
   const [showPaymentGuide, setShowPaymentGuide] = useState(false);
 
+  // ✅ Add new states for refund verification
+  const [verificationData, setVerificationData] = useState({
+    orderId: "", // Will be auto-filled
+    idNumber: "",
+    email: "",
+  });
+
+  const [verificationErrors, setVerificationErrors] = useState({
+    idNumber: false,
+    email: false,
+  });
+  const [isVerifying, setIsVerifying] = useState(false);
+  const [activeRefundTab, setActiveRefundTab] = useState("info");
+
   const fetchPaymentStatus = async (referenceNumber: string) => {
     try {
       const paymentResponse = await getPaymentTransactionDetail(
@@ -140,6 +163,135 @@ export default function Invoice({
       setIsRefreshing(false);
     }
   };
+
+  // ✅ Add refund dialog change handler
+  const handleRefundDialogChange = (open: boolean) => {
+    setShowRefundDialog(open);
+    if (!open) {
+      // Reset when closing
+      setActiveRefundTab("info");
+      setVerificationData({
+        orderId: "",
+        idNumber: "",
+        email: "",
+      });
+      setVerificationErrors({
+        idNumber: false,
+        email: false,
+      });
+      setIsVerifying(false);
+    } else {
+      // Auto-fill order_id when opening
+      if (booking?.order_id) {
+        setVerificationData((prev) => ({
+          ...prev,
+          orderId: booking.order_id,
+        }));
+      }
+    }
+  };
+
+  const handleRefundConfirm = () => {
+    setShowRefundDialog(false);
+
+    if (!booking?.order_id) {
+      toast.error("Data booking tidak ditemukan");
+      return;
+    }
+
+    navigator.clipboard
+      .writeText(booking.order_id)
+      .then(() => {
+        toast.success(
+          "Anda akan diarahkan ke form! Siap untuk mengisi formulir."
+        );
+      })
+      .catch(() => {
+        toast.info("Jangan lupa catat nomor booking: " + booking.order_id);
+      });
+
+    setTimeout(() => {
+      window.open(
+        "https://docs.google.com/forms/d/e/1FAIpQLScDU0MmMh-DTVHcCy8yhm1Hk2O0gHipK891EYpuVctVFrjp9w/viewform?usp=dialog",
+        "_blank"
+      );
+    }, 500);
+  };
+
+  // ✅ Add verification handler
+  // ✅ Update handleVerifyIdentity function - perbaiki warna success
+  // ✅ Update handleVerifyIdentity di invoice.tsx - sama seperti fix di atas
+const handleVerifyIdentity = async () => {
+  if (!booking) return;
+
+  setIsVerifying(true);
+
+  // Reset errors
+  setVerificationErrors({
+    idNumber: false,
+    email: false,
+  });
+
+  // Basic validation code...
+  // ... existing validation code ...
+
+  try {
+    const requestData: RefundVerificationRequest = {
+      order_id: booking.order_id,
+      id_number: verificationData.idNumber.trim(),
+      email: verificationData.email.trim().toLowerCase(),
+    };
+
+    console.log("🔄 Sending refund verification request:", requestData);
+
+    const response = await verifyRefundEligibility(requestData);
+    
+    console.log("📥 Full API response:", response);
+
+    // ✅ FIX: Check for success message in response
+    const isSuccess = response.message && (
+      response.message.toLowerCase().includes("success") ||
+      response.message.toLowerCase().includes("berhasil") ||
+      response.message.toLowerCase().includes("refunded successfully")
+    );
+
+    if (isSuccess || (response.success && response.data?.eligible)) {
+      console.log("✅ Detected success - proceeding with redirect");
+      setIsVerifying(false);
+      
+      toast.success("✅ Verifikasi berhasil! Anda akan diarahkan ke formulir refund.");
+      handleRefundConfirm();
+      
+    } else {
+      console.log("❌ Response indicates failure");
+      setIsVerifying(false);
+      
+      const message = response.message || "Data verifikasi tidak sesuai dengan data pemesanan";
+      
+      // Set specific field errors based on API response
+      if (message.toLowerCase().includes("id_number") || 
+          message.toLowerCase().includes("nomor identitas")) {
+        setVerificationErrors((prev) => ({ ...prev, idNumber: true }));
+      }
+      if (message.toLowerCase().includes("email")) {
+        setVerificationErrors((prev) => ({ ...prev, email: true }));
+      }
+      
+      toast.error(`❌ ${message}`);
+    }
+  } catch (error: any) {
+    console.error("💥 Refund verification error:", error);
+    setIsVerifying(false);
+    
+    if (error.message?.includes("Network error")) {
+      toast.error("❌ Terjadi kesalahan jaringan. Periksa koneksi internet Anda.");
+    } else {
+      toast.error("❌ Terjadi kesalahan saat memverifikasi data. Silakan coba lagi.");
+    }
+  }
+};
+
+  // ✅ Update refund confirm handler
 
   useEffect(() => {
     let pollInterval: NodeJS.Timeout | null = null;
@@ -210,43 +362,49 @@ export default function Invoice({
     };
   }, [orderId]);
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case "PAID":
-        return "bg-green-100 text-green-800 border-green-200";
-      case "UNPAID":
-        return "bg-yellow-100 text-yellow-800 border-yellow-200";
-      case "EXPIRED":
-        return "bg-red-100 text-red-800 border-red-200";
-      case "FAILED":
-        return "bg-red-100 text-red-800 border-red-200";
-      default:
-        return "bg-gray-100 text-gray-800 border-gray-200";
-    }
-  };
+  // ✅ Update getStatusColor function
+const getStatusColor = (status: string) => {
+  switch (status) {
+    case "PAID":
+      return "bg-green-100 text-green-800 border-green-200";
+    case "UNPAID":
+      return "bg-yellow-100 text-yellow-800 border-yellow-200";
+    case "EXPIRED":
+      return "bg-red-100 text-red-800 border-red-200";
+    case "FAILED":
+      return "bg-red-100 text-red-800 border-red-200";
+    case "REFUND": // ✅ Add REFUND status
+      return "bg-purple-100 text-purple-800 border-purple-200";
+    default:
+      return "bg-gray-100 text-gray-800 border-gray-200";
+  }
+};
 
-  const getStatusIcon = (status: string) => {
-    switch (status) {
-      case "PAID":
-        return <CheckCircle className="w-4 h-4" />;
-      case "UNPAID":
-        return <Timer className="w-4 h-4" />;
-      case "EXPIRED":
-      case "FAILED":
-        return <XCircle className="w-4 h-4" />;
-      default:
-        return <AlertCircle className="w-4 h-4" />;
-    }
-  };
+// ✅ Update getStatusIcon function
+const getStatusIcon = (status: string) => {
+  switch (status) {
+    case "PAID":
+      return <CheckCircle className="w-4 h-4" />;
+    case "UNPAID":
+      return <Timer className="w-4 h-4" />;
+    case "EXPIRED":
+    case "FAILED":
+      return <XCircle className="w-4 h-4" />;
+    case "REFUND": // ✅ Add REFUND status icon
+      return <RefreshCw className="w-4 h-4" />;
+    default:
+      return <AlertCircle className="w-4 h-4" />;
+  }
+};
 
-  const handleRefundConfirm = () => {
-    setShowRefundDialog(false);
-    // Navigate to refund page
-    window.open(
-      'https://docs.google.com/forms/d/e/1FAIpQLScDU0MmMh-DTVHcCy8yhm1Hk2O0gHipK891EYpuVctVFrjp9w/viewform?usp=dialog',
-      '_blank'
-    );
-  };
+  // ✅ Update status detection logic - gunakan booking status sebagai prioritas
+const getPaymentStatus = () => {
+  // Prioritas: booking status dulu, baru payment status
+  if (booking?.status === "REFUND") {
+    return "REFUND";
+  }
+  return paymentData?.status || "PENDING";
+};
 
   if (loading) {
     return (
@@ -281,6 +439,8 @@ export default function Invoice({
   return (
     <div className="">
       <div className="container mx-auto px-4">
+        <Toaster />
+
         {/* Header Section */}
         <div className="text-center m-6">
           <div className="flex items-center justify-center gap-4 mb-4">
@@ -318,13 +478,15 @@ export default function Invoice({
                       <Badge
                         className={cn(
                           "px-3 py-1 text-sm font-medium border",
-                          getStatusColor(paymentData?.status || "")
+                          getStatusColor(getPaymentStatus())
                         )}
                       >
                         <div className="flex items-center gap-1">
-                          {getStatusIcon(paymentData?.status || "")}
-                          {paymentData?.status === "PAID"
+                          {getStatusIcon(getPaymentStatus())}
+                          {getPaymentStatus() === "PAID"
                             ? "Sudah Dibayar"
+                            : getPaymentStatus() === "REFUND"
+                            ? "Sudah Direfund"
                             : "Belum Dibayar"}
                         </div>
                       </Badge>
@@ -553,8 +715,17 @@ export default function Invoice({
                   </div>
                 </CardContent>
               </Card>
+
+              {/* ✅ Enhanced Action Buttons - Updated with conditional rendering */}
               <div className="space-y-4 mt-8">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <div
+                  className={cn(
+                    "gap-3",
+                    paymentData?.status === "PAID"
+                      ? "grid grid-cols-1 md:grid-cols-3"
+                      : "grid grid-cols-1 md:grid-cols-2"
+                  )}
+                >
                   {/* ✅ Download/Print Button */}
                   <Button
                     onClick={() => window.print()}
@@ -587,8 +758,357 @@ export default function Invoice({
                     <Share2 className="w-4 h-4 mr-2" />
                     Bagikan Invoice
                   </Button>
+
+                  {/* ✅ Refund Button - Only show when PAID */}
+                  {paymentData?.status === "PAID" && (
+                    <AlertDialog
+                      open={showRefundDialog}
+                      onOpenChange={handleRefundDialogChange}
+                    >
+                      <AlertDialogTrigger asChild>
+                        <Button
+                          variant="outline"
+                          size="lg"
+                          className="w-full border-red-200 text-red-600 hover:bg-red-50 hover:border-red-300 hover:text-red-700"
+                        >
+                          <RefreshCw className="w-4 h-4 mr-2" />
+                          Ajukan Refund
+                        </Button>
+                      </AlertDialogTrigger>
+
+                      {/* ✅ Refund Dialog Content */}
+                      <AlertDialogContent className="w-[95vw] max-w-[600px] max-h-[90vh] overflow-y-auto mx-auto p-0">
+                        <AlertDialogHeader className="p-4">
+                          <AlertDialogTitle className="flex items-start gap-2 md:gap-3">
+                            <div className="w-10 h-10 md:w-12 md:h-12 rounded-full bg-red-100 flex items-center justify-center flex-shrink-0">
+                              <RefreshCw className="w-5 h-5 md:w-6 md:h-6 text-red-600" />
+                            </div>
+                            <div className="min-w-0 flex-1">
+                              <p className="text-lg md:text-xl font-semibold">
+                                Pengajuan Refund
+                              </p>
+                              {booking && (
+                                <p className="text-xs md:text-sm text-gray-500 font-normal mt-1">
+                                  Booking #{booking.order_id}
+                                </p>
+                              )}
+                            </div>
+                          </AlertDialogTitle>
+
+                          <AlertDialogDescription className="text-gray-600 p-4 md:p-6 pt-2">
+                            {/* ✅ Tabs System for Organized Content */}
+                            <Tabs
+                              value={activeRefundTab}
+                              onValueChange={setActiveRefundTab}
+                              className="w-full"
+                            >
+                              <TabsList className="grid w-full grid-cols-2 h-auto p-1">
+                                <TabsTrigger
+                                  value="info"
+                                  className="flex items-center gap-1.5 md:gap-2 py-2 md:py-2.5 text-xs md:text-sm"
+                                >
+                                  <HelpCircle className="w-3 h-3 md:w-4 md:h-4" />
+                                  <span className="hidden sm:inline">
+                                    Informasi
+                                  </span>
+                                  <span className="sm:hidden">Info</span>
+                                </TabsTrigger>
+                                <TabsTrigger
+                                  value="verify"
+                                  className="flex items-center gap-1.5 md:gap-2 py-2 md:py-2.5 text-xs md:text-sm"
+                                >
+                                  <AlertCircle className="w-3 h-3 md:w-4 md:h-4" />
+                                  <span className="hidden sm:inline">
+                                    Verifikasi
+                                  </span>
+                                  <span className="sm:hidden">Verify</span>
+                                </TabsTrigger>
+                              </TabsList>
+
+                              {/* ✅ Tab 1: Information */}
+                              <TabsContent
+                                value="info"
+                                className="space-y-3 mt-4"
+                              >
+                                <div className="bg-amber-50 p-3 md:p-4 rounded-lg border border-amber-200">
+                                  <div className="flex items-start gap-2 md:gap-3">
+                                    <AlertCircle className="w-4 h-4 md:w-5 md:h-5 text-amber-600 mt-0.5 flex-shrink-0" />
+                                    <div className="min-w-0 flex-1">
+                                      <p className="font-medium text-amber-800 mb-2 md:mb-3 text-sm md:text-base">
+                                        Sebelum melanjutkan, pastikan Anda
+                                        memahami:
+                                      </p>
+                                      <ul className="text-xs md:text-sm text-amber-700 space-y-1 md:space-y-2 list-disc pl-3 md:pl-4">
+                                        <li>
+                                          Refund hanya dapat diajukan maksimal
+                                          24 jam sebelum keberangkatan
+                                        </li>
+                                        <li>
+                                          Biaya administrasi 10% akan dipotong
+                                          dari total pembayaran
+                                        </li>
+                                        <li>
+                                          Proses refund membutuhkan waktu 3-7
+                                          hari kerja
+                                        </li>
+                                        <li>
+                                          Tiket akan dibatalkan setelah refund
+                                          disetujui
+                                        </li>
+                                      </ul>
+                                    </div>
+                                  </div>
+                                </div>
+
+                                <div className="bg-blue-50 p-3 md:p-4 rounded-lg border border-blue-200">
+                                  <div className="flex items-start gap-2 md:gap-3">
+                                    <HelpCircle className="w-4 h-4 md:w-5 md:h-5 text-blue-600 mt-0.5 flex-shrink-0" />
+                                    <div className="min-w-0 flex-1">
+                                      <p className="font-medium text-blue-800 mb-2 md:mb-3 text-sm md:text-base">
+                                        Proses Pengajuan Refund:
+                                      </p>
+                                      <ol className="text-xs md:text-sm text-blue-700 space-y-1 md:space-y-2 list-decimal pl-5 md:pl-6">
+                                        <li>
+                                          Pastikan tiket Anda memenuhi syarat
+                                          refund
+                                        </li>
+                                        <li>
+                                          Klik tombol "Ajukan Refund" di bawah
+                                        </li>
+                                        <li>
+                                          Isi formulir pengajuan refund dengan
+                                          lengkap dan benar
+                                        </li>
+                                        <li>
+                                          Kirimkan formulir dan tunggu
+                                          konfirmasi dari kami
+                                        </li>
+                                      </ol>
+                                    </div>
+                                  </div>
+                                </div>
+                              </TabsContent>
+
+                              {/* ✅ Tab 2: Verification Form */}
+                              <TabsContent
+                                value="verify"
+                                className="space-y-3 md:space-y-4 mt-4"
+                              >
+                                <div className="bg-orange-50 p-3 md:p-4 rounded-lg border border-orange-200">
+                                  <div className="flex items-start gap-2 md:gap-3">
+                                    <AlertCircle className="w-4 h-4 md:w-5 md:h-5 text-orange-600 mt-0.5 flex-shrink-0" />
+                                    <div className="min-w-0 flex-1">
+                                      <p className="font-medium text-orange-800 mb-1 md:mb-2 text-sm md:text-base">
+                                        Verifikasi Data Diperlukan
+                                      </p>
+                                      <p className="text-xs md:text-sm text-orange-700">
+                                        Masukkan nomor identitas dan email yang
+                                        sama dengan saat pemesanan tiket.
+                                      </p>
+                                    </div>
+                                  </div>
+                                </div>
+
+                                {/* ✅ Form Fields */}
+                                <div className="space-y-3 md:space-y-4">
+                                  {/* Order ID - Auto-filled & Read-only */}
+                                  <div className="space-y-1.5 md:space-y-2">
+                                    <label className="text-xs md:text-sm font-medium text-gray-700 flex items-center gap-1.5 md:gap-2">
+                                      <Ticket className="w-3 h-3 md:w-4 md:h-4 text-green-600 flex-shrink-0" />
+                                      <span>Nomor Booking</span>
+                                    </label>
+                                    <div className="relative">
+                                      <Input
+                                        type="text"
+                                        value={verificationData.orderId}
+                                        readOnly
+                                        className="h-10 md:h-11 bg-gray-50 text-gray-600 font-mono text-sm  cursor-not-allowed"
+                                      />
+                                      <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                                        <CheckCircle className="w-4 h-4 text-green-600" />
+                                      </div>
+                                    </div>
+                                    <p className="text-xs text-green-600 flex items-center gap-1">
+                                      <CheckCircle className="w-3 h-3 flex-shrink-0" />
+                                      <span>Nomor booking terisi otomatis</span>
+                                    </p>
+                                  </div>
+
+                                  {/* ID Number & Email - Grid Layout */}
+                                  <div className="grid grid-cols-1 gap-3 md:grid-cols-2 md:gap-4">
+                                    {/* ID Number Input */}
+                                    <div className="space-y-1.5 md:space-y-2">
+                                      <label className="text-xs md:text-sm font-medium text-gray-700 flex items-center gap-1.5 md:gap-2">
+                                        <CreditCard className="w-3 h-3 md:w-4 md:h-4 text-blue-600 flex-shrink-0" />
+                                        <span>
+                                          Nomor Identitas{" "}
+                                          <span className="text-red-500">
+                                            *
+                                          </span>
+                                        </span>
+                                      </label>
+                                      <Input
+                                        type="text"
+                                        placeholder="Nomor KTP/SIM/Passport"
+                                        value={verificationData.idNumber}
+                                        onChange={(e) =>
+                                          setVerificationData((prev) => ({
+                                            ...prev,
+                                            idNumber: e.target.value,
+                                          }))
+                                        }
+                                        className={cn(
+                                          "h-10 md:h-11 font-mono transition-colors text-sm ",
+                                          verificationErrors.idNumber &&
+                                            "border-red-500 focus:border-red-500"
+                                        )}
+                                      />
+                                      {verificationErrors.idNumber && (
+                                        <p className="text-xs text-red-600 flex items-center gap-1">
+                                          <AlertCircle className="w-3 h-3 flex-shrink-0" />
+                                          <span>
+                                            Nomor identitas tidak sesuai dengan
+                                            data pemesanan
+                                          </span>
+                                        </p>
+                                      )}
+                                    </div>
+
+                                    {/* Email Input */}
+                                    <div className="space-y-1.5 md:space-y-2">
+                                      <label className="text-xs md:text-sm font-medium text-gray-700 flex items-center gap-1.5 md:gap-2">
+                                        <Mail className="w-3 h-3 md:w-4 md:h-4 text-blue-600 flex-shrink-0" />
+                                        <span>
+                                          Email{" "}
+                                          <span className="text-red-500">
+                                            *
+                                          </span>
+                                        </span>
+                                      </label>
+                                      <Input
+                                        type="email"
+                                        placeholder="masukkan@email.com"
+                                        value={verificationData.email}
+                                        onChange={(e) =>
+                                          setVerificationData((prev) => ({
+                                            ...prev,
+                                            email: e.target.value,
+                                          }))
+                                        }
+                                        className={cn(
+                                          "h-10 md:h-11 transition-colors text-sm",
+                                          verificationErrors.email &&
+                                            "border-red-500 focus:border-red-500"
+                                        )}
+                                      />
+                                      {verificationErrors.email && (
+                                        <p className="text-xs text-red-600 flex items-center gap-1">
+                                          <AlertCircle className="w-3 h-3 flex-shrink-0" />
+                                          <span>
+                                            Email tidak sesuai dengan data
+                                            pemesanan
+                                          </span>
+                                        </p>
+                                      )}
+                                    </div>
+                                  </div>
+                                </div>
+
+                                {/* Form Status */}
+                                {(verificationErrors.idNumber ||
+                                  verificationErrors.email) && (
+                                  <div className="bg-red-50 p-2.5 md:p-3 rounded-lg border border-red-200">
+                                    <div className="flex items-start gap-2">
+                                      <AlertCircle className="w-4 h-4 text-red-600 flex-shrink-0 mt-0.5" />
+                                      <p className="text-xs md:text-sm text-red-700 font-medium">
+                                        Data verifikasi tidak sesuai dengan data
+                                        pemesanan
+                                      </p>
+                                    </div>
+                                  </div>
+                                )}
+
+                                {/* Success Tips */}
+                                <div className="bg-blue-50 p-2.5 md:p-3 rounded-lg border border-blue-200">
+                                  <div className="flex items-start gap-2">
+                                    <CheckCircle className="w-4 h-4 text-blue-600 flex-shrink-0 mt-0.5" />
+                                    <div className="min-w-0 flex-1">
+                                      <p className="text-xs text-blue-700 font-medium mb-1">
+                                        💡 Tips Verifikasi:
+                                      </p>
+                                      <ul className="text-xs text-blue-600 space-y-0.5 list-disc pl-3">
+                                        <li>
+                                          Masukkan nomor identitas tanpa spasi
+                                          atau tanda baca
+                                        </li>
+                                        <li>
+                                          Gunakan email yang sama dengan saat
+                                          pemesanan
+                                        </li>
+                                        <li>
+                                          Periksa kembali format email (contoh:
+                                          nama@domain.com)
+                                        </li>
+                                      </ul>
+                                    </div>
+                                  </div>
+                                </div>
+                              </TabsContent>
+                            </Tabs>
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+
+                        <AlertDialogFooter className="gap-2 md:gap-3 flex-col sm:flex-row sm:justify-center p-4 md:p-6">
+                          <AlertDialogCancel className="bg-gray-100 hover:bg-gray-200 text-gray-800 border-gray-300 h-10 md:h-11 text-sm md:text-base order-2 sm:order-1">
+                            Batal
+                          </AlertDialogCancel>
+
+                          {activeRefundTab === "info" ? (
+                            <Button
+                              onClick={() => setActiveRefundTab("verify")}
+                              className="bg-blue-600 hover:bg-blue-700 text-white h-10 md:h-11 text-sm md:text-base order-1 sm:order-2"
+                            >
+                              <div className="flex items-center gap-1.5 md:gap-2">
+                                <AlertCircle className="w-3 h-3 md:w-4 md:h-4" />
+                                <span className="hidden sm:inline">
+                                  Lanjutkan Verifikasi
+                                </span>
+                                <span className="sm:hidden">Lanjutkan</span>
+                              </div>
+                            </Button>
+                          ) : (
+                            <Button
+                              onClick={handleVerifyIdentity}
+                              disabled={
+                                isVerifying ||
+                                !verificationData.idNumber.trim() ||
+                                !verificationData.email.trim()
+                              }
+                              className="bg-red-600 hover:bg-red-700 text-white disabled:opacity-50 disabled:cursor-not-allowed h-10 md:h-11 text-sm md:text-base order-1 sm:order-2"
+                            >
+                              {isVerifying ? (
+                                <div className="flex items-center gap-1.5 md:gap-2">
+                                  <div className="w-3 h-3 md:w-4 md:h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                                  <span>Memverifikasi...</span>
+                                </div>
+                              ) : (
+                                <div className="flex items-center gap-1.5 md:gap-2">
+                                  <CheckCircle className="w-3 h-3 md:w-4 md:h-4" />
+                                  <span className="hidden sm:inline">
+                                    Verifikasi & Ajukan Refund
+                                  </span>
+                                  <span className="sm:hidden">
+                                    Verifikasi & Ajukan
+                                  </span>
+                                </div>
+                              )}
+                            </Button>
+                          )}
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
+                  )}
                 </div>
-                {/* Payment Guide Dialog - Only show when unpaid */}
               </div>
             </div>
 
@@ -723,7 +1243,7 @@ export default function Invoice({
                     } else if (isVAPayment) {
                       return (
                         <div className="text-center space-y-4">
-                          <div className="bg-Blue/5 rounded-lg p-4 border border-Blue/20">
+                          <div className="bg-Orange/5 rounded-lg p-4 border border-Orange/20">
                             <div className="flex items-center justify-center gap-2 mb-2">
                               <Hash className="w-4 h-4 text-Blue" />
                               <p className="text-sm text-Blue/80">
@@ -991,101 +1511,8 @@ export default function Invoice({
                 </Dialog>
               )}
 
-              {/* ✅ MOVED: Refund Button - Now above payment guide */}
-              <AlertDialog
-                open={showRefundDialog}
-                onOpenChange={setShowRefundDialog}
-              >
-                <AlertDialogTrigger asChild>
-                  <Button
-                    variant="outline"
-                    size="lg"
-                    className="w-full border-red-200 text-red-600 hover:bg-red-50 hover:border-red-300 hover:text-red-700"
-                  >
-                    <RefreshCw className="w-4 h-4 mr-2" />
-                    Ajukan Refund
-                  </Button>
-                </AlertDialogTrigger>
-                <AlertDialogContent className="sm:max-w-[500px]">
-                  <AlertDialogHeader>
-                    <AlertDialogTitle className="flex items-center gap-3">
-                      <div className="w-12 h-12 rounded-full bg-red-100 flex items-center justify-center">
-                        <RefreshCw className="w-6 h-6 text-red-600" />
-                      </div>
-                      <div>
-                        <p className="text-xl">Konfirmasi Pengajuan Refund</p>
-                        <p className="text-sm text-gray-500 font-normal">
-                          Booking #{booking.order_id}
-                        </p>
-                      </div>
-                    </AlertDialogTitle>
-                    <AlertDialogDescription className="text-gray-600 leading-relaxed space-y-4">
-                      <div className="bg-amber-50 p-4 rounded-lg border border-amber-200">
-                        <div className="flex items-start gap-3">
-                          <AlertCircle className="w-5 h-5 text-amber-600 mt-0.5" />
-                          <div>
-                            <p className="font-medium text-amber-800 mb-2">
-                              Sebelum melanjutkan, pastikan Anda memahami:
-                            </p>
-                            <ul className="text-sm text-amber-700 space-y-1 list-disc pl-4">
-                              <li>
-                                Refund hanya dapat diajukan maksimal 24 jam
-                                sebelum keberangkatan
-                              </li>
-                             
-                              <li>
-                                Proses refund membutuhkan waktu 3-7 hari kerja
-                              </li>
-                              <li>
-                                Tiket akan dibatalkan setelah refund disetujui
-                              </li>
-                            </ul>
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* ✅ Updated description for Google Form */}
-                      <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
-                        <div className="flex items-start gap-3">
-                          <HelpCircle className="w-5 h-5 text-blue-600 mt-0.5" />
-                          <div>
-                            <p className="font-medium text-blue-800 mb-2">
-                              Proses Pengajuan Refund:
-                            </p>
-                            <div className="text-sm text-blue-700 space-y-1">
-                              <p>• Anda akan diarahkan ke formulir pengajuan refund</p>
-                              <p>• Isi data dengan lengkap dan benar</p>
-                              <p>• Tim customer service akan memproses dalam 1x24 jam</p>
-                              <p>• Konfirmasi akan dikirim via email atau WhatsApp</p>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-
-                      <p className="text-center text-sm text-gray-600 bg-gray-50 p-3 rounded-lg">
-                        <strong>Nomor Booking Anda: {booking.order_id}</strong>
-                        <br />
-                        Pastikan menyimpan nomor ini untuk pengajuan refund.
-                      </p>
-                    </AlertDialogDescription>
-                  </AlertDialogHeader>
-                  <AlertDialogFooter className="gap-3">
-                    <AlertDialogCancel className="bg-gray-100 hover:bg-gray-200 text-gray-800 border-gray-300">
-                      Batal
-                    </AlertDialogCancel>
-                    <AlertDialogAction
-                      onClick={handleRefundConfirm}
-                      className="bg-red-600 hover:bg-red-700 text-white"
-                    >
-                      Lanjutkan ke Formulir Refund
-                    </AlertDialogAction>
-                  </AlertDialogFooter>
-                </AlertDialogContent>
-              </AlertDialog>
-
               {/* ✅ Enhanced Status Notice */}
               {paymentData?.status === "PAID" ? (
-                // Success Notice for Paid Status
                 <div className="bg-gradient-to-r from-green-50 to-green-100 rounded-lg p-4 border border-green-200">
                   <div className="text-center">
                     <div className="flex items-center justify-center gap-2 mb-2">
@@ -1102,15 +1529,28 @@ export default function Invoice({
                     </p>
                   </div>
                 </div>
+              ) : getPaymentStatus() === "REFUND" ? (
+                // ✅ Add REFUND status notice
+                <div className="bg-gradient-to-r from-purple-50 to-purple-100 rounded-lg p-4 border border-purple-200">
+                  <div className="text-center">
+                    <div className="flex items-center justify-center gap-2 mb-2">
+                      <RefreshCw className="w-5 h-5 text-purple-600" />
+                      <p className="font-semibold text-purple-800">Tiket Telah Direfund</p>
+                    </div>
+                    <p className="text-sm text-purple-700">
+                      Tiket ini telah dibatalkan dan dana sudah dikembalikan.
+                    </p>
+                    <p className="text-xs text-purple-600 mt-1">
+                      Tiket tidak dapat digunakan untuk perjalanan.
+                    </p>
+                  </div>
+                </div>
               ) : (
-                // Pending Payment Notice
                 <div className="bg-gradient-to-r from-Blue/20 to-Orange/20 rounded-lg p-4">
                   <div className="text-center text-sm">
                     <div className="flex items-center justify-center gap-2 mb-2">
                       <Timer className="w-4 h-4 text-Orange" />
-                      <p className="font-medium text-Blue">
-                        Menunggu Pembayaran
-                      </p>
+                      <p className="font-medium text-Blue">Menunggu Pembayaran</p>
                     </div>
                     <p className="text-Blue font-medium">
                       Selesaikan pembayaran untuk mengaktifkan tiket
