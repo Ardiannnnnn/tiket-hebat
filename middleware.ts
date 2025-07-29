@@ -1,4 +1,3 @@
-// middleware.ts
 import { NextRequest, NextResponse } from 'next/server';
 
 // Mapping role yang diizinkan per rute
@@ -8,6 +7,29 @@ const routeRoleMap: Record<string, string[]> = {
 };
 
 export function middleware(request: NextRequest) {
+  // ✅ MAINTENANCE MODE CHECK - Prioritas tertinggi
+  const isMaintenanceMode = process.env.MAINTENANCE_MODE === 'true';
+  
+  // ✅ Skip maintenance check untuk maintenance page itu sendiri
+  if (request.nextUrl.pathname === '/maintenance') {
+    return NextResponse.next();
+  }
+  
+  // ✅ Skip untuk static files
+  if (
+    request.nextUrl.pathname.startsWith('/_next/') ||
+    request.nextUrl.pathname.startsWith('/favicon.ico') ||
+    request.nextUrl.pathname.startsWith('/api/_')
+  ) {
+    return NextResponse.next();
+  }
+  
+  // ✅ Redirect ke maintenance page jika maintenance mode aktif
+  if (isMaintenanceMode) {
+    return NextResponse.redirect(new URL('/maintenance', request.url));
+  }
+
+  // ✅ EXISTING AUTH LOGIC - Hanya jalankan jika tidak maintenance mode
   const token = request.cookies.get('access_token')?.value;
 
   if (!token) {
@@ -60,17 +82,17 @@ function redirectToRefresh(request: NextRequest) {
   refreshUrl.searchParams.set('callback', request.nextUrl.pathname);
   return NextResponse.redirect(refreshUrl);
 }
-// Konfigurasi rute yang perlu login
+
+// ✅ Update config untuk include semua routes (maintenance mode berlaku global)
 export const config = {
   matcher: [
-    "/beranda/:path*",
-    "/dataTiket/:path*",
-    "/kapal/:path*",
-    "/pelabuhan/:path*",
-    "/dataRute/:path*",
-    "/uploadJadwal/:path*",
-    "/tiket-dashboard/:path*",
-    "/pengguna/:path*",
-    "/petugas/:path*",
+    /*
+     * Match all request paths except for the ones starting with:
+     * - api (API routes)
+     * - _next/static (static files)
+     * - _next/image (image optimization files)
+     * - favicon.ico (favicon file)
+     */
+    '/((?!_next/static|_next/image|favicon.ico).*)',
   ],
 };
