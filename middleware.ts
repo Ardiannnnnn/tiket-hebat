@@ -6,21 +6,35 @@ const routeRoleMap: Record<string, string[]> = {
   '/petugas': ['OPERATOR'],
 };
 
+// ✅ Routes yang tidak butuh authentication
+const publicRoutes = [
+  '/',
+  '/login',
+  '/register', 
+  '/maintenance',
+  '/unauthorized',
+  '/auth',
+  '/cek-tiket',
+  '/invoice'
+];
+
 export function middleware(request: NextRequest) {
-  // ✅ TEMPORARY: Hardcode maintenance mode
-  const isMaintenanceMode = true; // Ubah ke false untuk disable
-  
-  // ✅ Skip maintenance check untuk maintenance page itu sendiri
-  if (request.nextUrl.pathname === '/maintenance') {
-    return NextResponse.next();
-  }
+  // ✅ MAINTENANCE MODE CHECK
+  const isMaintenanceMode = true; // Ubah ke true untuk enable
   
   // ✅ Skip untuk static files
   if (
     request.nextUrl.pathname.startsWith('/_next/') ||
     request.nextUrl.pathname.startsWith('/favicon.ico') ||
-    request.nextUrl.pathname.startsWith('/api/_')
+    request.nextUrl.pathname.startsWith('/api/') ||
+    request.nextUrl.pathname.startsWith('/images/') ||
+    request.nextUrl.pathname.startsWith('/icons/')
   ) {
+    return NextResponse.next();
+  }
+  
+  // ✅ Skip maintenance check untuk maintenance page itu sendiri
+  if (request.nextUrl.pathname === '/maintenance') {
     return NextResponse.next();
   }
   
@@ -29,7 +43,18 @@ export function middleware(request: NextRequest) {
     return NextResponse.redirect(new URL('/maintenance', request.url));
   }
 
-  // ✅ EXISTING AUTH LOGIC - Hanya jalankan jika tidak maintenance mode
+  // ✅ Check if current path is public route
+  const isPublicRoute = publicRoutes.some(route => 
+    request.nextUrl.pathname === route || 
+    request.nextUrl.pathname.startsWith(route + '/')
+  );
+
+  // ✅ Skip auth check untuk public routes
+  if (isPublicRoute) {
+    return NextResponse.next();
+  }
+
+  // ✅ AUTH LOGIC - Hanya untuk protected routes
   const token = request.cookies.get('access_token')?.value;
 
   if (!token) {
@@ -43,6 +68,7 @@ export function middleware(request: NextRequest) {
   const role = getRoleFromToken(token);
   const currentPath = request.nextUrl.pathname;
 
+  // ✅ Role-based access control
   for (const path in routeRoleMap) {
     if (currentPath.startsWith(path)) {
       const allowed = routeRoleMap[path];
@@ -83,16 +109,8 @@ function redirectToRefresh(request: NextRequest) {
   return NextResponse.redirect(refreshUrl);
 }
 
-// ✅ Update config untuk include semua routes (maintenance mode berlaku global)
 export const config = {
   matcher: [
-    /*
-     * Match all request paths except for the ones starting with:
-     * - api (API routes)
-     * - _next/static (static files)
-     * - _next/image (image optimization files)
-     * - favicon.ico (favicon file)
-     */
     '/((?!_next/static|_next/image|favicon.ico).*)',
   ],
 };
