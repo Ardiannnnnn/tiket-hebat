@@ -7,8 +7,8 @@ const routeRoleMap: Record<string, string[]> = {
 };
 
 export function middleware(request: NextRequest) {
-  // ✅ MAINTENANCE MODE CHECK - Prioritas tertinggi
-  const isMaintenanceMode = process.env.MAINTENANCE_MODE === 'true';
+  // ✅ TEMPORARY: Hardcode maintenance mode
+  const isMaintenanceMode = true; // Ubah ke false untuk disable
   
   // ✅ Skip maintenance check untuk maintenance page itu sendiri
   if (request.nextUrl.pathname === '/maintenance') {
